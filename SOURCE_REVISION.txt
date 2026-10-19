@@ -1,3 +1,5 @@
 AIRS implementation and release tooling snapshot: abeac3b
 App implementation built from: c8c5722
 Distribution transformations: debug/local symbol stripping; Developer ID signing; removal of dangling omitted-tool aliases.
+Final packaging correction: omit the unused CPython embedding object before distribution signing.
+Final source snapshot also includes the completed notarization release notes.

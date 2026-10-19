@@ -44,6 +44,11 @@ def main():
         alias = bin_dir / name
         if alias.is_symlink() and not alias.exists():
             alias.unlink()
+    # CPython's embedding link object is build tooling, not a runtime module.
+    # Apple notarization rejects its unsigned MH_OBJECT payload in an app.
+    link_object = app / 'Contents/Frameworks/Python.framework/Versions/3.15/lib/python3.15/config-3.15-darwin/python.o'
+    if link_object.is_file() and not link_object.is_symlink():
+        link_object.unlink()
     bundles = [app]
     bundles += [p for p in app.rglob('*') if not p.is_symlink() and p.is_dir()
                 and p.suffix in ('.app', '.framework')]

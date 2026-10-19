@@ -1,7 +1,7 @@
 # AIRS 0.1.0
 
-Distribution status: Developer ID signed preview; notarization is pending.
-The app archive is held in a draft release until notarization is completed.
+Distribution status: Developer ID signed and Apple-notarized preview.
+The exported app carries a validated staple and passed Gatekeeper assessment.
 
 A native macOS workspace for bounded ARM64 Mach-O unwind diagnostics and
 entitlement comparisons. Analysis reads selected files as data; it does not
