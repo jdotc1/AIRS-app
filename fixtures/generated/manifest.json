@@ -1,0 +1,83 @@
+{
+  "files": {
+    "after.macho": {
+      "bytes": 4366,
+      "sha256": "a2a29d563ccb4866e02e82b97e00c40d5529b31a59063f3770a45343c291dfd0"
+    },
+    "arm64e.macho": {
+      "bytes": 4366,
+      "sha256": "98c5d35f5fc47709417df45d7569c9fa40d33f9490f1654ba27af7cbc6238e66"
+    },
+    "before.macho": {
+      "bytes": 4366,
+      "sha256": "48038d3232a9bc8a0360677bd630bce1c8fcc9a9189a31421c8acb95fe071295"
+    },
+    "metadata-only.macho": {
+      "bytes": 4265,
+      "sha256": "066a4d511b20ddc4360cb8c9fb2f4745b4781a7b5115f201f7168cc4cbf361a5"
+    },
+    "mixed-compressed.macho": {
+      "bytes": 4752,
+      "sha256": "74965fb53415a62800e6c682c8bcdb8242ff3f4b8edb745caf6e377f5e0af1e2"
+    },
+    "mixed-regular.macho": {
+      "bytes": 4768,
+      "sha256": "47ace7a3d0c85c70b2a016b92395b9610c5e01a79eba806aef9e00b7a52c5c15"
+    },
+    "no-unwind.macho": {
+      "bytes": 4278,
+      "sha256": "a3f9f794283cad56307760e7b611be1a54d91a0399814944e7c803cc43835ee6"
+    },
+    "symbol-boundaries.macho": {
+      "bytes": 4358,
+      "sha256": "8b07e94971932f4d43cbdbecf57d5ab162cd6294b7514afaa2671bcdd9fa98d6"
+    },
+    "universal32.macho": {
+      "bytes": 37134,
+      "sha256": "a1111eaf9191cb7470753db8ebefe4448bf42de49cae29547c001b7c0a65346d"
+    },
+    "universal64.macho": {
+      "bytes": 37134,
+      "sha256": "3d089d58a7ab770c76e133ccb03b57b5453cc7c3d3525b78dc606e274154fdab"
+    }
+  },
+  "mixed_expectations": {
+    "_canonical_frame": {
+      "explanation": "Canonical FP/LR frame checked at a direct call",
+      "verdict": "agreement"
+    },
+    "_conditional_flow": {
+      "explanation": "Conditional control flow is outside the linear model",
+      "verdict": "unresolved"
+    },
+    "_dwarf_fallback": {
+      "explanation": "DWARF reference is recorded but no FDE interpreter is implemented",
+      "verdict": "unresolved"
+    },
+    "_frameless_leaf": {
+      "explanation": "32-byte leaf stack; comparison is explicitly limited to the modeled body",
+      "verdict": "agreement"
+    },
+    "_no_rule": {
+      "explanation": "Zero encoding means no compact rule; it does not establish a defect",
+      "verdict": "unresolved"
+    },
+    "_pair_rule_missing": {
+      "explanation": "Synthetic metadata omits the saved pair needed to recover original x19",
+      "verdict": "inconsistency"
+    },
+    "_pair_saved": {
+      "explanation": "x19 saved at FP-8 and x20 at FP-16; x19 is modified before the call",
+      "verdict": "agreement"
+    },
+    "_pointer_auth": {
+      "explanation": "Pointer authentication instructions are recognized as unsupported scope",
+      "verdict": "unresolved"
+    },
+    "_shifted_frame_record": {
+      "explanation": "Synthetic frame metadata reconstructs the wrong caller SP for this explicitly restored frame",
+      "verdict": "inconsistency"
+    }
+  },
+  "purpose": "Synthetic, non-executed parser and analysis examples; not third-party bug reproductions"
+}

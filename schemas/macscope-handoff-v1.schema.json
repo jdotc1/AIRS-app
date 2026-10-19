@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:airs:schema:macscope-handoff:1",
+  "title": "AIRS macscope-handoff v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "report_kind": {
+      "const": "airs.macscope_handoff"
+    },
+    "integration_status": {
+      "const": "proposed_export_contract"
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "architecture": {
+          "enum": [
+            "arm64",
+            "arm64e"
+          ]
+        },
+        "cpu_subtype": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "uuid": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "container_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "slice_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "slice_offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "slice_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "preferred_base": {
+          "type": "string",
+          "pattern": "^0x[0-9a-f]{1,16}$"
+        }
+      },
+      "required": [
+        "display_name",
+        "architecture",
+        "cpu_subtype",
+        "uuid",
+        "container_sha256",
+        "slice_sha256",
+        "slice_offset",
+        "slice_size",
+        "preferred_base"
+      ],
+      "additionalProperties": true
+    },
+    "selection": {
+      "type": "object",
+      "properties": {
+        "finding_id": {
+          "type": "string",
+          "pattern": "^airsf-[0-9a-f]{64}$"
+        },
+        "function_name": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "address_space": {
+          "const": "preferred_vm"
+        },
+        "vm_range": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{1,16}$"
+            },
+            "end": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{1,16}$"
+            }
+          },
+          "required": [
+            "start",
+            "end"
+          ],
+          "additionalProperties": true
+        },
+        "image_relative_range": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{1,16}$"
+            },
+            "end": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{1,16}$"
+            }
+          },
+          "required": [
+            "start",
+            "end"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "finding_id",
+        "function_name",
+        "address_space",
+        "vm_range",
+        "image_relative_range"
+      ],
+      "additionalProperties": true
+    },
+    "finding": {
+      "type": "object",
+      "properties": {
+        "verdict": {
+          "enum": [
+            "agreement",
+            "inconsistency",
+            "unresolved"
+          ]
+        },
+        "coverage": {
+          "enum": [
+            "compact",
+            "dwarf_reference",
+            "dwarf_evaluated",
+            "none",
+            "unavailable"
+          ]
+        },
+        "mode": {
+          "enum": [
+            "frame",
+            "frameless",
+            "dwarf",
+            "pauth_frame",
+            "none",
+            "unknown"
+          ]
+        },
+        "scope": {
+          "enum": [
+            "synchronous_call_sites",
+            "modeled_leaf_body",
+            "metadata_only"
+          ]
+        },
+        "reason_codes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 65536
+          },
+          "maxItems": 200000
+        },
+        "checked_pcs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{1,16}$"
+          },
+          "maxItems": 200000
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "maxLength": 65536
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 65536
+              },
+              "address": {
+                "type": "string",
+                "pattern": "^0x[0-9a-f]{1,16}$"
+              },
+              "expected": {
+                "type": "string",
+                "maxLength": 65536
+              },
+              "observed": {
+                "type": "string",
+                "maxLength": 65536
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "additionalProperties": true
+          },
+          "maxItems": 200000
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 65536
+          },
+          "maxItems": 200000
+        }
+      },
+      "required": [
+        "verdict",
+        "coverage",
+        "mode",
+        "scope",
+        "reason_codes",
+        "checked_pcs",
+        "evidence",
+        "limitations"
+      ],
+      "additionalProperties": true
+    },
+    "source_analysis": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "analysis_model_version": {
+          "type": "string",
+          "maxLength": 65536
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "analysis_model_version"
+      ],
+      "additionalProperties": true
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 65536
+      },
+      "maxItems": 200000
+    }
+  },
+  "required": [
+    "schema_version",
+    "report_kind",
+    "integration_status",
+    "image",
+    "selection",
+    "finding",
+    "source_analysis",
+    "requirements"
+  ],
+  "additionalProperties": true
+}

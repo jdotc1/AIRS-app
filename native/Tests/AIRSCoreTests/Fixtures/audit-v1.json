@@ -1,0 +1,161 @@
+{
+  "findings": [
+    {
+      "checked_pcs": [
+        "0x10000100c"
+      ],
+      "coverage": "compact",
+      "encoding": "0x4000000",
+      "evidence": [
+        {
+          "address": "0x10000100c",
+          "code": "caller_lr",
+          "expected": "original x30",
+          "message": "The saved return address matches the modeled caller identity.",
+          "observed": "original x30"
+        }
+      ],
+      "function": {
+        "address": "0x100001000",
+        "boundary_source": "lc_function_starts",
+        "end_address": "0x100001020",
+        "image_offset": "0x1000",
+        "name": "_agreement",
+        "size": 32
+      },
+      "id": "airsf-1111111111111111111111111111111111111111111111111111111111111111",
+      "instruction_count": 8,
+      "limitations": [
+        "Only the reported synchronous call-site observation is checked."
+      ],
+      "mode": "frame",
+      "reason_codes": [
+        "modeled_state_agrees"
+      ],
+      "scope": "synchronous_call_sites",
+      "verdict": "agreement"
+    },
+    {
+      "checked_pcs": [
+        "0x100001038"
+      ],
+      "coverage": "compact",
+      "encoding": "0x4000000",
+      "evidence": [
+        {
+          "address": "0x100001038",
+          "code": "caller_lr_mismatch",
+          "expected": "original x30",
+          "message": "The saved return address differs at the modeled observation.",
+          "observed": "overwritten x30"
+        }
+      ],
+      "function": {
+        "address": "0x100001020",
+        "boundary_source": "lc_function_starts",
+        "end_address": "0x100001050",
+        "image_offset": "0x1020",
+        "name": "_mismatch",
+        "size": 48
+      },
+      "id": "airsf-2222222222222222222222222222222222222222222222222222222222222222",
+      "instruction_count": 12,
+      "limitations": [
+        "Synthetic mismatch for native UI and report-decoding tests."
+      ],
+      "mode": "frame",
+      "reason_codes": [
+        "caller_lr_mismatch"
+      ],
+      "scope": "synchronous_call_sites",
+      "verdict": "inconsistency"
+    },
+    {
+      "checked_pcs": [],
+      "coverage": "none",
+      "encoding": "0x0",
+      "evidence": [
+        {
+          "code": "no_unwind_rule",
+          "message": "A zero encoding establishes no unwind rule."
+        }
+      ],
+      "function": {
+        "address": "0x100001050",
+        "boundary_source": "lc_function_starts",
+        "end_address": "0x100001060",
+        "image_offset": "0x1050",
+        "name": "_unresolved",
+        "size": 16
+      },
+      "id": "airsf-3333333333333333333333333333333333333333333333333333333333333333",
+      "instruction_count": 4,
+      "limitations": [
+        "Missing metadata cannot establish an inconsistency."
+      ],
+      "mode": "none",
+      "reason_codes": [
+        "no_unwind_rule"
+      ],
+      "scope": "metadata_only",
+      "verdict": "unresolved"
+    }
+  ],
+  "generator": {
+    "analysis_model_version": "arm64-linear-v1",
+    "name": "airs",
+    "version": "0.1.0"
+  },
+  "image": {
+    "architecture": "arm64",
+    "container_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "cpu_subtype": 0,
+    "display_name": "SyntheticNativeFixture",
+    "file_type": "execute",
+    "preferred_base": "0x100000000",
+    "slice_offset": 0,
+    "slice_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "slice_size": 8192,
+    "uuid": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+  },
+  "issues": [
+    {
+      "code": "synthetic_fixture",
+      "message": "Synthetic wire-format fixture; not a compiler defect finding."
+    }
+  ],
+  "limitations": [
+    "This is a synthetic schema fixture and does not identify a real compiler defect.",
+    "No asynchronous unwind validity is established."
+  ],
+  "metadata_ranges": [
+    {
+      "encoding": "0x4000000",
+      "end": "0x100001020",
+      "mode": "frame",
+      "start": "0x100001000"
+    },
+    {
+      "encoding": "0x4000000",
+      "end": "0x100001050",
+      "mode": "frame",
+      "start": "0x100001020"
+    },
+    {
+      "encoding": "0x0",
+      "end": "0x100001060",
+      "mode": "none",
+      "start": "0x100001050"
+    }
+  ],
+  "report_kind": "airs.audit",
+  "schema_version": 1,
+  "summary": {
+    "agreement_count": 1,
+    "checked_pc_count": 2,
+    "function_count": 3,
+    "inconsistency_count": 1,
+    "metadata_entry_count": 3,
+    "unresolved_count": 1
+  }
+}

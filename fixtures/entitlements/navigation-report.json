@@ -1,0 +1,1472 @@
+{
+  "changes": [
+    {
+      "key": "example.key.000",
+      "kind": "changed",
+      "previous": {
+        "type": "integer",
+        "value": "0"
+      },
+      "current": {
+        "type": "integer",
+        "value": "1000"
+      }
+    },
+    {
+      "key": "example.key.099",
+      "kind": "changed",
+      "previous": {
+        "type": "integer",
+        "value": "99"
+      },
+      "current": {
+        "type": "integer",
+        "value": "1099"
+      }
+    }
+  ],
+  "current": {
+    "architecture": "arm64",
+    "entitlements": [
+      {
+        "key": "example.key.000",
+        "value": {
+          "type": "integer",
+          "value": "1000"
+        }
+      },
+      {
+        "key": "example.key.001",
+        "value": {
+          "type": "integer",
+          "value": "1"
+        }
+      },
+      {
+        "key": "example.key.002",
+        "value": {
+          "type": "integer",
+          "value": "2"
+        }
+      },
+      {
+        "key": "example.key.003",
+        "value": {
+          "type": "integer",
+          "value": "3"
+        }
+      },
+      {
+        "key": "example.key.004",
+        "value": {
+          "type": "integer",
+          "value": "4"
+        }
+      },
+      {
+        "key": "example.key.005",
+        "value": {
+          "type": "integer",
+          "value": "5"
+        }
+      },
+      {
+        "key": "example.key.006",
+        "value": {
+          "type": "integer",
+          "value": "6"
+        }
+      },
+      {
+        "key": "example.key.007",
+        "value": {
+          "type": "integer",
+          "value": "7"
+        }
+      },
+      {
+        "key": "example.key.008",
+        "value": {
+          "type": "integer",
+          "value": "8"
+        }
+      },
+      {
+        "key": "example.key.009",
+        "value": {
+          "type": "integer",
+          "value": "9"
+        }
+      },
+      {
+        "key": "example.key.010",
+        "value": {
+          "type": "integer",
+          "value": "10"
+        }
+      },
+      {
+        "key": "example.key.011",
+        "value": {
+          "type": "integer",
+          "value": "11"
+        }
+      },
+      {
+        "key": "example.key.012",
+        "value": {
+          "type": "integer",
+          "value": "12"
+        }
+      },
+      {
+        "key": "example.key.013",
+        "value": {
+          "type": "integer",
+          "value": "13"
+        }
+      },
+      {
+        "key": "example.key.014",
+        "value": {
+          "type": "integer",
+          "value": "14"
+        }
+      },
+      {
+        "key": "example.key.015",
+        "value": {
+          "type": "integer",
+          "value": "15"
+        }
+      },
+      {
+        "key": "example.key.016",
+        "value": {
+          "type": "integer",
+          "value": "16"
+        }
+      },
+      {
+        "key": "example.key.017",
+        "value": {
+          "type": "integer",
+          "value": "17"
+        }
+      },
+      {
+        "key": "example.key.018",
+        "value": {
+          "type": "integer",
+          "value": "18"
+        }
+      },
+      {
+        "key": "example.key.019",
+        "value": {
+          "type": "integer",
+          "value": "19"
+        }
+      },
+      {
+        "key": "example.key.020",
+        "value": {
+          "type": "integer",
+          "value": "20"
+        }
+      },
+      {
+        "key": "example.key.021",
+        "value": {
+          "type": "integer",
+          "value": "21"
+        }
+      },
+      {
+        "key": "example.key.022",
+        "value": {
+          "type": "integer",
+          "value": "22"
+        }
+      },
+      {
+        "key": "example.key.023",
+        "value": {
+          "type": "integer",
+          "value": "23"
+        }
+      },
+      {
+        "key": "example.key.024",
+        "value": {
+          "type": "integer",
+          "value": "24"
+        }
+      },
+      {
+        "key": "example.key.025",
+        "value": {
+          "type": "integer",
+          "value": "25"
+        }
+      },
+      {
+        "key": "example.key.026",
+        "value": {
+          "type": "integer",
+          "value": "26"
+        }
+      },
+      {
+        "key": "example.key.027",
+        "value": {
+          "type": "integer",
+          "value": "27"
+        }
+      },
+      {
+        "key": "example.key.028",
+        "value": {
+          "type": "integer",
+          "value": "28"
+        }
+      },
+      {
+        "key": "example.key.029",
+        "value": {
+          "type": "integer",
+          "value": "29"
+        }
+      },
+      {
+        "key": "example.key.030",
+        "value": {
+          "type": "integer",
+          "value": "30"
+        }
+      },
+      {
+        "key": "example.key.031",
+        "value": {
+          "type": "integer",
+          "value": "31"
+        }
+      },
+      {
+        "key": "example.key.032",
+        "value": {
+          "type": "integer",
+          "value": "32"
+        }
+      },
+      {
+        "key": "example.key.033",
+        "value": {
+          "type": "integer",
+          "value": "33"
+        }
+      },
+      {
+        "key": "example.key.034",
+        "value": {
+          "type": "integer",
+          "value": "34"
+        }
+      },
+      {
+        "key": "example.key.035",
+        "value": {
+          "type": "integer",
+          "value": "35"
+        }
+      },
+      {
+        "key": "example.key.036",
+        "value": {
+          "type": "integer",
+          "value": "36"
+        }
+      },
+      {
+        "key": "example.key.037",
+        "value": {
+          "type": "integer",
+          "value": "37"
+        }
+      },
+      {
+        "key": "example.key.038",
+        "value": {
+          "type": "integer",
+          "value": "38"
+        }
+      },
+      {
+        "key": "example.key.039",
+        "value": {
+          "type": "integer",
+          "value": "39"
+        }
+      },
+      {
+        "key": "example.key.040",
+        "value": {
+          "type": "integer",
+          "value": "40"
+        }
+      },
+      {
+        "key": "example.key.041",
+        "value": {
+          "type": "integer",
+          "value": "41"
+        }
+      },
+      {
+        "key": "example.key.042",
+        "value": {
+          "type": "integer",
+          "value": "42"
+        }
+      },
+      {
+        "key": "example.key.043",
+        "value": {
+          "type": "integer",
+          "value": "43"
+        }
+      },
+      {
+        "key": "example.key.044",
+        "value": {
+          "type": "integer",
+          "value": "44"
+        }
+      },
+      {
+        "key": "example.key.045",
+        "value": {
+          "type": "integer",
+          "value": "45"
+        }
+      },
+      {
+        "key": "example.key.046",
+        "value": {
+          "type": "integer",
+          "value": "46"
+        }
+      },
+      {
+        "key": "example.key.047",
+        "value": {
+          "type": "integer",
+          "value": "47"
+        }
+      },
+      {
+        "key": "example.key.048",
+        "value": {
+          "type": "integer",
+          "value": "48"
+        }
+      },
+      {
+        "key": "example.key.049",
+        "value": {
+          "type": "integer",
+          "value": "49"
+        }
+      },
+      {
+        "key": "example.key.050",
+        "value": {
+          "type": "integer",
+          "value": "50"
+        }
+      },
+      {
+        "key": "example.key.051",
+        "value": {
+          "type": "integer",
+          "value": "51"
+        }
+      },
+      {
+        "key": "example.key.052",
+        "value": {
+          "type": "integer",
+          "value": "52"
+        }
+      },
+      {
+        "key": "example.key.053",
+        "value": {
+          "type": "integer",
+          "value": "53"
+        }
+      },
+      {
+        "key": "example.key.054",
+        "value": {
+          "type": "integer",
+          "value": "54"
+        }
+      },
+      {
+        "key": "example.key.055",
+        "value": {
+          "type": "integer",
+          "value": "55"
+        }
+      },
+      {
+        "key": "example.key.056",
+        "value": {
+          "type": "integer",
+          "value": "56"
+        }
+      },
+      {
+        "key": "example.key.057",
+        "value": {
+          "type": "integer",
+          "value": "57"
+        }
+      },
+      {
+        "key": "example.key.058",
+        "value": {
+          "type": "integer",
+          "value": "58"
+        }
+      },
+      {
+        "key": "example.key.059",
+        "value": {
+          "type": "integer",
+          "value": "59"
+        }
+      },
+      {
+        "key": "example.key.060",
+        "value": {
+          "type": "integer",
+          "value": "60"
+        }
+      },
+      {
+        "key": "example.key.061",
+        "value": {
+          "type": "integer",
+          "value": "61"
+        }
+      },
+      {
+        "key": "example.key.062",
+        "value": {
+          "type": "integer",
+          "value": "62"
+        }
+      },
+      {
+        "key": "example.key.063",
+        "value": {
+          "type": "integer",
+          "value": "63"
+        }
+      },
+      {
+        "key": "example.key.064",
+        "value": {
+          "type": "integer",
+          "value": "64"
+        }
+      },
+      {
+        "key": "example.key.065",
+        "value": {
+          "type": "integer",
+          "value": "65"
+        }
+      },
+      {
+        "key": "example.key.066",
+        "value": {
+          "type": "integer",
+          "value": "66"
+        }
+      },
+      {
+        "key": "example.key.067",
+        "value": {
+          "type": "integer",
+          "value": "67"
+        }
+      },
+      {
+        "key": "example.key.068",
+        "value": {
+          "type": "integer",
+          "value": "68"
+        }
+      },
+      {
+        "key": "example.key.069",
+        "value": {
+          "type": "integer",
+          "value": "69"
+        }
+      },
+      {
+        "key": "example.key.070",
+        "value": {
+          "type": "integer",
+          "value": "70"
+        }
+      },
+      {
+        "key": "example.key.071",
+        "value": {
+          "type": "integer",
+          "value": "71"
+        }
+      },
+      {
+        "key": "example.key.072",
+        "value": {
+          "type": "integer",
+          "value": "72"
+        }
+      },
+      {
+        "key": "example.key.073",
+        "value": {
+          "type": "integer",
+          "value": "73"
+        }
+      },
+      {
+        "key": "example.key.074",
+        "value": {
+          "type": "integer",
+          "value": "74"
+        }
+      },
+      {
+        "key": "example.key.075",
+        "value": {
+          "type": "integer",
+          "value": "75"
+        }
+      },
+      {
+        "key": "example.key.076",
+        "value": {
+          "type": "integer",
+          "value": "76"
+        }
+      },
+      {
+        "key": "example.key.077",
+        "value": {
+          "type": "integer",
+          "value": "77"
+        }
+      },
+      {
+        "key": "example.key.078",
+        "value": {
+          "type": "integer",
+          "value": "78"
+        }
+      },
+      {
+        "key": "example.key.079",
+        "value": {
+          "type": "integer",
+          "value": "79"
+        }
+      },
+      {
+        "key": "example.key.080",
+        "value": {
+          "type": "integer",
+          "value": "80"
+        }
+      },
+      {
+        "key": "example.key.081",
+        "value": {
+          "type": "integer",
+          "value": "81"
+        }
+      },
+      {
+        "key": "example.key.082",
+        "value": {
+          "type": "integer",
+          "value": "82"
+        }
+      },
+      {
+        "key": "example.key.083",
+        "value": {
+          "type": "integer",
+          "value": "83"
+        }
+      },
+      {
+        "key": "example.key.084",
+        "value": {
+          "type": "integer",
+          "value": "84"
+        }
+      },
+      {
+        "key": "example.key.085",
+        "value": {
+          "type": "integer",
+          "value": "85"
+        }
+      },
+      {
+        "key": "example.key.086",
+        "value": {
+          "type": "integer",
+          "value": "86"
+        }
+      },
+      {
+        "key": "example.key.087",
+        "value": {
+          "type": "integer",
+          "value": "87"
+        }
+      },
+      {
+        "key": "example.key.088",
+        "value": {
+          "type": "integer",
+          "value": "88"
+        }
+      },
+      {
+        "key": "example.key.089",
+        "value": {
+          "type": "integer",
+          "value": "89"
+        }
+      },
+      {
+        "key": "example.key.090",
+        "value": {
+          "type": "integer",
+          "value": "90"
+        }
+      },
+      {
+        "key": "example.key.091",
+        "value": {
+          "type": "integer",
+          "value": "91"
+        }
+      },
+      {
+        "key": "example.key.092",
+        "value": {
+          "type": "integer",
+          "value": "92"
+        }
+      },
+      {
+        "key": "example.key.093",
+        "value": {
+          "type": "integer",
+          "value": "93"
+        }
+      },
+      {
+        "key": "example.key.094",
+        "value": {
+          "type": "integer",
+          "value": "94"
+        }
+      },
+      {
+        "key": "example.key.095",
+        "value": {
+          "type": "integer",
+          "value": "95"
+        }
+      },
+      {
+        "key": "example.key.096",
+        "value": {
+          "type": "integer",
+          "value": "96"
+        }
+      },
+      {
+        "key": "example.key.097",
+        "value": {
+          "type": "integer",
+          "value": "97"
+        }
+      },
+      {
+        "key": "example.key.098",
+        "value": {
+          "type": "integer",
+          "value": "98"
+        }
+      },
+      {
+        "key": "example.key.099",
+        "value": {
+          "type": "integer",
+          "value": "1099"
+        }
+      },
+      {
+        "key": "é",
+        "value": {
+          "type": "integer",
+          "value": "2"
+        }
+      }
+    ],
+    "origin": "syntheticExample",
+    "presence": "dictionaryPresent",
+    "signingIdentifier": "org.example.EntitlementDiffFixture",
+    "sourceName": "Current-Navigation.app"
+  },
+  "gatekeeperAssessment": "notPerformed",
+  "notices": [
+    "Extracted declarations are not effective permissions or a security verdict.",
+    "Unverified signatures may produce partial information. Inputs are not an atomic filesystem snapshot.",
+    "Reports omit source paths but include potentially sensitive names, identifiers and entitlement values.",
+    "Contains synthetic example data; not an inspection of installed applications."
+  ],
+  "previous": {
+    "architecture": "arm64",
+    "entitlements": [
+      {
+        "key": "example.key.000",
+        "value": {
+          "type": "integer",
+          "value": "0"
+        }
+      },
+      {
+        "key": "example.key.001",
+        "value": {
+          "type": "integer",
+          "value": "1"
+        }
+      },
+      {
+        "key": "example.key.002",
+        "value": {
+          "type": "integer",
+          "value": "2"
+        }
+      },
+      {
+        "key": "example.key.003",
+        "value": {
+          "type": "integer",
+          "value": "3"
+        }
+      },
+      {
+        "key": "example.key.004",
+        "value": {
+          "type": "integer",
+          "value": "4"
+        }
+      },
+      {
+        "key": "example.key.005",
+        "value": {
+          "type": "integer",
+          "value": "5"
+        }
+      },
+      {
+        "key": "example.key.006",
+        "value": {
+          "type": "integer",
+          "value": "6"
+        }
+      },
+      {
+        "key": "example.key.007",
+        "value": {
+          "type": "integer",
+          "value": "7"
+        }
+      },
+      {
+        "key": "example.key.008",
+        "value": {
+          "type": "integer",
+          "value": "8"
+        }
+      },
+      {
+        "key": "example.key.009",
+        "value": {
+          "type": "integer",
+          "value": "9"
+        }
+      },
+      {
+        "key": "example.key.010",
+        "value": {
+          "type": "integer",
+          "value": "10"
+        }
+      },
+      {
+        "key": "example.key.011",
+        "value": {
+          "type": "integer",
+          "value": "11"
+        }
+      },
+      {
+        "key": "example.key.012",
+        "value": {
+          "type": "integer",
+          "value": "12"
+        }
+      },
+      {
+        "key": "example.key.013",
+        "value": {
+          "type": "integer",
+          "value": "13"
+        }
+      },
+      {
+        "key": "example.key.014",
+        "value": {
+          "type": "integer",
+          "value": "14"
+        }
+      },
+      {
+        "key": "example.key.015",
+        "value": {
+          "type": "integer",
+          "value": "15"
+        }
+      },
+      {
+        "key": "example.key.016",
+        "value": {
+          "type": "integer",
+          "value": "16"
+        }
+      },
+      {
+        "key": "example.key.017",
+        "value": {
+          "type": "integer",
+          "value": "17"
+        }
+      },
+      {
+        "key": "example.key.018",
+        "value": {
+          "type": "integer",
+          "value": "18"
+        }
+      },
+      {
+        "key": "example.key.019",
+        "value": {
+          "type": "integer",
+          "value": "19"
+        }
+      },
+      {
+        "key": "example.key.020",
+        "value": {
+          "type": "integer",
+          "value": "20"
+        }
+      },
+      {
+        "key": "example.key.021",
+        "value": {
+          "type": "integer",
+          "value": "21"
+        }
+      },
+      {
+        "key": "example.key.022",
+        "value": {
+          "type": "integer",
+          "value": "22"
+        }
+      },
+      {
+        "key": "example.key.023",
+        "value": {
+          "type": "integer",
+          "value": "23"
+        }
+      },
+      {
+        "key": "example.key.024",
+        "value": {
+          "type": "integer",
+          "value": "24"
+        }
+      },
+      {
+        "key": "example.key.025",
+        "value": {
+          "type": "integer",
+          "value": "25"
+        }
+      },
+      {
+        "key": "example.key.026",
+        "value": {
+          "type": "integer",
+          "value": "26"
+        }
+      },
+      {
+        "key": "example.key.027",
+        "value": {
+          "type": "integer",
+          "value": "27"
+        }
+      },
+      {
+        "key": "example.key.028",
+        "value": {
+          "type": "integer",
+          "value": "28"
+        }
+      },
+      {
+        "key": "example.key.029",
+        "value": {
+          "type": "integer",
+          "value": "29"
+        }
+      },
+      {
+        "key": "example.key.030",
+        "value": {
+          "type": "integer",
+          "value": "30"
+        }
+      },
+      {
+        "key": "example.key.031",
+        "value": {
+          "type": "integer",
+          "value": "31"
+        }
+      },
+      {
+        "key": "example.key.032",
+        "value": {
+          "type": "integer",
+          "value": "32"
+        }
+      },
+      {
+        "key": "example.key.033",
+        "value": {
+          "type": "integer",
+          "value": "33"
+        }
+      },
+      {
+        "key": "example.key.034",
+        "value": {
+          "type": "integer",
+          "value": "34"
+        }
+      },
+      {
+        "key": "example.key.035",
+        "value": {
+          "type": "integer",
+          "value": "35"
+        }
+      },
+      {
+        "key": "example.key.036",
+        "value": {
+          "type": "integer",
+          "value": "36"
+        }
+      },
+      {
+        "key": "example.key.037",
+        "value": {
+          "type": "integer",
+          "value": "37"
+        }
+      },
+      {
+        "key": "example.key.038",
+        "value": {
+          "type": "integer",
+          "value": "38"
+        }
+      },
+      {
+        "key": "example.key.039",
+        "value": {
+          "type": "integer",
+          "value": "39"
+        }
+      },
+      {
+        "key": "example.key.040",
+        "value": {
+          "type": "integer",
+          "value": "40"
+        }
+      },
+      {
+        "key": "example.key.041",
+        "value": {
+          "type": "integer",
+          "value": "41"
+        }
+      },
+      {
+        "key": "example.key.042",
+        "value": {
+          "type": "integer",
+          "value": "42"
+        }
+      },
+      {
+        "key": "example.key.043",
+        "value": {
+          "type": "integer",
+          "value": "43"
+        }
+      },
+      {
+        "key": "example.key.044",
+        "value": {
+          "type": "integer",
+          "value": "44"
+        }
+      },
+      {
+        "key": "example.key.045",
+        "value": {
+          "type": "integer",
+          "value": "45"
+        }
+      },
+      {
+        "key": "example.key.046",
+        "value": {
+          "type": "integer",
+          "value": "46"
+        }
+      },
+      {
+        "key": "example.key.047",
+        "value": {
+          "type": "integer",
+          "value": "47"
+        }
+      },
+      {
+        "key": "example.key.048",
+        "value": {
+          "type": "integer",
+          "value": "48"
+        }
+      },
+      {
+        "key": "example.key.049",
+        "value": {
+          "type": "integer",
+          "value": "49"
+        }
+      },
+      {
+        "key": "example.key.050",
+        "value": {
+          "type": "integer",
+          "value": "50"
+        }
+      },
+      {
+        "key": "example.key.051",
+        "value": {
+          "type": "integer",
+          "value": "51"
+        }
+      },
+      {
+        "key": "example.key.052",
+        "value": {
+          "type": "integer",
+          "value": "52"
+        }
+      },
+      {
+        "key": "example.key.053",
+        "value": {
+          "type": "integer",
+          "value": "53"
+        }
+      },
+      {
+        "key": "example.key.054",
+        "value": {
+          "type": "integer",
+          "value": "54"
+        }
+      },
+      {
+        "key": "example.key.055",
+        "value": {
+          "type": "integer",
+          "value": "55"
+        }
+      },
+      {
+        "key": "example.key.056",
+        "value": {
+          "type": "integer",
+          "value": "56"
+        }
+      },
+      {
+        "key": "example.key.057",
+        "value": {
+          "type": "integer",
+          "value": "57"
+        }
+      },
+      {
+        "key": "example.key.058",
+        "value": {
+          "type": "integer",
+          "value": "58"
+        }
+      },
+      {
+        "key": "example.key.059",
+        "value": {
+          "type": "integer",
+          "value": "59"
+        }
+      },
+      {
+        "key": "example.key.060",
+        "value": {
+          "type": "integer",
+          "value": "60"
+        }
+      },
+      {
+        "key": "example.key.061",
+        "value": {
+          "type": "integer",
+          "value": "61"
+        }
+      },
+      {
+        "key": "example.key.062",
+        "value": {
+          "type": "integer",
+          "value": "62"
+        }
+      },
+      {
+        "key": "example.key.063",
+        "value": {
+          "type": "integer",
+          "value": "63"
+        }
+      },
+      {
+        "key": "example.key.064",
+        "value": {
+          "type": "integer",
+          "value": "64"
+        }
+      },
+      {
+        "key": "example.key.065",
+        "value": {
+          "type": "integer",
+          "value": "65"
+        }
+      },
+      {
+        "key": "example.key.066",
+        "value": {
+          "type": "integer",
+          "value": "66"
+        }
+      },
+      {
+        "key": "example.key.067",
+        "value": {
+          "type": "integer",
+          "value": "67"
+        }
+      },
+      {
+        "key": "example.key.068",
+        "value": {
+          "type": "integer",
+          "value": "68"
+        }
+      },
+      {
+        "key": "example.key.069",
+        "value": {
+          "type": "integer",
+          "value": "69"
+        }
+      },
+      {
+        "key": "example.key.070",
+        "value": {
+          "type": "integer",
+          "value": "70"
+        }
+      },
+      {
+        "key": "example.key.071",
+        "value": {
+          "type": "integer",
+          "value": "71"
+        }
+      },
+      {
+        "key": "example.key.072",
+        "value": {
+          "type": "integer",
+          "value": "72"
+        }
+      },
+      {
+        "key": "example.key.073",
+        "value": {
+          "type": "integer",
+          "value": "73"
+        }
+      },
+      {
+        "key": "example.key.074",
+        "value": {
+          "type": "integer",
+          "value": "74"
+        }
+      },
+      {
+        "key": "example.key.075",
+        "value": {
+          "type": "integer",
+          "value": "75"
+        }
+      },
+      {
+        "key": "example.key.076",
+        "value": {
+          "type": "integer",
+          "value": "76"
+        }
+      },
+      {
+        "key": "example.key.077",
+        "value": {
+          "type": "integer",
+          "value": "77"
+        }
+      },
+      {
+        "key": "example.key.078",
+        "value": {
+          "type": "integer",
+          "value": "78"
+        }
+      },
+      {
+        "key": "example.key.079",
+        "value": {
+          "type": "integer",
+          "value": "79"
+        }
+      },
+      {
+        "key": "example.key.080",
+        "value": {
+          "type": "integer",
+          "value": "80"
+        }
+      },
+      {
+        "key": "example.key.081",
+        "value": {
+          "type": "integer",
+          "value": "81"
+        }
+      },
+      {
+        "key": "example.key.082",
+        "value": {
+          "type": "integer",
+          "value": "82"
+        }
+      },
+      {
+        "key": "example.key.083",
+        "value": {
+          "type": "integer",
+          "value": "83"
+        }
+      },
+      {
+        "key": "example.key.084",
+        "value": {
+          "type": "integer",
+          "value": "84"
+        }
+      },
+      {
+        "key": "example.key.085",
+        "value": {
+          "type": "integer",
+          "value": "85"
+        }
+      },
+      {
+        "key": "example.key.086",
+        "value": {
+          "type": "integer",
+          "value": "86"
+        }
+      },
+      {
+        "key": "example.key.087",
+        "value": {
+          "type": "integer",
+          "value": "87"
+        }
+      },
+      {
+        "key": "example.key.088",
+        "value": {
+          "type": "integer",
+          "value": "88"
+        }
+      },
+      {
+        "key": "example.key.089",
+        "value": {
+          "type": "integer",
+          "value": "89"
+        }
+      },
+      {
+        "key": "example.key.090",
+        "value": {
+          "type": "integer",
+          "value": "90"
+        }
+      },
+      {
+        "key": "example.key.091",
+        "value": {
+          "type": "integer",
+          "value": "91"
+        }
+      },
+      {
+        "key": "example.key.092",
+        "value": {
+          "type": "integer",
+          "value": "92"
+        }
+      },
+      {
+        "key": "example.key.093",
+        "value": {
+          "type": "integer",
+          "value": "93"
+        }
+      },
+      {
+        "key": "example.key.094",
+        "value": {
+          "type": "integer",
+          "value": "94"
+        }
+      },
+      {
+        "key": "example.key.095",
+        "value": {
+          "type": "integer",
+          "value": "95"
+        }
+      },
+      {
+        "key": "example.key.096",
+        "value": {
+          "type": "integer",
+          "value": "96"
+        }
+      },
+      {
+        "key": "example.key.097",
+        "value": {
+          "type": "integer",
+          "value": "97"
+        }
+      },
+      {
+        "key": "example.key.098",
+        "value": {
+          "type": "integer",
+          "value": "98"
+        }
+      },
+      {
+        "key": "example.key.099",
+        "value": {
+          "type": "integer",
+          "value": "99"
+        }
+      },
+      {
+        "key": "é",
+        "value": {
+          "type": "integer",
+          "value": "2"
+        }
+      }
+    ],
+    "origin": "syntheticExample",
+    "presence": "dictionaryPresent",
+    "signingIdentifier": "org.example.EntitlementDiffFixture",
+    "sourceName": "Previous-Navigation.app"
+  },
+  "schemaVersion": 1,
+  "scope": "Requested architecture of the main executable only; nested code and other slices excluded.",
+  "signatureValidation": "notPerformed",
+  "tool": "EntitlementDiff",
+  "unchangedCount": 99
+}

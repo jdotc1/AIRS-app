@@ -1,0 +1,179 @@
+{
+  "analysis_config": {
+    "limits": {
+      "max_evidence_per_function": 32,
+      "max_file_bytes": 536870912,
+      "max_functions": 50000,
+      "max_instructions_per_function": 16384,
+      "max_load_commands": 4096,
+      "max_observations_per_function": 256,
+      "max_sections": 4096,
+      "max_total_evidence": 8192,
+      "max_total_instructions": 1000000,
+      "max_unwind_entries": 200000
+    }
+  },
+  "findings": [
+    {
+      "checked_pcs": [
+        "0x10000100c"
+      ],
+      "coverage": "compact",
+      "encoding": "0x04000000",
+      "evidence": [
+        {
+          "code": "caller_state_recovered",
+          "message": "The compact rule recovers entry SP and original x19\u2013x30 at every listed modeled observation"
+        }
+      ],
+      "function": {
+        "address": "0x100001000",
+        "boundary_source": "lc_function_starts",
+        "end_address": "0x100001018",
+        "image_offset": "0x1000",
+        "name": "_canonical_frame",
+        "size": 24
+      },
+      "id": "airsf-971f6375b40dadd02757805443ff18f1f3e84cb32f2a9050853e38f1376f8de2",
+      "instruction_count": 6,
+      "limitations": [
+        "Only the documented, bounded integer instruction subset is interpreted.",
+        "Checks describe selected modeled states; they do not establish whole-function or asynchronous unwind correctness.",
+        "SIMD, pointer authentication, DWARF FDE evaluation, personality and LSDA semantics are outside this model.",
+        "Direct callees are summarized as ABI-conforming returns preserving SP, x19\u2013x29 and unescaped allocated stack storage; callees are not analyzed."
+      ],
+      "mode": "frame",
+      "reason_codes": [
+        "supported_model_agreement"
+      ],
+      "scope": "synchronous_call_sites",
+      "verdict": "agreement"
+    },
+    {
+      "checked_pcs": [
+        "0x10000101c"
+      ],
+      "coverage": "compact",
+      "encoding": "0x02002000",
+      "evidence": [
+        {
+          "code": "caller_state_recovered",
+          "message": "The compact rule recovers entry SP and original x19\u2013x30 at every listed modeled observation"
+        }
+      ],
+      "function": {
+        "address": "0x100001018",
+        "boundary_source": "lc_function_starts",
+        "end_address": "0x100001028",
+        "image_offset": "0x1018",
+        "name": "_frameless_leaf",
+        "size": 16
+      },
+      "id": "airsf-6535c47266f94fdaa7ce342c4830937b1f1ab0f354427df7d03679422859a373",
+      "instruction_count": 4,
+      "limitations": [
+        "Only the documented, bounded integer instruction subset is interpreted.",
+        "Checks describe selected modeled states; they do not establish whole-function or asynchronous unwind correctness.",
+        "SIMD, pointer authentication, DWARF FDE evaluation, personality and LSDA semantics are outside this model.",
+        "Leaf observations are states before identified body instructions, excluding recognized prologue and epilogue transitions."
+      ],
+      "mode": "frameless",
+      "reason_codes": [
+        "supported_model_agreement"
+      ],
+      "scope": "modeled_leaf_body",
+      "verdict": "agreement"
+    },
+    {
+      "checked_pcs": [
+        "0x10000103c"
+      ],
+      "coverage": "compact",
+      "encoding": "0x04000001",
+      "evidence": [
+        {
+          "code": "caller_state_recovered",
+          "message": "The compact rule recovers entry SP and original x19\u2013x30 at every listed modeled observation"
+        }
+      ],
+      "function": {
+        "address": "0x100001028",
+        "boundary_source": "lc_function_starts",
+        "end_address": "0x100001050",
+        "image_offset": "0x1028",
+        "name": "_pair_saved",
+        "size": 40
+      },
+      "id": "airsf-e273c5c02bd8f3c142abcf94d8fac1fd4b27e92e73ff45dc00a7dfa1a42c0d8c",
+      "instruction_count": 10,
+      "limitations": [
+        "Only the documented, bounded integer instruction subset is interpreted.",
+        "Checks describe selected modeled states; they do not establish whole-function or asynchronous unwind correctness.",
+        "SIMD, pointer authentication, DWARF FDE evaluation, personality and LSDA semantics are outside this model.",
+        "Direct callees are summarized as ABI-conforming returns preserving SP, x19\u2013x29 and unescaped allocated stack storage; callees are not analyzed."
+      ],
+      "mode": "frame",
+      "reason_codes": [
+        "supported_model_agreement"
+      ],
+      "scope": "synchronous_call_sites",
+      "verdict": "agreement"
+    }
+  ],
+  "generator": {
+    "analysis_model_version": "arm64-linear-v1",
+    "name": "AIRS",
+    "version": "0.1.0"
+  },
+  "image": {
+    "architecture": "arm64",
+    "container_sha256": "48038d3232a9bc8a0360677bd630bce1c8fcc9a9189a31421c8acb95fe071295",
+    "cpu_subtype": 0,
+    "display_name": "before.macho",
+    "file_type": "dylib",
+    "preferred_base": "0x100000000",
+    "slice_offset": 0,
+    "slice_sha256": "48038d3232a9bc8a0360677bd630bce1c8fcc9a9189a31421c8acb95fe071295",
+    "slice_size": 4366,
+    "uuid": "854848f6-cc58-577c-a1de-a5a77b916641"
+  },
+  "issues": [],
+  "limitations": [
+    "This is a bounded static model, not a proof that a binary always unwinds correctly.",
+    "Compact unwind is checked at supported synchronous call states or explicitly labeled leaf-body states; no asynchronous or all-PC guarantee is made.",
+    "Unsupported instructions, control flow, DWARF fallback, ARM64e/PAC and SIMD saves remain unresolved.",
+    "Exception personalities, LSDA behavior, runtime stack contents and executable behavior are not validated.",
+    "The inspected file is read as data and is never loaded or executed.",
+    "Selecting a .app analyzes its principal executable; embedded images are not recursively scanned in this version."
+  ],
+  "metadata_ranges": [
+    {
+      "encoding": "0x04000000",
+      "end": "0x100001018",
+      "mode": "frame",
+      "start": "0x100001000"
+    },
+    {
+      "encoding": "0x02002000",
+      "end": "0x100001028",
+      "mode": "frameless",
+      "start": "0x100001018"
+    },
+    {
+      "encoding": "0x04000001",
+      "end": "0x100001050",
+      "mode": "frame",
+      "start": "0x100001028"
+    }
+  ],
+  "report_kind": "airs.audit",
+  "schema_version": 1,
+  "summary": {
+    "agreement_count": 3,
+    "checked_pc_count": 3,
+    "function_count": 3,
+    "inconsistency_count": 0,
+    "metadata_entry_count": 3,
+    "unresolved_count": 0
+  }
+}

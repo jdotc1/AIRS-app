@@ -1,0 +1,1300 @@
+{
+  "changes": [
+    {
+      "key": "example.inspector",
+      "kind": "changed",
+      "previous": {
+        "type": "dictionary",
+        "value": [
+          {
+            "key": "a-text",
+            "value": {
+              "type": "string",
+              "value": "aé — PREVIOUS END"
+            }
+          },
+          {
+            "key": "b-bytes",
+            "value": {
+              "type": "data-base64",
+              "value": "AKvNCQ=="
+            }
+          },
+          {
+            "key": "c-many",
+            "value": {
+              "type": "array",
+              "value": [
+                {
+                  "type": "string",
+                  "value": "item 0"
+                },
+                {
+                  "type": "string",
+                  "value": "item 1"
+                },
+                {
+                  "type": "string",
+                  "value": "item 2"
+                },
+                {
+                  "type": "string",
+                  "value": "item 3"
+                },
+                {
+                  "type": "string",
+                  "value": "item 4"
+                },
+                {
+                  "type": "string",
+                  "value": "item 5"
+                },
+                {
+                  "type": "string",
+                  "value": "item 6"
+                },
+                {
+                  "type": "string",
+                  "value": "item 7"
+                },
+                {
+                  "type": "string",
+                  "value": "item 8"
+                },
+                {
+                  "type": "string",
+                  "value": "item 9"
+                },
+                {
+                  "type": "string",
+                  "value": "item 10"
+                },
+                {
+                  "type": "string",
+                  "value": "item 11"
+                },
+                {
+                  "type": "string",
+                  "value": "item 12"
+                },
+                {
+                  "type": "string",
+                  "value": "item 13"
+                },
+                {
+                  "type": "string",
+                  "value": "item 14"
+                },
+                {
+                  "type": "string",
+                  "value": "item 15"
+                },
+                {
+                  "type": "string",
+                  "value": "item 16"
+                },
+                {
+                  "type": "string",
+                  "value": "item 17"
+                },
+                {
+                  "type": "string",
+                  "value": "item 18"
+                },
+                {
+                  "type": "string",
+                  "value": "item 19"
+                },
+                {
+                  "type": "string",
+                  "value": "item 20"
+                },
+                {
+                  "type": "string",
+                  "value": "item 21"
+                },
+                {
+                  "type": "string",
+                  "value": "item 22"
+                },
+                {
+                  "type": "string",
+                  "value": "item 23"
+                },
+                {
+                  "type": "string",
+                  "value": "item 24"
+                },
+                {
+                  "type": "string",
+                  "value": "item 25"
+                },
+                {
+                  "type": "string",
+                  "value": "item 26"
+                },
+                {
+                  "type": "string",
+                  "value": "item 27"
+                },
+                {
+                  "type": "string",
+                  "value": "item 28"
+                },
+                {
+                  "type": "string",
+                  "value": "item 29"
+                },
+                {
+                  "type": "string",
+                  "value": "item 30"
+                },
+                {
+                  "type": "string",
+                  "value": "item 31"
+                },
+                {
+                  "type": "string",
+                  "value": "item 32"
+                },
+                {
+                  "type": "string",
+                  "value": "item 33"
+                },
+                {
+                  "type": "string",
+                  "value": "item 34"
+                },
+                {
+                  "type": "string",
+                  "value": "item 35"
+                },
+                {
+                  "type": "string",
+                  "value": "item 36"
+                },
+                {
+                  "type": "string",
+                  "value": "item 37"
+                },
+                {
+                  "type": "string",
+                  "value": "item 38"
+                },
+                {
+                  "type": "string",
+                  "value": "item 39"
+                },
+                {
+                  "type": "string",
+                  "value": "item 40"
+                },
+                {
+                  "type": "string",
+                  "value": "item 41"
+                },
+                {
+                  "type": "string",
+                  "value": "item 42"
+                },
+                {
+                  "type": "string",
+                  "value": "item 43"
+                },
+                {
+                  "type": "string",
+                  "value": "item 44"
+                },
+                {
+                  "type": "string",
+                  "value": "item 45"
+                },
+                {
+                  "type": "string",
+                  "value": "item 46"
+                },
+                {
+                  "type": "string",
+                  "value": "item 47"
+                },
+                {
+                  "type": "string",
+                  "value": "item 48"
+                },
+                {
+                  "type": "string",
+                  "value": "item 49"
+                },
+                {
+                  "type": "string",
+                  "value": "item 50"
+                },
+                {
+                  "type": "string",
+                  "value": "item 51"
+                },
+                {
+                  "type": "string",
+                  "value": "item 52"
+                },
+                {
+                  "type": "string",
+                  "value": "item 53"
+                },
+                {
+                  "type": "string",
+                  "value": "item 54"
+                },
+                {
+                  "type": "string",
+                  "value": "item 55"
+                },
+                {
+                  "type": "string",
+                  "value": "item 56"
+                },
+                {
+                  "type": "string",
+                  "value": "item 57"
+                },
+                {
+                  "type": "string",
+                  "value": "item 58"
+                },
+                {
+                  "type": "string",
+                  "value": "item 59"
+                },
+                {
+                  "type": "string",
+                  "value": "item 60"
+                },
+                {
+                  "type": "string",
+                  "value": "item 61"
+                },
+                {
+                  "type": "string",
+                  "value": "item 62"
+                },
+                {
+                  "type": "string",
+                  "value": "item 63"
+                },
+                {
+                  "type": "string",
+                  "value": "item 64"
+                },
+                {
+                  "type": "string",
+                  "value": "item 65"
+                },
+                {
+                  "type": "string",
+                  "value": "item 66"
+                },
+                {
+                  "type": "string",
+                  "value": "item 67"
+                },
+                {
+                  "type": "string",
+                  "value": "item 68"
+                },
+                {
+                  "type": "string",
+                  "value": "item 69"
+                }
+              ]
+            }
+          },
+          {
+            "key": "z-tail",
+            "value": {
+              "type": "string",
+              "value": "late needle PREVIOUS"
+            }
+          }
+        ]
+      },
+      "current": {
+        "type": "dictionary",
+        "value": [
+          {
+            "key": "a-text",
+            "value": {
+              "type": "string",
+              "value": "aé — CURRENT END"
+            }
+          },
+          {
+            "key": "b-bytes",
+            "value": {
+              "type": "data-base64",
+              "value": "AavNCQ=="
+            }
+          },
+          {
+            "key": "c-many",
+            "value": {
+              "type": "array",
+              "value": [
+                {
+                  "type": "string",
+                  "value": "item 0"
+                },
+                {
+                  "type": "string",
+                  "value": "item 1"
+                },
+                {
+                  "type": "string",
+                  "value": "item 2"
+                },
+                {
+                  "type": "string",
+                  "value": "item 3"
+                },
+                {
+                  "type": "string",
+                  "value": "item 4"
+                },
+                {
+                  "type": "string",
+                  "value": "item 5"
+                },
+                {
+                  "type": "string",
+                  "value": "item 6"
+                },
+                {
+                  "type": "string",
+                  "value": "item 7"
+                },
+                {
+                  "type": "string",
+                  "value": "item 8"
+                },
+                {
+                  "type": "string",
+                  "value": "item 9"
+                },
+                {
+                  "type": "string",
+                  "value": "item 10"
+                },
+                {
+                  "type": "string",
+                  "value": "item 11"
+                },
+                {
+                  "type": "string",
+                  "value": "item 12"
+                },
+                {
+                  "type": "string",
+                  "value": "item 13"
+                },
+                {
+                  "type": "string",
+                  "value": "item 14"
+                },
+                {
+                  "type": "string",
+                  "value": "item 15"
+                },
+                {
+                  "type": "string",
+                  "value": "item 16"
+                },
+                {
+                  "type": "string",
+                  "value": "item 17"
+                },
+                {
+                  "type": "string",
+                  "value": "item 18"
+                },
+                {
+                  "type": "string",
+                  "value": "item 19"
+                },
+                {
+                  "type": "string",
+                  "value": "item 20"
+                },
+                {
+                  "type": "string",
+                  "value": "item 21"
+                },
+                {
+                  "type": "string",
+                  "value": "item 22"
+                },
+                {
+                  "type": "string",
+                  "value": "item 23"
+                },
+                {
+                  "type": "string",
+                  "value": "item 24"
+                },
+                {
+                  "type": "string",
+                  "value": "item 25"
+                },
+                {
+                  "type": "string",
+                  "value": "item 26"
+                },
+                {
+                  "type": "string",
+                  "value": "item 27"
+                },
+                {
+                  "type": "string",
+                  "value": "item 28"
+                },
+                {
+                  "type": "string",
+                  "value": "item 29"
+                },
+                {
+                  "type": "string",
+                  "value": "item 30"
+                },
+                {
+                  "type": "string",
+                  "value": "item 31"
+                },
+                {
+                  "type": "string",
+                  "value": "item 32"
+                },
+                {
+                  "type": "string",
+                  "value": "item 33"
+                },
+                {
+                  "type": "string",
+                  "value": "item 34"
+                },
+                {
+                  "type": "string",
+                  "value": "item 35"
+                },
+                {
+                  "type": "string",
+                  "value": "item 36"
+                },
+                {
+                  "type": "string",
+                  "value": "item 37"
+                },
+                {
+                  "type": "string",
+                  "value": "item 38"
+                },
+                {
+                  "type": "string",
+                  "value": "item 39"
+                },
+                {
+                  "type": "string",
+                  "value": "item 40"
+                },
+                {
+                  "type": "string",
+                  "value": "item 41"
+                },
+                {
+                  "type": "string",
+                  "value": "item 42"
+                },
+                {
+                  "type": "string",
+                  "value": "item 43"
+                },
+                {
+                  "type": "string",
+                  "value": "item 44"
+                },
+                {
+                  "type": "string",
+                  "value": "item 45"
+                },
+                {
+                  "type": "string",
+                  "value": "item 46"
+                },
+                {
+                  "type": "string",
+                  "value": "item 47"
+                },
+                {
+                  "type": "string",
+                  "value": "item 48"
+                },
+                {
+                  "type": "string",
+                  "value": "item 49"
+                },
+                {
+                  "type": "string",
+                  "value": "item 50"
+                },
+                {
+                  "type": "string",
+                  "value": "item 51"
+                },
+                {
+                  "type": "string",
+                  "value": "item 52"
+                },
+                {
+                  "type": "string",
+                  "value": "item 53"
+                },
+                {
+                  "type": "string",
+                  "value": "item 54"
+                },
+                {
+                  "type": "string",
+                  "value": "item 55"
+                },
+                {
+                  "type": "string",
+                  "value": "item 56"
+                },
+                {
+                  "type": "string",
+                  "value": "item 57"
+                },
+                {
+                  "type": "string",
+                  "value": "item 58"
+                },
+                {
+                  "type": "string",
+                  "value": "item 59"
+                },
+                {
+                  "type": "string",
+                  "value": "item 60"
+                },
+                {
+                  "type": "string",
+                  "value": "item 61"
+                },
+                {
+                  "type": "string",
+                  "value": "item 62"
+                },
+                {
+                  "type": "string",
+                  "value": "item 63"
+                },
+                {
+                  "type": "string",
+                  "value": "item 64"
+                },
+                {
+                  "type": "string",
+                  "value": "item 65"
+                },
+                {
+                  "type": "string",
+                  "value": "item 66"
+                },
+                {
+                  "type": "string",
+                  "value": "item 67"
+                },
+                {
+                  "type": "string",
+                  "value": "item 68"
+                },
+                {
+                  "type": "string",
+                  "value": "item 69"
+                }
+              ]
+            }
+          },
+          {
+            "key": "z-tail",
+            "value": {
+              "type": "string",
+              "value": "late needle CURRENT"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "current": {
+    "architecture": "arm64",
+    "entitlements": [
+      {
+        "key": "example.inspector",
+        "value": {
+          "type": "dictionary",
+          "value": [
+            {
+              "key": "a-text",
+              "value": {
+                "type": "string",
+                "value": "aé — CURRENT END"
+              }
+            },
+            {
+              "key": "b-bytes",
+              "value": {
+                "type": "data-base64",
+                "value": "AavNCQ=="
+              }
+            },
+            {
+              "key": "c-many",
+              "value": {
+                "type": "array",
+                "value": [
+                  {
+                    "type": "string",
+                    "value": "item 0"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 1"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 2"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 3"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 4"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 5"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 6"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 7"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 8"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 9"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 10"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 11"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 12"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 13"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 14"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 15"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 16"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 17"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 18"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 19"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 20"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 21"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 22"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 23"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 24"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 25"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 26"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 27"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 28"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 29"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 30"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 31"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 32"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 33"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 34"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 35"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 36"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 37"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 38"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 39"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 40"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 41"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 42"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 43"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 44"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 45"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 46"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 47"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 48"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 49"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 50"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 51"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 52"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 53"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 54"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 55"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 56"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 57"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 58"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 59"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 60"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 61"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 62"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 63"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 64"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 65"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 66"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 67"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 68"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 69"
+                  }
+                ]
+              }
+            },
+            {
+              "key": "z-tail",
+              "value": {
+                "type": "string",
+                "value": "late needle CURRENT"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "origin": "syntheticExample",
+    "presence": "dictionaryPresent",
+    "signingIdentifier": "org.example.EntitlementDiffFixture",
+    "sourceName": "Current-Inspector.app"
+  },
+  "gatekeeperAssessment": "notPerformed",
+  "notices": [
+    "Extracted declarations are not effective permissions or a security verdict.",
+    "Unverified signatures may produce partial information. Inputs are not an atomic filesystem snapshot.",
+    "Reports omit source paths but include potentially sensitive names, identifiers and entitlement values.",
+    "Contains synthetic example data; not an inspection of installed applications."
+  ],
+  "previous": {
+    "architecture": "arm64",
+    "entitlements": [
+      {
+        "key": "example.inspector",
+        "value": {
+          "type": "dictionary",
+          "value": [
+            {
+              "key": "a-text",
+              "value": {
+                "type": "string",
+                "value": "aé — PREVIOUS END"
+              }
+            },
+            {
+              "key": "b-bytes",
+              "value": {
+                "type": "data-base64",
+                "value": "AKvNCQ=="
+              }
+            },
+            {
+              "key": "c-many",
+              "value": {
+                "type": "array",
+                "value": [
+                  {
+                    "type": "string",
+                    "value": "item 0"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 1"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 2"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 3"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 4"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 5"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 6"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 7"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 8"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 9"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 10"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 11"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 12"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 13"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 14"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 15"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 16"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 17"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 18"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 19"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 20"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 21"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 22"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 23"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 24"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 25"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 26"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 27"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 28"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 29"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 30"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 31"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 32"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 33"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 34"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 35"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 36"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 37"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 38"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 39"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 40"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 41"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 42"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 43"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 44"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 45"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 46"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 47"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 48"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 49"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 50"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 51"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 52"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 53"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 54"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 55"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 56"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 57"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 58"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 59"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 60"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 61"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 62"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 63"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 64"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 65"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 66"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 67"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 68"
+                  },
+                  {
+                    "type": "string",
+                    "value": "item 69"
+                  }
+                ]
+              }
+            },
+            {
+              "key": "z-tail",
+              "value": {
+                "type": "string",
+                "value": "late needle PREVIOUS"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "origin": "syntheticExample",
+    "presence": "dictionaryPresent",
+    "signingIdentifier": "org.example.EntitlementDiffFixture",
+    "sourceName": "Previous-Inspector.app"
+  },
+  "schemaVersion": 1,
+  "scope": "Requested architecture of the main executable only; nested code and other slices excluded.",
+  "signatureValidation": "notPerformed",
+  "tool": "EntitlementDiff",
+  "unchangedCount": 0
+}

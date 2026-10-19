@@ -1,0 +1,76 @@
+{
+  "changes": [
+    {
+      "after_scope": "synchronous_call_sites",
+      "after_verdict": "agreement",
+      "baseline_id": "airsf-1111111111111111111111111111111111111111111111111111111111111111",
+      "before_scope": "synchronous_call_sites",
+      "before_verdict": "agreement",
+      "change": "unchanged",
+      "current_id": "airsf-1111111111111111111111111111111111111111111111111111111111111111",
+      "function_name": "_agreement",
+      "key": "offset:0x1000",
+      "match_basis": "exact_image_offset",
+      "notes": []
+    },
+    {
+      "after_scope": "synchronous_call_sites",
+      "after_verdict": "agreement",
+      "baseline_id": "airsf-2222222222222222222222222222222222222222222222222222222222222222",
+      "before_scope": "synchronous_call_sites",
+      "before_verdict": "inconsistency",
+      "change": "changed",
+      "current_id": "airsf-2222222222222222222222222222222222222222222222222222222222222222",
+      "function_name": "_mismatch",
+      "key": "offset:0x1020",
+      "match_basis": "exact_image_offset",
+      "notes": []
+    },
+    {
+      "after_scope": "metadata_only",
+      "after_verdict": "unresolved",
+      "baseline_id": "airsf-3333333333333333333333333333333333333333333333333333333333333333",
+      "before_scope": "metadata_only",
+      "before_verdict": "unresolved",
+      "change": "unchanged",
+      "current_id": "airsf-3333333333333333333333333333333333333333333333333333333333333333",
+      "function_name": "_unresolved",
+      "key": "offset:0x1050",
+      "match_basis": "exact_image_offset",
+      "notes": []
+    }
+  ],
+  "comparison": {
+    "baseline_image": {
+      "architecture": "arm64",
+      "display_name": "SyntheticNativeFixture",
+      "slice_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "uuid": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+    },
+    "current_image": {
+      "architecture": "arm64",
+      "display_name": "SyntheticNativeFixture",
+      "slice_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "uuid": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+    },
+    "matching_policy": "exact_digest_then_unique_symbol",
+    "model_compatible": true,
+    "same_image": true
+  },
+  "limitations": [
+    "Different build addresses are never joined solely because they are equal.",
+    "Cross-build symbol matches are candidates for review, not guaranteed source identity.",
+    "Added/removed unmatched functions are not automatically regressions/fixes.",
+    "An agreement still has the scope and limitations of its source report."
+  ],
+  "report_kind": "airs.diff",
+  "schema_version": 1,
+  "summary": {
+    "added_count": 0,
+    "ambiguous_count": 0,
+    "changed_count": 1,
+    "matched_count": 3,
+    "removed_count": 0,
+    "unchanged_count": 2
+  }
+}

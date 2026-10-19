@@ -1,0 +1,192 @@
+{
+  "changes" : [
+    {
+      "current" : {
+        "type" : "boolean",
+        "value" : true
+      },
+      "key" : "com.apple.security.files.user-selected.read-only",
+      "kind" : "added"
+    },
+    {
+      "key" : "com.apple.security.get-task-allow",
+      "kind" : "removed",
+      "previous" : {
+        "type" : "boolean",
+        "value" : true
+      }
+    },
+    {
+      "current" : {
+        "type" : "boolean",
+        "value" : false
+      },
+      "key" : "com.apple.security.network.client",
+      "kind" : "changed",
+      "previous" : {
+        "type" : "boolean",
+        "value" : true
+      }
+    },
+    {
+      "current" : {
+        "type" : "array",
+        "value" : [
+          {
+            "type" : "string",
+            "value" : "local"
+          },
+          {
+            "type" : "string",
+            "value" : "research"
+          }
+        ]
+      },
+      "key" : "example.feature-labels",
+      "kind" : "changed",
+      "previous" : {
+        "type" : "array",
+        "value" : [
+          {
+            "type" : "string",
+            "value" : "research"
+          },
+          {
+            "type" : "string",
+            "value" : "local"
+          }
+        ]
+      }
+    },
+    {
+      "current" : {
+        "type" : "integer",
+        "value" : "2"
+      },
+      "key" : "example.parser-version",
+      "kind" : "changed",
+      "previous" : {
+        "type" : "integer",
+        "value" : "1"
+      }
+    }
+  ],
+  "current" : {
+    "architecture" : "arm64",
+    "entitlements" : [
+      {
+        "key" : "com.apple.security.app-sandbox",
+        "value" : {
+          "type" : "boolean",
+          "value" : true
+        }
+      },
+      {
+        "key" : "com.apple.security.files.user-selected.read-only",
+        "value" : {
+          "type" : "boolean",
+          "value" : true
+        }
+      },
+      {
+        "key" : "com.apple.security.network.client",
+        "value" : {
+          "type" : "boolean",
+          "value" : false
+        }
+      },
+      {
+        "key" : "example.feature-labels",
+        "value" : {
+          "type" : "array",
+          "value" : [
+            {
+              "type" : "string",
+              "value" : "local"
+            },
+            {
+              "type" : "string",
+              "value" : "research"
+            }
+          ]
+        }
+      },
+      {
+        "key" : "example.parser-version",
+        "value" : {
+          "type" : "integer",
+          "value" : "2"
+        }
+      }
+    ],
+    "origin" : "syntheticExample",
+    "presence" : "dictionaryPresent",
+    "signingIdentifier" : "org.example.EntitlementDiffFixture",
+    "sourceName" : "Example-After.app"
+  },
+  "gatekeeperAssessment" : "notPerformed",
+  "notices" : [
+    "Extracted declarations are not effective permissions or a security verdict.",
+    "Unverified signatures may produce partial information. Inputs are not an atomic filesystem snapshot.",
+    "Reports omit source paths but include potentially sensitive names, identifiers and entitlement values.",
+    "Contains synthetic example data; not an inspection of installed applications."
+  ],
+  "previous" : {
+    "architecture" : "arm64",
+    "entitlements" : [
+      {
+        "key" : "com.apple.security.app-sandbox",
+        "value" : {
+          "type" : "boolean",
+          "value" : true
+        }
+      },
+      {
+        "key" : "com.apple.security.get-task-allow",
+        "value" : {
+          "type" : "boolean",
+          "value" : true
+        }
+      },
+      {
+        "key" : "com.apple.security.network.client",
+        "value" : {
+          "type" : "boolean",
+          "value" : true
+        }
+      },
+      {
+        "key" : "example.feature-labels",
+        "value" : {
+          "type" : "array",
+          "value" : [
+            {
+              "type" : "string",
+              "value" : "research"
+            },
+            {
+              "type" : "string",
+              "value" : "local"
+            }
+          ]
+        }
+      },
+      {
+        "key" : "example.parser-version",
+        "value" : {
+          "type" : "integer",
+          "value" : "1"
+        }
+      }
+    ],
+    "origin" : "syntheticExample",
+    "presence" : "dictionaryPresent",
+    "signingIdentifier" : "org.example.EntitlementDiffFixture",
+    "sourceName" : "Example-Before.app"
+  },
+  "schemaVersion" : 1,
+  "scope" : "Requested architecture of the main executable only; nested code and other slices excluded.",
+  "signatureValidation" : "notPerformed",
+  "tool" : "EntitlementDiff",
+  "unchangedCount" : 1
+}

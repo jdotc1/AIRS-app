@@ -1,0 +1,67 @@
+{
+  "finding": {
+    "checked_pcs": [
+      "0x100001064"
+    ],
+    "coverage": "compact",
+    "evidence": [
+      {
+        "address": "0x100001064",
+        "code": "caller_state_mismatch",
+        "expected": "original x19",
+        "message": "The compact rule does not recover the original x19 identity",
+        "observed": "constant 0x7"
+      }
+    ],
+    "limitations": [
+      "Only the documented, bounded integer instruction subset is interpreted.",
+      "Checks describe selected modeled states; they do not establish whole-function or asynchronous unwind correctness.",
+      "SIMD, pointer authentication, DWARF FDE evaluation, personality and LSDA semantics are outside this model.",
+      "Direct callees are summarized as ABI-conforming returns preserving SP, x19\u2013x29 and unescaped allocated stack storage; callees are not analyzed."
+    ],
+    "mode": "frame",
+    "reason_codes": [
+      "caller_state_mismatch"
+    ],
+    "scope": "synchronous_call_sites",
+    "verdict": "inconsistency"
+  },
+  "image": {
+    "architecture": "arm64",
+    "container_sha256": "47ace7a3d0c85c70b2a016b92395b9610c5e01a79eba806aef9e00b7a52c5c15",
+    "cpu_subtype": 0,
+    "display_name": "mixed-regular.macho",
+    "preferred_base": "0x100000000",
+    "slice_offset": 0,
+    "slice_sha256": "47ace7a3d0c85c70b2a016b92395b9610c5e01a79eba806aef9e00b7a52c5c15",
+    "slice_size": 4768,
+    "uuid": "2bf3bb71-3a89-55b8-bebb-f554eba88960"
+  },
+  "integration_status": "proposed_export_contract",
+  "report_kind": "airs.macscope_handoff",
+  "requirements": [
+    "Verify architecture and selected-slice SHA-256 before applying an address to an open image.",
+    "Use UUID as additional image identity when present; a matching filename is insufficient.",
+    "Addresses are preferred unslid VM addresses; apply a verified runtime slide only in a runtime-aware adapter.",
+    "This export defines a proposed adapter contract. It does not assume an existing MacScope GUI deep link or import command."
+  ],
+  "schema_version": 1,
+  "selection": {
+    "address_space": "preferred_vm",
+    "finding_id": "airsf-c13a8b43cf0ecb85b90d49e06c8bee5c20f6f295e9166f086a361efe35bc3e9c",
+    "function_name": "_pair_rule_missing",
+    "image_relative_range": {
+      "end": "0x1078",
+      "start": "0x1050"
+    },
+    "vm_range": {
+      "end": "0x100001078",
+      "start": "0x100001050"
+    }
+  },
+  "source_analysis": {
+    "analysis_model_version": "arm64-linear-v1",
+    "name": "AIRS",
+    "version": "0.1.0"
+  }
+}

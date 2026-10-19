@@ -1,0 +1,83 @@
+{
+  "changes": [
+    {
+      "after_scope": "synchronous_call_sites",
+      "after_verdict": "agreement",
+      "baseline_id": "airsf-971f6375b40dadd02757805443ff18f1f3e84cb32f2a9050853e38f1376f8de2",
+      "before_scope": "synchronous_call_sites",
+      "before_verdict": "agreement",
+      "change": "unchanged",
+      "current_id": "airsf-37ed95633aafc6096d2496afab3378e559254b0f24407cf0c631f0ac90f688ca",
+      "function_name": "_canonical_frame",
+      "key": "symbol:_canonical_frame",
+      "match_basis": "unique_symbol",
+      "notes": [
+        "Unique symbol-name match is a review candidate; it does not prove source-function identity across builds."
+      ]
+    },
+    {
+      "after_scope": "modeled_leaf_body",
+      "after_verdict": "inconsistency",
+      "baseline_id": "airsf-6535c47266f94fdaa7ce342c4830937b1f1ab0f354427df7d03679422859a373",
+      "before_scope": "modeled_leaf_body",
+      "before_verdict": "agreement",
+      "change": "changed",
+      "current_id": "airsf-7141efa3e31b21789071ed24510e448ca833de829ce639d2334c73514e3d82a0",
+      "function_name": "_frameless_leaf",
+      "key": "symbol:_frameless_leaf",
+      "match_basis": "unique_symbol",
+      "notes": [
+        "Unique symbol-name match is a review candidate; it does not prove source-function identity across builds."
+      ]
+    },
+    {
+      "after_scope": "synchronous_call_sites",
+      "after_verdict": "inconsistency",
+      "baseline_id": "airsf-e273c5c02bd8f3c142abcf94d8fac1fd4b27e92e73ff45dc00a7dfa1a42c0d8c",
+      "before_scope": "synchronous_call_sites",
+      "before_verdict": "agreement",
+      "change": "changed",
+      "current_id": "airsf-dcb27918b4d278f183c85c6f8afeef07eebe1f8d47415761bb45e0a7dd17d603",
+      "function_name": "_pair_saved",
+      "key": "symbol:_pair_saved",
+      "match_basis": "unique_symbol",
+      "notes": [
+        "Unique symbol-name match is a review candidate; it does not prove source-function identity across builds."
+      ]
+    }
+  ],
+  "comparison": {
+    "analysis_configuration_changed": false,
+    "baseline_image": {
+      "architecture": "arm64",
+      "display_name": "before.macho",
+      "slice_sha256": "48038d3232a9bc8a0360677bd630bce1c8fcc9a9189a31421c8acb95fe071295",
+      "uuid": "854848f6-cc58-577c-a1de-a5a77b916641"
+    },
+    "current_image": {
+      "architecture": "arm64",
+      "display_name": "after.macho",
+      "slice_sha256": "a2a29d563ccb4866e02e82b97e00c40d5529b31a59063f3770a45343c291dfd0",
+      "uuid": "96572f86-0b54-5cf2-b913-1ed907664805"
+    },
+    "matching_policy": "exact_digest_then_unique_symbol",
+    "model_compatible": true,
+    "same_image": false
+  },
+  "limitations": [
+    "Different build addresses are never joined solely because they are equal.",
+    "Cross-build symbol matches are candidates for review, not guaranteed source identity.",
+    "Added/removed unmatched functions are not automatically regressions/fixes.",
+    "An agreement still has the scope and limitations of its source report."
+  ],
+  "report_kind": "airs.diff",
+  "schema_version": 1,
+  "summary": {
+    "added_count": 0,
+    "ambiguous_count": 0,
+    "changed_count": 2,
+    "matched_count": 3,
+    "removed_count": 0,
+    "unchanged_count": 1
+  }
+}

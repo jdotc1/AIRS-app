@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:airs:schema:baseline-diff:1",
+  "title": "AIRS baseline-diff v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "report_kind": {
+      "const": "airs.diff"
+    },
+    "comparison": {
+      "type": "object",
+      "properties": {
+        "baseline_image": {
+          "type": "object",
+          "properties": {
+            "display_name": {
+              "type": "string",
+              "maxLength": 65536
+            },
+            "uuid": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "slice_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "architecture": {
+              "type": "string",
+              "maxLength": 65536
+            }
+          },
+          "required": [
+            "display_name",
+            "uuid",
+            "slice_sha256",
+            "architecture"
+          ],
+          "additionalProperties": true
+        },
+        "current_image": {
+          "type": "object",
+          "properties": {
+            "display_name": {
+              "type": "string",
+              "maxLength": 65536
+            },
+            "uuid": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "slice_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "architecture": {
+              "type": "string",
+              "maxLength": 65536
+            }
+          },
+          "required": [
+            "display_name",
+            "uuid",
+            "slice_sha256",
+            "architecture"
+          ],
+          "additionalProperties": true
+        },
+        "same_image": {
+          "type": "boolean"
+        },
+        "model_compatible": {
+          "type": "boolean"
+        },
+        "analysis_configuration_changed": {
+          "type": "boolean"
+        },
+        "matching_policy": {
+          "const": "exact_digest_then_unique_symbol"
+        }
+      },
+      "required": [
+        "baseline_image",
+        "current_image",
+        "same_image",
+        "model_compatible",
+        "matching_policy"
+      ],
+      "additionalProperties": true
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "matched_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "changed_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unchanged_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "added_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "removed_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ambiguous_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "matched_count",
+        "changed_count",
+        "unchanged_count",
+        "added_count",
+        "removed_count",
+        "ambiguous_count"
+      ],
+      "additionalProperties": true
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 65536
+          },
+          "match_basis": {
+            "enum": [
+              "exact_image_offset",
+              "unique_symbol",
+              "unmatched"
+            ]
+          },
+          "function_name": {
+            "type": "string",
+            "maxLength": 65536
+          },
+          "change": {
+            "enum": [
+              "changed",
+              "unchanged",
+              "added",
+              "removed",
+              "ambiguous"
+            ]
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 65536
+            },
+            "maxItems": 200000
+          },
+          "baseline_id": {
+            "type": "string",
+            "pattern": "^airsf-[0-9a-f]{64}$"
+          },
+          "current_id": {
+            "type": "string",
+            "pattern": "^airsf-[0-9a-f]{64}$"
+          },
+          "before_verdict": {
+            "enum": [
+              "agreement",
+              "inconsistency",
+              "unresolved"
+            ]
+          },
+          "after_verdict": {
+            "enum": [
+              "agreement",
+              "inconsistency",
+              "unresolved"
+            ]
+          },
+          "before_scope": {
+            "enum": [
+              "synchronous_call_sites",
+              "modeled_leaf_body",
+              "metadata_only"
+            ]
+          },
+          "after_scope": {
+            "enum": [
+              "synchronous_call_sites",
+              "modeled_leaf_body",
+              "metadata_only"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "match_basis",
+          "function_name",
+          "change",
+          "notes"
+        ],
+        "additionalProperties": true
+      },
+      "maxItems": 200000
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 65536
+      },
+      "maxItems": 200000
+    }
+  },
+  "required": [
+    "schema_version",
+    "report_kind",
+    "comparison",
+    "summary",
+    "changes",
+    "limitations"
+  ],
+  "additionalProperties": true
+}

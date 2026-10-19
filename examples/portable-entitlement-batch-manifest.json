@@ -1,0 +1,11 @@
+{
+  "kind": "airs-entitlement-batch-manifest",
+  "version": 2,
+  "pairs": [
+    {
+      "previousPath": "Previous.app",
+      "currentPath": "Current.app",
+      "architecture": "arm64"
+    }
+  ]
+}
