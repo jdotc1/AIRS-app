@@ -1,35 +1,41 @@
-# AIRS 0.1.0 — initial preview
+# AIRS 0.1.1 Preview
 
-Distribution status: Developer ID signed and Apple-notarized preview.
-The exported app carries a validated staple and passed Gatekeeper assessment.
+A focused usability update for the native macOS workspace.
 
-Native macOS review of bounded ARM64 unwind evidence and application entitlement
-comparisons. Includes audit history, saved-report review, explicit-pair entitlement
-batches and a command-line entitlement comparison tool. The native workspace uses
-Lumen and includes the latest Compare Entitlements layout improvements.
+## Changes
 
-The app includes Python 3.15.0 and requires an Apple silicon Mac with macOS 14 or
-newer. The inspected targets are read as data and never executed. Unsupported
-analysis remains unresolved; findings apply only to the supported checked scope.
-This is not a general ARM64 correctness guarantee or an automated remediation tool.
+- Entitlement searches and empty categories now explain why no keys are visible
+  and offer Clear Search, Show All Changes or Show All Keys as appropriate.
+  Sorting and complete comparison data remain intact.
+- Matching entitlement snapshots offer Show All Keys; snapshots containing no
+  keys receive completed-comparison wording without a misleading recovery action.
+- Unwind review identifies a selected function hidden by search or verdict filters.
+  Show Selected Function restores its row; Report Overview retains filter context.
+- Empty function results no longer cover the overview row. Reason codes and
+  evidence precede the longer function identity block.
+- Function-list selection no longer publishes workspace changes directly from
+  the native list update callback.
 
-Lumen's two required libraries are included as a portable, sanitized source
-snapshot. The source release omits developer instructions, local evidence and
-private repository history. Python and EntitlementDiff license notices are retained.
+## Compatibility and validation
 
-This preview has not been qualified on a clean Mac or as an Intel app. Existing
-AppKit geometry diagnostics remain under investigation. No MacScope consumer or
-automatic patching capability is claimed.
+Version 0.1.1 (2), Apple silicon, macOS 14 or newer, with private Python 3.15.0.
+Analysis model v31, report schemas, extraction and export semantics are unchanged.
+Selected files are read as data and never executed.
 
-## Distribution verification
+Three focused selection tests and a native minimum-layout check with four states
+passed. Native packaged-app interactions confirmed both workflows; the final
+selection-binding repair completed checked transitions without publication
+warnings. Unchanged engine, runtime, model and export evidence was reused.
 
-Version 0.1.0 (1), dev.airs.app. Uploaded using Xcode Organizer with the
-existing developer account. Apple accepted notarization submission
-09FCC694-0382-4D81-BBEB-0B9E4D9ED272. The exported app passed strict signature
-verification, staple validation and Gatekeeper assessment (Notarized Developer ID).
-An unused CPython embedding link object was excluded from the app after Apple
-identified it during the initial submission. No analysis behavior changed.
+This remains a preview. Clean-Mac, older-macOS and Intel-app qualification are
+not established. Existing system window-sharing geometry and host-service
+messages remain documented; this release does not claim a clean runtime log.
+No general ARM64 correctness, effective-permission or security verdict is implied.
 
-Existing accepted engine, entitlement and UI checks were reused. This release
-does not establish clean-Mac or Intel-app acceptance. It remains an initial
-preview with bounded findings as described in the analysis contract.
+## Distribution
+
+Developer ID signed and Apple-notarized. The exported app passed strict signature
+validation, staple validation and Gatekeeper assessment (Notarized Developer ID).
+Apple accepted submission 7A389300-70C3-4CEB-ACB3-F6935D32F129 on October 19, 2026.
+The signed release app also completed saved-report selection recovery and synthetic
+entitlement-search recovery checks. No target app was executed or reanalyzed.

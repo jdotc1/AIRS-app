@@ -176,6 +176,18 @@ final class AuditWorkspace: ObservableObject {
         return report?.findings.first { $0.id == id }
     }
 
+    var selectedFindingIsHidden: Bool {
+        guard let finding = selectedFinding else { return false }
+        return !verdictFilter.includes(finding.verdict) || !finding.matches(search)
+    }
+
+    /// Reveal the same finding; filtering never replaces its evidence or report.
+    func revealSelectedFinding() {
+        guard selectedFindingIsHidden else { return }
+        search = ""
+        verdictFilter = .all
+    }
+
     var hasUnretainedBatchReports: Bool { batchSnapshot?.hasUnretainedReports == true }
     var hasUnsavedBatchHistory: Bool { batchSnapshot?.persistenceError != nil }
     var requiresQuitSettlement: Bool { isBusy || hasUnsavedBatchHistory }

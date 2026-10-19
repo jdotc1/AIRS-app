@@ -1,4 +1,4 @@
-# AIRS 0.1.0
+# AIRS 0.1.1
 
 Distribution status: Developer ID signed and Apple-notarized preview.
 The exported app carries a validated staple and passed Gatekeeper assessment.
@@ -6,6 +6,21 @@ The exported app carries a validated staple and passed Gatekeeper assessment.
 A native macOS workspace for bounded ARM64 Mach-O unwind diagnostics and
 entitlement comparisons. Analysis reads selected files as data; it does not
 load or execute the inspected applications.
+
+Download the app from the [public releases](https://github.com/jdotc1/AIRS-app/releases).
+
+## Changes in 0.1.1
+
+- Empty entitlement results explain the current search/category state and offer
+  an explicit recovery action while preserving sorting and comparison data.
+- Unwind review identifies a selected function hidden by filters and offers
+  Show Selected Function or Report Overview without replacing its evidence.
+- No-match function guidance keeps the overview row available. Reason codes and
+  evidence appear before the longer function identity details.
+- Native function-list selection uses view-local state with guarded workspace
+  synchronization, avoiding publication during the native list update callback.
+
+Analysis coverage, report schemas and supported conclusions are unchanged.
 
 ## Requirements
 

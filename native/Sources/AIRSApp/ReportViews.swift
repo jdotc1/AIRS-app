@@ -128,15 +128,12 @@ struct FindingDetailView: View {
                             .font(.callout).foregroundStyle(.secondary)
                     }
                 }
-                SectionCard("Function range") {
-                    FactRow(label: "Preferred VM", value: "\(finding.function.address)–\(finding.function.endAddress)", monospaced: true)
-                    FactRow(label: "Image offset", value: finding.function.imageOffset, monospaced: true)
-                    FactRow(label: "Size", value: "\(finding.function.size) bytes")
-                    FactRow(label: "Boundary source", value: readableToken(finding.function.boundarySource))
-                    FactRow(label: "Finding ID", value: finding.id, monospaced: true)
-                }
-                if let symbols = report.sourceAnnotations {
-                    FindingSourceView(annotations: symbols, findingID: finding.id)
+                if !finding.reasonCodes.isEmpty {
+                    SectionCard("Reason codes") {
+                        Text(finding.reasonCodes.joined(separator: "\n"))
+                            .font(.system(.callout, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
                 }
                 SectionCard("Evidence") {
                     if finding.evidence.isEmpty {
@@ -149,12 +146,15 @@ struct FindingDetailView: View {
                         }
                     }
                 }
-                if !finding.reasonCodes.isEmpty {
-                    SectionCard("Reason codes") {
-                        Text(finding.reasonCodes.joined(separator: "\n"))
-                            .font(.system(.callout, design: .monospaced))
-                            .textSelection(.enabled)
-                    }
+                SectionCard("Function range") {
+                    FactRow(label: "Preferred VM", value: "\(finding.function.address)–\(finding.function.endAddress)", monospaced: true)
+                    FactRow(label: "Image offset", value: finding.function.imageOffset, monospaced: true)
+                    FactRow(label: "Size", value: "\(finding.function.size) bytes")
+                    FactRow(label: "Boundary source", value: readableToken(finding.function.boundarySource))
+                    FactRow(label: "Finding ID", value: finding.id, monospaced: true)
+                }
+                if let symbols = report.sourceAnnotations {
+                    FindingSourceView(annotations: symbols, findingID: finding.id)
                 }
                 LimitationsView(title: "Function limitations", limitations: finding.limitations)
                 LimitationsView(title: "Report limitations", limitations: report.limitations)

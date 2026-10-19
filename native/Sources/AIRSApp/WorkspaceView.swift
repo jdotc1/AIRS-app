@@ -7,6 +7,12 @@ struct WorkspaceView: View {
     @Environment(\.lumenPalette) private var palette
 
     @ObservedObject var workspace: AuditWorkspace
+    @State private var listSelection: WorkspaceSelection?
+
+    init(workspace: AuditWorkspace) {
+        self.workspace = workspace
+        _listSelection = State(initialValue: workspace.selection)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,6 +26,12 @@ struct WorkspaceView: View {
                 HSplitView {
                     sidebar.frame(minWidth: 220, idealWidth: 240, maxWidth: 260)
                     VStack(spacing: 0) {
+                        if workspace.selectedFindingIsHidden {
+                            HiddenFindingNotice(reveal: workspace.revealSelectedFinding,
+                                overview: { workspace.selection = .overview })
+                                .disabled(workspace.isBusy)
+                            Divider()
+                        }
                         if let finding = workspace.selectedFinding {
                             FindingDetailView(report: report, finding: finding,
                                               isBusy: workspace.isBusy) {
@@ -41,9 +53,13 @@ struct WorkspaceView: View {
             Text(workspace.errorMessage)
         }
         .onChange(of: workspace.selection) { _, _ in
+            if listSelection != workspace.selection { listSelection = workspace.selection }
             workspace.showingLibrary = false
             workspace.showingBatch = false
             workspace.showingBatchHistory = false
+        }
+        .onChange(of: listSelection) { _, selection in
+            if workspace.selection != selection { workspace.selection = selection }
         }
         .sheet(item: $workspace.bundleDiscovery) { inventory in
             BundleDiscoveryView(inventory: inventory, workspace: workspace)
@@ -79,23 +95,25 @@ struct WorkspaceView: View {
                 }
                 .padding(14)
                 Divider()
-                List(selection: $workspace.selection) {
+                // Native List owns its transient selection update. Publish the shared
+                // selection from onChange, outside its AppKit update callback.
+                List(selection: $listSelection) {
                     Section {
                         Label("Report overview", systemImage: "chart.bar.doc.horizontal")
                             .tag(WorkspaceSelection.overview)
                     }
                     Section("Functions · \(workspace.visibleFindings.count) shown") {
+                        if workspace.visibleFindings.isEmpty {
+                            VStack(alignment: .leading, spacing: AppDesign.Space.small) {
+                                Text("No matching functions").font(.headline)
+                                Text("Change the search or verdict filter. Report overview remains available above.")
+                                    .font(.callout).foregroundStyle(.secondary)
+                            }.padding(.vertical, AppDesign.Space.small)
+                        }
                         ForEach(workspace.visibleFindings) { finding in
                             FindingRow(finding: finding)
                                 .tag(WorkspaceSelection.finding(finding.id))
                         }
-                    }
-                }
-                .overlay {
-                    if workspace.visibleFindings.isEmpty {
-                        LumenEmptyState(systemImage: "magnifyingglass", title: "No matching functions",
-                            message: "Change the search or verdict filter.")
-                        .allowsHitTesting(false)
                     }
                 }
             } else {
@@ -114,6 +132,24 @@ struct WorkspaceView: View {
             }
         }
         .background(palette[.bgSidebar])
+    }
+}
+
+private struct HiddenFindingNotice: View {
+    let reveal: () -> Void
+    let overview: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppDesign.Space.small) {
+            Text("Selected function is hidden by the current filters.").font(.callout.weight(.semibold))
+            Text("Its evidence remains displayed below.").font(.callout).foregroundStyle(.secondary)
+            HStack(spacing: AppDesign.Space.medium) {
+                Button("Show Selected Function", action: reveal)
+                Button("Report Overview", action: overview)
+            }.controlSize(.small)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(AppDesign.Space.medium)
     }
 }
 

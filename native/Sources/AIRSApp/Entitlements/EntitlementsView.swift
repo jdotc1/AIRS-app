@@ -125,15 +125,21 @@ struct EntitlementsBrowser: View {
                 Spacer()
                 Text(model.browser.changePositionText).monospacedDigit()
             }.font(.caption).foregroundStyle(.secondary).padding(.horizontal, AppDesign.Space.section)
-            GeometryReader { geometry in
-                VSplitView {
-                    ChangeTable(rows: model.browser.visibleRows, selection: $model.browser.selection,
-                                sortOrder: $model.browser.sortOrder, revealID: workspace.findRevealID,
-                                revealRevision: workspace.findRevealRevision)
-                        .frame(minHeight: 100)
-                    detailView
-                        .id(model.reportRevision).id(model.browser.selectedRow?.id)
-                        .frame(minHeight: min(300, max(200, geometry.size.height * 0.55)))
+            if let guidance = model.browser.recoveryGuidance {
+                EntitlementsRecoveryView(guidance: guidance,
+                    disabled: !navigationAllowed || workspace.isBusy,
+                    recover: { model.browser.recover($0) })
+            } else {
+                GeometryReader { geometry in
+                    VSplitView {
+                        ChangeTable(rows: model.browser.visibleRows, selection: $model.browser.selection,
+                                    sortOrder: $model.browser.sortOrder, revealID: workspace.findRevealID,
+                                    revealRevision: workspace.findRevealRevision)
+                            .frame(minHeight: 100)
+                        detailView
+                            .id(model.reportRevision).id(model.browser.selectedRow?.id)
+                            .frame(minHeight: min(300, max(200, geometry.size.height * 0.55)))
+                    }
                 }
             }
         }
@@ -153,6 +159,27 @@ struct EntitlementsBrowser: View {
                     openTreeHexHit: { workspace.openTreeHexHit($0, hit: $1) },
                     copyTreeHexResult: { workspace.copyTreeHexResultDetails($0) }, busy: workspace.isBusy)
 
+    }
+}
+
+private struct EntitlementsRecoveryView: View {
+    let guidance: BrowserRecoveryGuidance
+    let disabled: Bool
+    let recover: (BrowserRecoveryGuidance.Action) -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: AppDesign.Space.medium) {
+                Text(guidance.title).font(.headline)
+                Text(guidance.message).foregroundStyle(.secondary)
+                if let action = guidance.action, let label = guidance.actionLabel {
+                    Button(label) { recover(action) }.disabled(disabled)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(AppDesign.Space.section)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 
