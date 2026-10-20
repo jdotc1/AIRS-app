@@ -1,13 +1,20 @@
 # AIRS 0.1.1
 
-Distribution status: Developer ID signed and Apple-notarized preview.
-The exported app carries a validated staple and passed Gatekeeper assessment.
+**Read-only ARM64 binary analysis and entitlement review for macOS security research.**
 
-A native macOS workspace for bounded ARM64 Mach-O unwind diagnostics and
-entitlement comparisons. Analysis reads selected files as data; it does not
-load or execute the inspected applications.
+AIRS is a native macOS workspace for examining ARM64 Mach-O unwind behavior and
+comparing application entitlements on Apple silicon. It brings bounded unwind
+diagnostics and entitlement differences into a local review workflow, reading
+selected files as data without loading or executing the inspected applications.
+
+Use it to inspect supported unwind patterns and review changes in declared
+entitlements. Findings remain tied to supported analysis coverage, with
+ambiguous and unsupported cases reported as unresolved.
 
 Download the app from the [public releases](https://github.com/jdotc1/AIRS-app/releases).
+
+Distribution status: Developer ID signed and Apple-notarized preview.
+The exported app carries a validated staple and passed Gatekeeper assessment.
 
 ## Changes in 0.1.1
 
