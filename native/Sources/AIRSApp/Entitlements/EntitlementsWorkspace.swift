@@ -23,12 +23,23 @@ struct EntitlementBatchManifestReview: Identifiable {
 @Observable
 @MainActor
 final class EntitlementsWorkspace {
+    private(set) var inspectionContexts: [ComparisonSide: InspectionCaptureContext] = [:]
+    private let inspectionLibrary: InspectionLibrary
+    private let writeInspectionPreferences: @Sendable (InspectionLibraryPreferences, URL) throws -> Void
+    private(set) var pinnedInspectionID: UUID?
+    private var inspectionPreferencesURL: URL { inspectionLibrary.storageRoot.deletingLastPathComponent().appendingPathComponent("InspectionPreferences.json") }
+    private(set) var inspectionEntries: [InspectionLibraryEntry] = []
+    var inspectionReview: InspectionCaptureContext?
+    private(set) var showingInspectionLibrary = false
+    var captureName = ""
+    var captureSide: ComparisonSide?
+
     let model: ComparisonModel
     private(set) var isWorking = false
     private(set) var isWriting = false
     private(set) var isPresentingPanel = false
     private(set) var isTerminating = false
-    private(set) var status = "Choose Previous and Current apps, or open a saved entitlement report."
+    private(set) var status = "Choose one app to inspect its entitlements, or two apps to compare."
     private(set) var showingLibrary = false
     private(set) var libraryEntries: [EntitlementLibraryEntry] = []
     private(set) var libraryLoaded = false
@@ -89,6 +100,7 @@ final class EntitlementsWorkspace {
     private var isInspecting = false
     private let readReport: @Sendable (URL) async throws -> SavedReport
     private let writeReport: @Sendable (EntitlementDiffCore.ComparisonReport, URL, [URL]) async throws -> Void
+    private let writeTextReport: (@Sendable (EntitlementDiffCore.ComparisonReport, URL, [URL]) async throws -> Void)?
 
     init(library: EntitlementReportLibrary = EntitlementReportLibrary(),
          batchHistory: EntitlementBatchHistory = EntitlementBatchHistory(root: EntitlementsWorkspace.batchHistoryRoot),
@@ -99,9 +111,14 @@ final class EntitlementsWorkspace {
          },
          batchRunner: EntitlementBatchRunner = EntitlementBatchRunner(),
          reader: any SnapshotReading = SecurityEntitlementReader(),
+         inspectionLibrary: InspectionLibrary = InspectionLibrary(root: URL.applicationSupportDirectory.appendingPathComponent("AIRS/InspectionLibrary")),
+         writeInspectionPreferences: @escaping @Sendable (InspectionLibraryPreferences, URL) throws -> Void = { try $0.write(to: $1) },
          readBatchManifest: @escaping @Sendable (URL) async throws -> EntitlementBatchManifest = { try await EntitlementsWorkspace.readManifest($0) },
          readReport: @escaping @Sendable (URL) async throws -> SavedReport = { try await EntitlementsWorkspace.readSaved($0) },
-         writeReport: @escaping @Sendable (EntitlementDiffCore.ComparisonReport, URL, [URL]) async throws -> Void = { try await EntitlementsWorkspace.writeSaved($0, $1, $2) }) {
+         writeReport: @escaping @Sendable (EntitlementDiffCore.ComparisonReport, URL, [URL]) async throws -> Void = { try await EntitlementsWorkspace.writeSaved($0, $1, $2) },
+         writeTextReport: (@Sendable (EntitlementDiffCore.ComparisonReport, URL, [URL]) async throws -> Void)? = nil) {
+        self.inspectionLibrary = inspectionLibrary
+        self.writeInspectionPreferences = writeInspectionPreferences
         self.library = library
         self.batchHistory = batchHistory
         self.recovery = recovery ?? EntitlementBatchRecovery(root: batchHistory.storageRoot.deletingLastPathComponent().appendingPathComponent("EntitlementBatchRecovery"))
@@ -112,15 +129,31 @@ final class EntitlementsWorkspace {
         self.readBatchManifest = readBatchManifest
         self.readReport = readReport
         self.writeReport = writeReport
+        self.writeTextReport = writeTextReport
     }
 
-    var isBusy: Bool { isWorking || isPresentingPanel || savedReport != nil || focusedValue != nil || entitlementFind != nil || batchManifestReview != nil || isTerminating }
-    var canFindEntitlement: Bool { !isBusy && !showingLibrary && !showingBatch && !showingBatchHistory && !showingBatchRecovery && errorMessage == nil && model.report != nil }
+    /// A failed/loading/empty side is never presented as a successful empty snapshot.
+    /// Two ready inputs continue through the existing comparison path.
+    var standaloneInspection: StandaloneEntitlementInspection? {
+        switch (model.previous.snapshot, model.current.snapshot) {
+        case (.some(let snapshot), .none):
+            return .init(side: .previous, snapshot: snapshot, revision: model.reportRevision)
+        case (.none, .some(let snapshot)):
+            return .init(side: .current, snapshot: snapshot, revision: model.reportRevision)
+        default:
+            return nil
+        }
+    }
+
+    var isBusy: Bool { inspectionReview != nil || captureSide != nil || isWorking || isPresentingPanel || savedReport != nil || focusedValue != nil || entitlementFind != nil || batchManifestReview != nil || isTerminating }
+    var canFindEntitlement: Bool { !isBusy && !showingInspectionLibrary && !showingLibrary && !showingBatch && !showingBatchHistory && !showingBatchRecovery && errorMessage == nil && model.report != nil }
     var canCancel: Bool { isWorking && !isWriting && !isTerminating }
     var requiresQuitSettlement: Bool { isWorking || isPresentingPanel || hasUnretainedBatchReport || batchNeedsHistorySave || batchNeedsCheckpointSave }
     var hasUnretainedBatchReport: Bool { batchResult?.hasUnretainedReport == true }
     var canEditBatch: Bool { !isBusy && batchResult == nil }
     var canRunBatch: Bool { canEditBatch && !batchPairs.isEmpty }
+    var projectProtectedInputs:[URL]=[]
+    var projectHistoryIDs:[UUID:[UUID]]=[:]
     var protectedInputs: [URL] {
         let primary = model.selectedSourceURLs + [protectedSavedReportURL, sourceBatchManifestURL].compactMap { $0 }
         let currentBatch = batchPairs.flatMap { [$0.previous, $0.current] }
@@ -128,7 +161,7 @@ final class EntitlementsWorkspace {
         let historical = selectedBatchHistory?.result.rows.flatMap { row in
             [row.pair.previous, row.pair.current] + [row.exportedReportURL].compactMap { $0 }
         } ?? []
-        return primary + [library.storageRoot, batchHistory.storageRoot, recovery.storageRoot] + currentBatch + historical
+        return projectProtectedInputs + primary + inspectionContexts.values.compactMap(\.sourceURL) + [inspectionLibrary.storageRoot, inspectionPreferencesURL, library.storageRoot, batchHistory.storageRoot, recovery.storageRoot] + currentBatch + historical
     }
 
     // Reuse the donor browser's exact lookup and visible-order navigation.
@@ -197,6 +230,20 @@ final class EntitlementsWorkspace {
         }.value
     }
 
+    /// Complete existing text serialization, independent of the visible filter.
+    /// Text is a readable summary of all differences and unchanged-key count;
+    /// it is not a schema-1 import document or a full unchanged-value snapshot.
+    nonisolated static func writeTextSaved(_ report: EntitlementDiffCore.ComparisonReport, _ url: URL, _ inputs: [URL]) async throws {
+        try await Task.detached(priority: .userInitiated) {
+            let access = url.startAccessingSecurityScopedResource()
+            defer { if access { url.stopAccessingSecurityScopedResource() } }
+            try ReportDestination.validate(url, excluding: inputs)
+            let bytes = Data(report.text().utf8)
+            try ReportDestination.validate(url, excluding: inputs)
+            try bytes.write(to: url, options: .atomic)
+        }.value
+    }
+
     /// One bounded host operation. Even cancelled native calls retain ownership until settled.
     @discardableResult
     private func begin(writing: Bool = false, inspecting: Bool = false, _ body: @escaping @MainActor () async throws -> Void) -> Task<Void, Never> {
@@ -219,15 +266,177 @@ final class EntitlementsWorkspace {
         return task
     }
 
+    /// Build a document only for this successful read revision. Metadata failure
+    /// leaves the actual read visible and makes capture explicitly unavailable.
+    private func prepareCapture(_ side: ComparisonSide) async {
+        let state = side == .previous ? model.previous : model.current
+        guard let snapshot = state.snapshot, !snapshot.isSavedBaseline, model.selectedSourceURL(for: side) != nil else { return }
+        let revision = model.reportRevision
+        let completedAt = Date()
+        do {
+            let context = try await Task.detached(priority: .userInitiated) {
+                let document = try InspectionDocument(snapshot: snapshot, capturedAt: completedAt,
+                    producerVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.1-development")
+                return InspectionCaptureContext(document: document, data: try InspectionDocumentCodec.encode(document))
+            }.value
+            try Task.checkCancellation()
+            guard model.reportRevision == revision else { return }
+            inspectionContexts[side] = context
+        } catch {
+            if !Task.isCancelled { status = "Inspection succeeded, but baseline capture is unavailable: " + error.localizedDescription }
+        }
+    }
+
+    func requestCapture(_ side: ComparisonSide) {
+        guard !isBusy, inspectionContexts[side] != nil else { return }
+        captureName = inspectionContexts[side]?.document.snapshot.sourceName ?? ""
+        captureSide = side
+    }
+
+    @discardableResult
+    func captureBaseline(_ side: ComparisonSide, label: String) -> Task<Void, Never>? {
+        guard !isBusy, let context = inspectionContexts[side] else { return nil }
+        return begin(writing: true) {
+            _ = try await self.inspectionLibrary.keep(context.data, label: label)
+            self.inspectionEntries = try await self.inspectionLibrary.entries()
+            self.status = "Baseline retained. Original application binaries are not stored."
+        }
+    }
+
+    @discardableResult
+    func openInspectionLibrary() -> Task<Void, Never>? {
+        guard !isBusy else { return nil }
+        showingInspectionLibrary = true
+        return begin {
+            self.inspectionEntries = try await self.inspectionLibrary.entries()
+            var preferences = try InspectionLibraryPreferences.read(at: self.inspectionPreferencesURL)
+            if let id = preferences.pinnedBaselineID, !self.inspectionEntries.contains(where: { $0.id == id && $0.issue == nil }) {
+                preferences.pinnedBaselineID = nil
+                try self.writeInspectionPreferences(preferences, self.inspectionPreferencesURL)
+                self.status = "Default baseline is unavailable; the default was cleared."
+            }
+            self.pinnedInspectionID = preferences.pinnedBaselineID
+        }
+    }
+    @discardableResult
+    func pinInspection(_ id: UUID?) -> Task<Void, Never>? {
+        guard !isBusy, id == nil || inspectionEntries.contains(where: { $0.id == id && $0.issue == nil }) else { return nil }
+        return begin(writing: true) {
+            let preferences = InspectionLibraryPreferences(pinnedBaselineID: id)
+            try self.writeInspectionPreferences(preferences, self.inspectionPreferencesURL)
+            self.pinnedInspectionID = id
+            self.status = id == nil ? "Default baseline cleared." : "Default baseline saved. Review it before adoption."
+        }
+    }
+
+    @discardableResult
+    func removeInspection(_ id: UUID) -> Task<Void, Never>? {
+        guard !isBusy else { return nil }
+        return begin(writing: true) {
+            if self.pinnedInspectionID == id {
+                try self.writeInspectionPreferences(.init(), self.inspectionPreferencesURL)
+                self.pinnedInspectionID = nil
+            }
+            try await self.inspectionLibrary.remove(id)
+            self.inspectionEntries = try await self.inspectionLibrary.entries()
+            self.status = "Retained baseline removed. Active snapshots and original apps are unchanged."
+        }
+    }
+
+    func closeInspectionLibrary() { guard !isBusy else { return }; showingInspectionLibrary = false }
+
+    @discardableResult
+    func reviewInspection(_ id: UUID) -> Task<Void, Never>? {
+        guard !isBusy else { return nil }
+        return begin {
+            let retained = try await self.inspectionLibrary.load(id)
+            try Task.checkCancellation()
+            self.inspectionReview = InspectionCaptureContext(document: retained.report,
+                data: retained.data, sourceURL: retained.reportURL, label: retained.provenance.sourceLabel)
+        }
+    }
+
+    func reviewValidatedInspection(_ document: InspectionDocument, data: Data, from url: URL) {
+        guard !isBusy else { return }
+        inspectionReview = InspectionCaptureContext(document: document, data: data, sourceURL: url)
+    }
+
+    func adoptInspection(_ action: InspectionReviewAction) {
+        guard !isWorking, !isTerminating, let context = inspectionReview else { return }
+        model.useSavedBaseline(context.document.snapshot)
+        inspectionContexts = [.previous: context]
+        protectedSavedReportURL = context.sourceURL
+        inspectionReview = nil
+        showingInspectionLibrary = false
+        showingLibrary = false; showingBatch = false; showingBatchHistory = false; showingBatchRecovery = false
+        status = action == .inspect ? "Browsing saved inspection; no app was read." : "Saved Previous baseline ready. Choose a Current app."
+    }
+
+    @discardableResult
+    func exportInspection(_ side: ComparisonSide, to url: URL) -> Task<Void, Never>? {
+        guard !isBusy, let context = inspectionContexts[side] else { return nil }
+        let inputs = protectedInputs
+        return begin(writing: true) {
+            try await Task.detached(priority: .userInitiated) {
+                let access = url.startAccessingSecurityScopedResource()
+                defer { if access { url.stopAccessingSecurityScopedResource() } }
+                try ReportDestination.validate(url, excluding: inputs)
+                try context.data.write(to: url, options: .atomic)
+            }.value
+            self.status = "Complete inspection exported."
+        }
+    }
+
+    func chooseInspectionExport(_ side: ComparisonSide) {
+        guard !isBusy, inspectionContexts[side] != nil else { return }
+        isPresentingPanel = true
+        let panel = NSSavePanel()
+        panel.title = "Export Inspection"
+        panel.allowedContentTypes = [UTType(filenameExtension: "airsinspect") ?? .json]
+        panel.nameFieldStringValue = "Inspection.airsinspect"
+        let result = panel.runModal()
+        isPresentingPanel = false
+        if result == .OK, let url = panel.url { exportInspection(side, to: url) }
+    }
+
     @discardableResult
     func inspect(_ url: URL, side: ComparisonSide) -> Task<Void, Never>? {
         guard !isBusy else { return nil }
         status = "Reading \(side.label.lowercased()) app metadata…"
+        inspectionContexts[side] = nil
         let read = model.load(url, side: side)
         return begin(inspecting: true) {
             await read.value
             try Task.checkCancellation()
-            self.status = "Inspection settled. Metadata extraction does not validate a signature."
+            await self.prepareCapture(side)
+            if self.inspectionContexts[side] != nil {
+                self.status = "Inspection settled. Metadata extraction does not validate a signature."
+            }
+        }
+    }
+
+    @discardableResult
+    func inspectSingle(_ url: URL) -> Task<Void, Never>? {
+        guard !isBusy else { return nil }
+        inspectionContexts.removeAll(); protectedSavedReportURL = nil
+        model.clear()
+        showComparison()
+        return inspect(url, side: .previous)
+    }
+
+    @discardableResult
+    func inspectPair(previous: URL, current: URL) -> Task<Void, Never>? {
+        guard !isBusy else { return nil }
+        inspectionContexts.removeAll()
+        protectedSavedReportURL = nil
+        showComparison()
+        let reads = [(ComparisonSide.previous, model.load(previous, side: .previous)),
+                     (ComparisonSide.current, model.load(current, side: .current))]
+        return begin(inspecting: true) {
+            for (_, task) in reads { await task.value }
+            try Task.checkCancellation()
+            for (side, _) in reads { await self.prepareCapture(side) }
+            self.status = "Requested pair settled. Missing slices and failed reads remain explicit."
         }
     }
 
@@ -267,22 +476,52 @@ final class EntitlementsWorkspace {
 
     func clear(_ side: ComparisonSide? = nil) {
         guard !isBusy else { return }
-        if let side { model.clear(side) } else {
+        if let side { inspectionContexts[side] = nil; model.clear(side) } else {
+            inspectionContexts.removeAll()
             model.clear(); protectedSavedReportURL = nil
         }
         status = "Selection cleared."
     }
 
+    var canChangeArchitecture: Bool {
+        !isBusy && ![model.previous.snapshot, model.current.snapshot].compactMap({ $0 }).contains(where: \.isSavedBaseline)
+    }
+    var architectureChangeReason: String {
+        canChangeArchitecture ? "Live selections are re-read for the requested architecture; no fallback." : "Clear saved baselines before changing architecture."
+    }
+    func waitForSettlement() async { await activeTask?.value }
+
     func setArchitecture(_ architecture: Architecture) {
         guard !isBusy, architecture != model.architecture else { return }
+        guard canChangeArchitecture else { status = architectureChangeReason; return }
+        let selections = ComparisonSide.allCases.compactMap { side in
+            model.selectedSourceURL(for: side).map { (side, $0) }
+        }
+        inspectionContexts.removeAll()
         model.setArchitecture(architecture); protectedSavedReportURL = nil
-        status = "Architecture changed; choose both inputs again. No fallback slice is used."
+        let reads = selections.map { ($0.0, model.load($0.1, side: $0.0)) }
+        guard !reads.isEmpty else {
+            status = "Architecture changed. Synthetic example cleared; no app was re-read."
+            return
+        }
+        begin(inspecting: true) {
+            for (_, task) in reads { await task.value }
+            try Task.checkCancellation()
+            for (side, _) in reads { await self.prepareCapture(side) }
+            self.status = "Selected apps re-read for the requested architecture. No fallback slice is used."
+        }
     }
 
-    func swap() { guard !isBusy else { return }; model.swap() }
+    func swap() {
+        guard !isBusy, model.swap() else { return }
+        let previous = inspectionContexts[.previous]
+        inspectionContexts[.previous] = inspectionContexts[.current]
+        inspectionContexts[.current] = previous
+    }
     func loadExample() {
         guard !isBusy else { return }
         protectedSavedReportURL = nil
+        inspectionContexts.removeAll()
         model.loadExample(structured: true)
         status = "Synthetic values; no app was inspected."
     }
@@ -317,6 +556,7 @@ final class EntitlementsWorkspace {
 
     func adoptSavedBaseline(_ snapshot: EntitlementSnapshot) {
         guard !isWorking, !isTerminating, savedReport != nil else { return }
+        inspectionContexts.removeAll()
         model.useSavedBaseline(snapshot)
         finishReview()
     }
@@ -329,6 +569,7 @@ final class EntitlementsWorkspace {
     }
     func openSavedComparison() {
         guard !isWorking, !isTerminating, let savedReport else { return }
+        inspectionContexts.removeAll()
         model.openSavedComparison(savedReport)
         finishReview()
     }
@@ -343,6 +584,7 @@ final class EntitlementsWorkspace {
     @discardableResult
     func openLibrary() -> Task<Void, Never>? {
         guard !isBusy else { return nil }
+        showingInspectionLibrary = false
         showingLibrary = true; showingBatch = false; showingBatchHistory = false; showingBatchRecovery = false
         return refreshLibrary()
     }
@@ -352,6 +594,7 @@ final class EntitlementsWorkspace {
     /// Return to the primary comparison without clearing inputs, queue or recovery state.
     func showComparison() {
         guard !isBusy else { return }
+        showingInspectionLibrary = false
         showingLibrary = false; showingBatch = false
         showingBatchHistory = false; showingBatchRecovery = false
     }
@@ -486,6 +729,7 @@ final class EntitlementsWorkspace {
 
     func openBatch() {
         guard !isBusy else { return }
+        showingInspectionLibrary = false
         showingBatch = true; showingLibrary = false; showingBatchHistory = false; showingBatchRecovery = false
     }
     func closeBatch() { guard !isBusy else { return }; showingBatch = false }
@@ -611,6 +855,7 @@ final class EntitlementsWorkspace {
     @discardableResult
     func openBatchRecovery() -> Task<Void, Never>? {
         guard !isBusy else { return nil }
+        showingInspectionLibrary = false
         showingBatchRecovery = true; showingBatch = false; showingLibrary = false; showingBatchHistory = false
         return begin { self.recoveryEntries = try await self.recovery.entries() }
     }
@@ -752,6 +997,7 @@ final class EntitlementsWorkspace {
     @discardableResult
     func openBatchHistory() -> Task<Void, Never>? {
         guard !isBusy else { return nil }
+        showingInspectionLibrary = false
         showingBatchHistory = true; showingBatchRecovery = false; showingBatch = false; showingLibrary = false
         selectedBatchHistory = nil
         return refreshBatchHistory()
@@ -821,6 +1067,19 @@ final class EntitlementsWorkspace {
         if result == .OK, let url = panel.url { export(to: url) }
     }
 
+    func chooseTextExport() {
+        guard !isBusy, model.report != nil else { return }
+        isPresentingPanel = true
+        let panel = NSSavePanel()
+        panel.title = "Export Entitlement Text Summary"
+        panel.message = "Includes every difference, unchanged-key count and scope notices. The active filter does not limit this summary. Use JSON to retain both complete snapshots."
+        panel.allowedContentTypes = [.plainText]
+        panel.nameFieldStringValue = "AIRS-entitlements.txt"
+        let result = panel.runModal()
+        isPresentingPanel = false
+        if result == .OK, let url = panel.url { exportText(to: url) }
+    }
+
     @discardableResult
     func export(to url: URL) -> Task<Void, Never>? {
         guard !isBusy, let report = model.report else { return nil }
@@ -829,6 +1088,27 @@ final class EntitlementsWorkspace {
         return begin(writing: true) {
             try await self.writeReport(report, url, inputs)
             self.status = "Complete schema-1 entitlement report exported."
+        }
+    }
+
+    @discardableResult
+    func exportText(to url: URL) -> Task<Void, Never>? {
+        guard !isBusy, let report = model.report else { return nil }
+        let inputs = protectedInputs
+        status = "Writing complete entitlement text summary…"
+        return begin(writing: true) {
+            if let writer = self.writeTextReport { try await writer(report, url, inputs) }
+            else {
+                let contexts = self.inspectionContexts
+                try await Task.detached(priority: .userInitiated) {
+                    let access = url.startAccessingSecurityScopedResource()
+                    defer { if access { url.stopAccessingSecurityScopedResource() } }
+                    let bytes = Data(InspectionSummary.text(report: report, contexts: contexts).utf8)
+                    try ReportDestination.validate(url, excluding: inputs)
+                    try bytes.write(to: url, options: .atomic)
+                }.value
+            }
+            self.status = "Text summary exported with every difference and scope notice."
         }
     }
 
@@ -852,26 +1132,29 @@ final class EntitlementsWorkspace {
     func cancel() {
         guard canCancel else { return }
         activeTask?.cancel()
-        if isInspecting { model.clear() }
+        if isInspecting { inspectionContexts.removeAll(); model.clear() }
         status = "Cancelling; waiting for the owned read to settle…"
     }
 
     func finishBeforeQuit() async -> Bool {
         isTerminating = true
         let task = activeTask
-        if !isWriting { task?.cancel(); if isInspecting { model.clear() } }
+        if !isWriting { task?.cancel(); if isInspecting { inspectionContexts.removeAll(); model.clear() } }
         await task?.value
         if batchNeedsCheckpointSave {
+            showingInspectionLibrary = false
             isTerminating = false; showingBatch = true; showingLibrary = false; showingBatchHistory = false; showingBatchRecovery = false
             errorMessage = "The latest recovery checkpoint has not been saved. Retry saving it before quitting."
             return false
         }
         if hasUnretainedBatchReport {
+            showingInspectionLibrary = false
             isTerminating = false; showingBatch = true; showingLibrary = false; showingBatchHistory = false; showingBatchRecovery = false
             errorMessage = "A completed batch comparison has not been saved. Retry saving or export its complete report before quitting."
             return false
         }
         if batchNeedsHistorySave {
+            showingInspectionLibrary = false
             isTerminating = false; showingBatch = true; showingLibrary = false; showingBatchHistory = false; showingBatchRecovery = false
             errorMessage = "Settled batch history has not been saved. Retry saving or explicitly discard its history before quitting. Completed reports remain saved."
             return false

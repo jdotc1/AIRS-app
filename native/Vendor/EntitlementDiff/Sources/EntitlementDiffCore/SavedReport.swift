@@ -47,15 +47,54 @@ public struct SavedReport: Sendable, Identifiable {
             default: throw SavedReportError.invalid
             }
             _ = try change.object(keys); _ = try c.string("key")
-            if let old = c["previous"] { _ = try value(old) }
-            if let new = c["current"] { _ = try value(new) }
+            if let old = c["previous"] { _ = try SnapshotJSONDecoder.value(old) }
+            if let new = c["current"] { _ = try SnapshotJSONDecoder.value(new) }
         }
-        let old = try snapshot(fields.required("previous")), new = try snapshot(fields.required("current"))
+        let old = try SnapshotJSONDecoder.snapshot(fields.required("previous"))
+        let new = try SnapshotJSONDecoder.snapshot(fields.required("current"))
         _ = try ComparisonReport(previous: old, current: new)
         return Self(previous: old, current: new)
     }
+}
 
-    private static func snapshot(_ node: JSONNode) throws -> EntitlementSnapshot {
+/// Standalone snapshots reuse schema-1's exact typed decoder and import budgets.
+/// This is not a comparison report. Decoded snapshots are saved, unverified metadata.
+public enum EntitlementSnapshotJSONCodec {
+    public static let maximumBytes = SavedReport.maximumBytes
+
+    public static func decode(_ data: Data) throws -> EntitlementSnapshot {
+        try SnapshotJSONDecoder.snapshot(root(data))
+    }
+
+    public static func encode(_ snapshot: EntitlementSnapshot) throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        var data = try encoder.encode(snapshot)
+        data.append(0x0A)
+        _ = try decode(data)
+        return data
+    }
+
+    /// Validates every JSON token, duplicate object key and global budget before
+    /// selecting a snapshot. The caller must also decode and validate its metadata.
+    /// The exact outer key set and integer schemaVersion token are mandatory.
+    public static func decodeEnvelope(_ data: Data, snapshotKey: String,
+                                      expectedKeys: Set<String>, schemaVersion: Int = 1) throws -> EntitlementSnapshot {
+        let fields = try root(data).object(expectedKeys)
+        guard expectedKeys.contains(snapshotKey), expectedKeys.contains("schemaVersion"),
+              fields["schemaVersion"] == .number(String(schemaVersion)) else { throw SavedReportError.invalid }
+        return try SnapshotJSONDecoder.snapshot(fields.required(snapshotKey))
+    }
+
+    private static func root(_ data: Data) throws -> JSONNode {
+        guard data.count <= maximumBytes else { throw SavedReportError.limit }
+        var parser = BoundedJSON(data)
+        return try parser.parse()
+    }
+}
+
+private enum SnapshotJSONDecoder {
+    static func snapshot(_ node: JSONNode) throws -> EntitlementSnapshot {
         let f = try node.object(["sourceName", "signingIdentifier", "architecture", "presence", "origin", "entitlements"])
         let name = try f.string("sourceName"), signing = try f.string("signingIdentifier")
         guard !name.isEmpty, name.utf8.count <= 1_024, !name.contains("/"), !name.contains("\\"), name != ".", name != "..",
@@ -69,14 +108,14 @@ public struct SavedReport: Sendable, Identifiable {
                      presence: presence, origin: origin, entitlements: entries, isSavedBaseline: true)
     }
 
-    private static func dictionary(_ node: JSONNode) throws -> EntitlementDictionary {
+    static func dictionary(_ node: JSONNode) throws -> EntitlementDictionary {
         guard case .array(let entries) = node else { throw SavedReportError.invalid }
         return try EntitlementDictionary(entries: entries.map { entry in
             let f = try entry.object(["key", "value"])
             return .init(key: try f.string("key"), value: try value(f.required("value")))
         })
     }
-    private static func value(_ node: JSONNode) throws -> EntitlementValue {
+    static func value(_ node: JSONNode) throws -> EntitlementValue {
         let f = try node.object(["type", "value"]), raw = try f.required("value")
         switch try f.string("type") {
         case "boolean": guard case .boolean(let v) = raw else { throw SavedReportError.invalid }; return .boolean(v)
@@ -163,5 +202,15 @@ private struct BoundedJSON {
         let number = try JSONDecoder().decode(Double.self, from: token)
         guard number.isFinite else { throw SavedReportError.invalid }
         return .number(text)
+    }
+}
+
+/// Structural validation for chunked evidence envelopes. Existing report/snapshot
+/// entry points and their 8 MiB ceiling remain unchanged.
+public enum EvidenceEnvelopeJSON {
+    public static func validate(_ data: Data) throws {
+        guard data.count <= 32 * 1_024 * 1_024 else { throw SavedReportError.limit }
+        var parser = BoundedJSON(data)
+        _ = try parser.parse()
     }
 }

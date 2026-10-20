@@ -108,11 +108,14 @@ final class EntitlementBatchHistoryWorkspaceTests: XCTestCase {
         XCTAssertTrue(workspace.batchNeedsHistorySave); XCTAssertNotNil(workspace.batchHistoryFailure)
         workspace.clearBatch(); XCTAssertEqual(workspace.batchResult?.id, batchID)
         workspace.closeBatch()
+        await workspace.openInspectionLibrary()?.value
+        XCTAssertTrue(workspace.showingInspectionLibrary)
         let audit = AuditWorkspace(); let navigation = AIRSNavigation(); let fileOpen = AIRSFileOpen(hasModal: { false })
         navigation.showsEntitlements = false
         let delegate = AIRSApplicationDelegate()
         delegate.configureFileOpening(audit: audit, entitlements: workspace, navigation: navigation, fileOpen: fileOpen)
         let ready = await delegate.settleBeforeQuit()
+        XCTAssertFalse(workspace.showingInspectionLibrary, "Rejected quit must show batch settlement controls")
         XCTAssertFalse(ready); XCTAssertTrue(navigation.showsEntitlements); XCTAssertTrue(workspace.showingBatch)
         workspace.errorMessage = nil
         try FileManager.default.removeItem(at: historyRoot)

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AIRS saved-evidence policy request schema 1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "evaluationID",
+    "mode",
+    "reviewArchive",
+    "policy",
+    "expectedReviewDigest",
+    "expectedContentIdentities",
+    "assessments"
+  ],
+  "properties": {
+    "kind": {
+      "const": "airs.review-policy-request"
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "evaluationID": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "mode": {
+      "enum": [
+        "liveArtifact",
+        "historicalRecord"
+      ]
+    },
+    "reviewArchive": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "policy": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "expectedReviewDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "expectedContentIdentities": {
+      "type": "object",
+      "maxProperties": 256,
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 256
+      }
+    },
+    "assessments": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4096
+      }
+    }
+  }
+}

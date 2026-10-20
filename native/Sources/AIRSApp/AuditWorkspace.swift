@@ -3,6 +3,7 @@ import Combine
 import Foundation
 import UniformTypeIdentifiers
 import AIRSCore
+import enum EntitlementDiffCore.ReportDestination
 
 enum WorkspaceSelection: Hashable {
     case overview
@@ -110,6 +111,8 @@ final class AuditWorkspace: ObservableObject {
     @Published var showingLibrary = false
     @Published var showingBatch = false
     @Published var showingBatchHistory = false
+    @Published var projectHistoryIDs:[UUID:[UUID]]=[:]
+    var projectProtectedInputs:[URL]=[]
     @Published private(set) var batchHistoryEntries: [BatchHistoryEntry] = []
     @Published private(set) var batchSnapshot: ImageBatchSnapshot?
     @Published private(set) var libraryEntries: [ReportLibraryEntry] = []
@@ -735,6 +738,7 @@ final class AuditWorkspace: ObservableObject {
     }
 
     func validateExportDestination(_ url: URL, protectedInputs: [URL]) throws {
+        if !projectProtectedInputs.isEmpty {try ReportDestination.validate(url,excluding:projectProtectedInputs)}
         for input in [inspectedInput, attachedSymbolInput, discoveredBundleInput].compactMap({ $0 }) + protectedInputs {
             let protectedPath = input.resolvingSymlinksInPath().standardizedFileURL.path
             let destinationPath = url.resolvingSymlinksInPath().standardizedFileURL.path

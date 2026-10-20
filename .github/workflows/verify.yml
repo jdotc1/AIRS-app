@@ -1,0 +1,130 @@
+name: Source verification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: source-verification-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  python:
+    name: Python ${{ matrix.python }} source tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11.17', '3.15.0']
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Select Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run owned unit tests with a receipt
+        run: python -I -B scripts/verify-python.py --fail-on-skip --receipt build/verification/python.json
+      - name: Retain Python receipt
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: python-${{ matrix.python }}-verification
+          path: build/verification/python.json
+          if-no-files-found: error
+          retention-days: 14
+
+  native:
+    name: Swift source tests on macOS 15 arm64
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Select the source-test Python interpreter
+        id: python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.15.0'
+          architecture: arm64
+      - name: Record the actual host and toolchain
+        run: |
+          mkdir -p build/verification
+          test "$(uname -m)" = arm64
+          test -d "$DEVELOPER_DIR"
+          xcodebuild -version > build/verification/xcode.txt
+          xcrun swift --version > build/verification/swift.txt
+          sw_vers > build/verification/macos.txt
+          git rev-parse HEAD > build/verification/source-revision.txt
+      - name: Build both release executables
+        id: native_build
+        run: |
+          set -o pipefail
+          xcrun swift build --package-path native --configuration release --product AIRSApp 2>&1 | tee build/verification/native-app-build.log
+          xcrun swift build --package-path native --configuration release --product airs-entitlements 2>&1 | tee build/verification/native-cli-build.log
+      - name: Run sequential native tests
+        id: native_tests
+        env:
+          AIRS_PYTHON: ${{ steps.python.outputs.python-path }}
+        run: |
+          set -o pipefail
+          xcrun swift test --package-path native 2>&1 | tee build/verification/native-tests.log
+      - name: Record native qualification scope and visible skips
+        if: always()
+        env:
+          NATIVE_BUILD_OUTCOME: ${{ steps.native_build.outcome }}
+          NATIVE_TEST_OUTCOME: ${{ steps.native_tests.outcome }}
+        run: |
+          python3 -I -B - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          directory = Path('build/verification')
+          directory.mkdir(parents=True, exist_ok=True)
+          log = directory / 'native-tests.log'
+          lines = log.read_text(encoding='utf-8', errors='replace').splitlines() if log.exists() else []
+          skipped = [line for line in lines if 'skipp' in line.lower()]
+          receipt = {
+              'schema_version': 1,
+              'scope': 'native-source-tests',
+              'build_step_outcome': os.environ['NATIVE_BUILD_OUTCOME'],
+              'test_step_outcome': os.environ['NATIVE_TEST_OUTCOME'],
+              'private_runtime_qualification': 'not_requested',
+              'packaged_app_qualification': 'not_requested',
+              'expected_runtime_skip': 'PrivatePythonTests.testActualPrivateChildUsesIsolatedNoSiteNoBytecodeAndCancellationSettles',
+              'conditional_filesystem_skip': 'BundleDiscoveryTests.testInvalidNamesConsumeEntryBudgetAndRemainVisible',
+              'skip_log_lines': skipped,
+              'skip_accounting': 'Raw sequential XCTest lines; inspect the attached log. No test counts are inferred.',
+          }
+          (directory / 'native-scope.json').write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8')
+          with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a', encoding='utf-8') as summary:
+              summary.write('## Native source verification\n\n')
+              summary.write('The private app runtime was not downloaded or prepared. Its actual-child test is expected to skip.\n\n')
+              summary.write('A filesystem byte-name test may skip on a host that rejects that filename. Review all skip lines in native-tests.log before accepting this run.\n\n')
+              summary.write('These results do not qualify app packaging, signing, notarization, or a clean Mac.\n')
+          PY
+      - name: Retain native logs and scope
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-macos-15-arm64-source-verification
+          path: build/verification/
+          if-no-files-found: error
+          retention-days: 14

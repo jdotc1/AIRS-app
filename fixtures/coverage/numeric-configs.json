@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "report_kind": "airs.coverage_inventory",
+  "status": "complete",
+  "summary": {
+    "duplicate_report_count": 0,
+    "function_count": 18,
+    "agreement_count": 6,
+    "inconsistency_count": 4,
+    "unresolved_count": 8,
+    "input_report_count": 2,
+    "unique_image_model_config_count": 2,
+    "conflicting_report_count": 0
+  },
+  "reports": [
+    {
+      "index": 0,
+      "image": {
+        "display_name": "Owned saved coverage fixture",
+        "slice_sha256": "47ace7a3d0c85c70b2a016b92395b9610c5e01a79eba806aef9e00b7a52c5c15",
+        "architecture": "arm64",
+        "cpu_subtype": 0,
+        "uuid": "2bf3bb71-3a89-55b8-bebb-f554eba88960"
+      },
+      "model": "arm64-linear-v1",
+      "analysis_config": {
+        "limits": {
+          "max_evidence_per_function": 32,
+          "max_file_bytes": 536870912,
+          "max_functions": 50000,
+          "max_instructions_per_function": 16384,
+          "max_load_commands": 4096,
+          "max_observations_per_function": 256,
+          "max_sections": 4096,
+          "max_total_evidence": 8192,
+          "max_total_instructions": 1000000,
+          "max_unwind_entries": 200000
+        },
+        "metadata": 1
+      },
+      "summary": {
+        "agreement_count": 3,
+        "checked_pc_count": 5,
+        "function_count": 9,
+        "inconsistency_count": 2,
+        "metadata_entry_count": 9,
+        "unresolved_count": 4
+      },
+      "duplicate_of": null
+    },
+    {
+      "index": 1,
+      "image": {
+        "display_name": "Owned saved coverage fixture",
+        "slice_sha256": "47ace7a3d0c85c70b2a016b92395b9610c5e01a79eba806aef9e00b7a52c5c15",
+        "architecture": "arm64",
+        "cpu_subtype": 0,
+        "uuid": "2bf3bb71-3a89-55b8-bebb-f554eba88960"
+      },
+      "model": "arm64-linear-v1",
+      "analysis_config": {
+        "limits": {
+          "max_evidence_per_function": 32,
+          "max_file_bytes": 536870912,
+          "max_functions": 50000,
+          "max_instructions_per_function": 16384,
+          "max_load_commands": 4096,
+          "max_observations_per_function": 256,
+          "max_sections": 4096,
+          "max_total_evidence": 8192,
+          "max_total_instructions": 1000000,
+          "max_unwind_entries": 200000
+        },
+        "metadata": 1.0
+      },
+      "summary": {
+        "agreement_count": 3,
+        "checked_pc_count": 5,
+        "function_count": 9,
+        "inconsistency_count": 2,
+        "metadata_entry_count": 9,
+        "unresolved_count": 4
+      },
+      "duplicate_of": null
+    }
+  ],
+  "conflicting_report_indices": [],
+  "models": {
+    "arm64-linear-v1": 2
+  },
+  "reasons": [
+    {
+      "reason": "dwarf_fde_not_evaluated",
+      "count": 2,
+      "examples": [
+        {
+          "report_index": 0,
+          "finding_id": "airsf-77bd08ab2f58acdb78f208a672ba1d36d05e7aa6351fd5eab420aba0f2594a26",
+          "function_name": "_dwarf_fallback",
+          "pc": "0x1000010a8",
+          "scope": "metadata_only",
+          "mode": "dwarf"
+        },
+        {
+          "report_index": 1,
+          "finding_id": "airsf-77bd08ab2f58acdb78f208a672ba1d36d05e7aa6351fd5eab420aba0f2594a26",
+          "function_name": "_dwarf_fallback",
+          "pc": "0x1000010a8",
+          "scope": "metadata_only",
+          "mode": "dwarf"
+        }
+      ]
+    },
+    {
+      "reason": "empty_unwind_rule",
+      "count": 2,
+      "examples": [
+        {
+          "report_index": 0,
+          "finding_id": "airsf-0c624860209a48b2b7e27395a1ab78b86a144fc17de4f502d83e6e46910dd43e",
+          "function_name": "_no_rule",
+          "pc": "0x1000010b8",
+          "scope": "metadata_only",
+          "mode": "none"
+        },
+        {
+          "report_index": 1,
+          "finding_id": "airsf-0c624860209a48b2b7e27395a1ab78b86a144fc17de4f502d83e6e46910dd43e",
+          "function_name": "_no_rule",
+          "pc": "0x1000010b8",
+          "scope": "metadata_only",
+          "mode": "none"
+        }
+      ]
+    },
+    {
+      "reason": "unsupported_control_flow",
+      "count": 2,
+      "examples": [
+        {
+          "report_index": 0,
+          "finding_id": "airsf-5c35afe7b9bfd220d900db28307ddd443381b4c77cfc969838e9976447dd3501",
+          "function_name": "_conditional_flow",
+          "pc": "0x100001090",
+          "scope": "metadata_only",
+          "mode": "frame"
+        },
+        {
+          "report_index": 1,
+          "finding_id": "airsf-5c35afe7b9bfd220d900db28307ddd443381b4c77cfc969838e9976447dd3501",
+          "function_name": "_conditional_flow",
+          "pc": "0x100001090",
+          "scope": "metadata_only",
+          "mode": "frame"
+        }
+      ]
+    },
+    {
+      "reason": "unsupported_pauth",
+      "count": 2,
+      "examples": [
+        {
+          "report_index": 0,
+          "finding_id": "airsf-5d274d867246b8c748efd4325eeb5315b4554dd844a176abb5be27d266e6c20e",
+          "function_name": "_pointer_auth",
+          "pc": "0x1000010c0",
+          "scope": "metadata_only",
+          "mode": "frame"
+        },
+        {
+          "report_index": 1,
+          "finding_id": "airsf-5d274d867246b8c748efd4325eeb5315b4554dd844a176abb5be27d266e6c20e",
+          "function_name": "_pointer_auth",
+          "pc": "0x1000010c0",
+          "scope": "metadata_only",
+          "mode": "frame"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "This inventory describes only the supplied saved reports; it is not real-world prevalence.",
+    "Duplicate image/model/configuration reports with equal findings are counted once; conflicting variants remain visible and are counted separately.",
+    "Reason counts can overlap when an unresolved finding has multiple reasons. No semantic support is added.",
+    "Symbols or source labels do not prove that functions across builds have the same source identity."
+  ]
+}

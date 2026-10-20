@@ -20,6 +20,10 @@ MASK32 = (1 << 32) - 1
 def decode_instruction(word: int, address: int = 0) -> Instruction:
     if not 0 <= word <= 0xffffffff:
         raise ModelError('invalid_instruction_word','Instruction is not a 32-bit word',address)
+    # Owned MacScope one-source sf/opcode2/opcode dispatch; CLZ only.
+    # Fix every nonoperand bit, including S and opcode2; Rn/Rd31 mean ZR.
+    if word & 0x7ffffc00 == 0x5ac01000:
+        return Instruction(address,word,'xclz' if word&(1<<31) else 'wclz',word&31,(word>>5)&31)
     # Field layout adapted from the owned MacScope conditional-compare decoder.
     # Fix reserved bit4/bit10 as well as the register/immediate discriminator.
     form = word & 0xffe00c10
@@ -215,6 +219,17 @@ class PathState(MachineState):
 
     def apply(self, instruction: Instruction) -> None:
         kind,address = instruction.kind,instruction.address
+        if kind in ('wclz','xclz'):
+            raw=self.read_register(instruction.rn)
+            if raw.kind == 'stack':
+                raise ModelError('clz_stack_address_not_modeled','CLZ source is a derived stack address',address)
+            width=32 if kind == 'wclz' else 64
+            value=Value('unknown','CLZ source must be concrete')
+            if raw.kind == 'constant':
+                value=Value('constant',width-(int(raw.value)&((1<<width)-1)).bit_length())
+            if width == 32: self.write_w(instruction.rd,value)
+            else: self._write_register(instruction.rd,value)
+            return
         if kind in ('smulh','umulh'):
             # MacScope highMultiplyOperation captures both incoming X operands.
             left,right=self.read_register(instruction.rn),self.read_register(instruction.rt2)
@@ -686,7 +701,7 @@ def audit_cfg_function(image: MachOImage, function: FunctionRange, entry: Unwind
                 if index not in body_indices:
                     raise ModelError('cfg_call_outside_body','A direct call is outside the shared frame body',ins.address)
                 call_targets[index]=target
-            if index in body_indices and (ins.changes_sp or ins.changes_fp or (ins.kind in ('wadc','wadcs','wsbc','wsbcs','xadc','xadcs','xsbc','xsbcs','wadd','wadds','wsubs','xadds','xsubs','wadds_reg','wsubs_reg','xadds_reg','xsubs_reg','wadds_ext','wsubs_ext','xadds_ext','xsubs_ext','smulh','umulh','smaddl','smsubl','umaddl','umsubl','wmadd','wmsub','xmadd','xmsub','wlslv','wlsrv','wasrv','wrorv','xlslv','xlsrv','xasrv','xrorv','wextr','xextr','wsbfm','wbfm','wubfm','xsbfm','xbfm','xubfm','wlsl','wcsel','wcsinc','wcsinv','wcsneg','xcsel','xcsinc','xcsinv','xcsneg','wldr','wands','wbics','xands','xbics','wands_imm','xands_imm','wand_imm','worr_imm','weor_imm','xand_imm','xorr_imm','xeor_imm','wand_reg','wbic_reg','worr_reg','worn_reg','weor_reg','weon_reg','xand_reg','xbic_reg','xorr_reg','xorn_reg','xeor_reg','xeon_reg') and ins.rd==29)):
+            if index in body_indices and (ins.changes_sp or ins.changes_fp or (ins.kind in ('wclz','xclz','wadc','wadcs','wsbc','wsbcs','xadc','xadcs','xsbc','xsbcs','wadd','wadds','wsubs','xadds','xsubs','wadds_reg','wsubs_reg','xadds_reg','xsubs_reg','wadds_ext','wsubs_ext','xadds_ext','xsubs_ext','smulh','umulh','smaddl','smsubl','umaddl','umsubl','wmadd','wmsub','xmadd','xmsub','wlslv','wlsrv','wasrv','wrorv','xlslv','xlsrv','xasrv','xrorv','wextr','xextr','wsbfm','wbfm','wubfm','xsbfm','xbfm','xubfm','wlsl','wcsel','wcsinc','wcsinv','wcsneg','xcsel','xcsinc','xcsinv','xcsneg','wldr','wands','wbics','xands','xbics','wands_imm','xands_imm','wand_imm','worr_imm','weor_imm','xand_imm','xorr_imm','xeor_imm','wand_reg','wbic_reg','worr_reg','worn_reg','weor_reg','weon_reg','xand_reg','xbic_reg','xorr_reg','xorn_reg','xeor_reg','xeon_reg') and ins.rd==29)):
                 raise ModelError('cfg_frame_transition_not_modeled','Frame transitions inside CFG body are not supported',ins.address)
             if ins.kind in ('b','bcond'):
                 target=ins.address+ins.immediate

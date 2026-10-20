@@ -39,10 +39,19 @@ public actor SecurityEntitlementReader: SnapshotReading {
         let location = try AppBundlePreflight.inspect(url)
         try Task.checkCancellation()
 
+        return try readCode(at: location.bundleURL, executableURL: location.executableURL,
+            architecture: architecture, sourceName: location.bundleURL.lastPathComponent, identity: location.identity)
+    }
+
+    /// Caller supplies a separately preflighted conventional code unit and owns
+    /// before/after file-identity checks. Shared extraction preserves the app reader.
+    public func readCode(at codeURL: URL, executableURL: URL, architecture: Architecture,
+                         sourceName: String, identity: AppIdentity? = nil) throws -> EntitlementSnapshot {
+        try Task.checkCancellation()
         // Security's architecture attribute is ignored for non-Mach-O code.
         // A magic prefix is not enough. Ask the public CFBundle API to identify
         // this exact executable, without loading it or constructing a cached Bundle.
-        guard let architectures = CFBundleCopyExecutableArchitecturesForURL(location.executableURL as CFURL) as? [NSNumber],
+        guard let architectures = CFBundleCopyExecutableArchitecturesForURL(executableURL as CFURL) as? [NSNumber],
               !architectures.isEmpty else { throw BundleInputError.machORequired }
         let requestedCPU = architecture == .arm64 ? kCFBundleExecutableArchitectureARM64 : kCFBundleExecutableArchitectureX86_64
         guard architectures.contains(where: { $0.intValue == requestedCPU }) else {
@@ -52,7 +61,7 @@ public actor SecurityEntitlementReader: SnapshotReading {
         let attributes = [kSecCodeAttributeArchitecture as String: architecture.rawValue] as CFDictionary
         let flags = SecCSFlags(rawValue: 0) // kSecCSDefaultFlags in CSCommon.h
         var staticCode: SecStaticCode?
-        let createStatus = SecStaticCodeCreateWithPathAndAttributes(location.bundleURL as CFURL, flags, attributes, &staticCode)
+        let createStatus = SecStaticCodeCreateWithPathAndAttributes(codeURL as CFURL, flags, attributes, &staticCode)
         guard createStatus == errSecSuccess else {
             throw NativeInspectionError.systemCall(operation: "Create static code", status: createStatus, architecture: architecture)
         }
@@ -73,9 +82,9 @@ public actor SecurityEntitlementReader: SnapshotReading {
         )
         guard let actualExecutable = information[kSecCodeInfoMainExecutable as String] as? URL,
               actualExecutable.resolvingSymlinksInPath().standardizedFileURL.path.utf8
-                .elementsEqual(location.executableURL.path.utf8) else { throw NativeInspectionError.executableMismatch }
+                .elementsEqual(executableURL.path.utf8) else { throw NativeInspectionError.executableMismatch }
         try Task.checkCancellation()
-        return .init(sourceName: location.bundleURL.lastPathComponent, signingIdentifier: metadata.signingIdentifier,
-                     architecture: architecture, presence: metadata.presence, entitlements: metadata.entitlements, identity: location.identity)
+        return .init(sourceName: sourceName, signingIdentifier: metadata.signingIdentifier,
+                     architecture: architecture, presence: metadata.presence, entitlements: metadata.entitlements, identity: identity)
     }
 }

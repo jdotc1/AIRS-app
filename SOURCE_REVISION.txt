@@ -1,4 +1,0 @@
-AIRS 0.1.1 implementation snapshot: cc73b3a
-Usability implementation: 40e8eb0 and 89d1895
-Analysis model and report schema unchanged.
-Release assembly reuses accepted 0.1.0 runtime, CLI and resources; the native app executable and engine version label are updated.

@@ -112,12 +112,14 @@ final class EntitlementsWorkspaceTests: XCTestCase {
         XCTAssertTrue(try XCTUnwrap(workspace.model.current.snapshot).isSavedBaseline)
         XCTAssertTrue(workspace.model.selectedSourceURLs.isEmpty)
         XCTAssertFalse(workspace.model.canReload(.previous))
-        XCTAssertEqual(workspace.protectedInputs, [url])
+        XCTAssertTrue(workspace.protectedInputs.contains(url))
         workspace.model.browser.selection = workspace.model.browser.visibleRows.first?.id
         workspace.setArchitecture(.x86_64)
-        XCTAssertNil(workspace.model.report)
-        XCTAssertNil(workspace.model.browser.selectedRow)
-        XCTAssertTrue(workspace.protectedInputs.isEmpty)
+        XCTAssertNotNil(workspace.model.report)
+        XCTAssertNotNil(workspace.model.browser.selectedRow)
+        XCTAssertTrue(workspace.protectedInputs.contains(url))
+        XCTAssertEqual(workspace.model.architecture, .arm64)
+        XCTAssertFalse(workspace.canChangeArchitecture)
     }
 
     @MainActor

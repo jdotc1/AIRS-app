@@ -35,6 +35,7 @@ struct EntitlementBatchHistoryView: View {
                             EntitlementBatchHistoryRow(entry: entry, busy: workspace.isBusy,
                                 open: { workspace.loadBatchHistory(entry.id) },
                                 remove: { workspace.removeBatchHistory(entry.id) })
+                            if let ids=workspace.projectHistoryIDs[entry.id],!ids.isEmpty {Text("Project IDs: "+ids.map(\.uuidString).joined(separator:", ")).textSelection(.enabled).foregroundStyle(.secondary)}
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading)
                 }

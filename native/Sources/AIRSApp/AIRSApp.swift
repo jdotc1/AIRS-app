@@ -37,6 +37,7 @@ struct AIRSApp: App {
                     NSApplication.shared.setActivationPolicy(.regular)
                     NSApplication.shared.activate(ignoringOtherApps: true)
                     workspace.refreshEngineAvailability()
+                    fileOpen.configureProjectProtection(audit:workspace,entitlements:entitlements)
                 }
                 .alert("Open Report", isPresented: Binding(
                     get: { fileOpen.errorMessage != nil },
@@ -71,6 +72,18 @@ struct AIRSApp: App {
                     .disabled(workspace.isBusy || entitlements.isBusy || fileOpen.blocksActions)
                 Button("Keep Current Report") { navigation.performAudit { workspace.keepCurrentReport() } }
                     .disabled(workspace.report == nil || workspace.isBusy || entitlements.isBusy || fileOpen.blocksActions)
+                Button("Open Coverage Inventory…") {fileOpen.chooseCoverage(audit:workspace,entitlements:entitlements)}
+                    .disabled(fileOpen.blocksActions || workspace.blocksFileOpen || entitlements.isBusy)
+                Button("Review Owned Build Policy…") {fileOpen.choosePolicyReview(audit:workspace,entitlements:entitlements)}
+                    .disabled(fileOpen.blocksActions || workspace.blocksFileOpen || entitlements.isBusy)
+                Button("Inspection Projects…") {fileOpen.openProjects(audit:workspace,entitlements:entitlements)}
+                    .disabled(fileOpen.blocksActions || workspace.blocksFileOpen || entitlements.isBusy)
+                Button("Assess App Signature and Distribution…") {fileOpen.chooseAssessment(audit:workspace,entitlements:entitlements)}
+                    .disabled(fileOpen.blocksActions || workspace.blocksFileOpen || entitlements.isBusy)
+                Button("Compare App Components…") { fileOpen.chooseComponentComparison(audit:workspace,entitlements:entitlements) }
+                    .disabled(workspace.blocksFileOpen || entitlements.isBusy || fileOpen.blocksActions)
+                Button("Inventory App Components…") { fileOpen.chooseInventory(audit: workspace, entitlements: entitlements) }
+                    .disabled(workspace.blocksFileOpen || entitlements.isBusy || fileOpen.blocksActions)
                 Button("Discover App Images…") { navigation.performAudit { workspace.chooseBundleDiscovery() } }
                     .disabled(workspace.isBusy || entitlements.isBusy || fileOpen.blocksActions || workspace.hasUnsavedBatchHistory)
                 Button("Analyze Selected Images…") { navigation.performAudit { workspace.chooseBatch() } }
@@ -114,6 +127,8 @@ struct AIRSApp: App {
                 Button("Keep Current Entitlement Report") { entitlements.keepCurrentReport() }
                     .disabled(!navigation.allowsEntitlementNavigation(audit: workspace, fileOpen: fileOpen) || entitlements.isBusy || entitlements.model.report == nil)
                 Button("Export Entitlement JSON…", action: entitlements.chooseExport)
+                    .disabled(entitlements.isBusy || fileOpen.blocksActions || entitlements.model.report == nil)
+                Button("Export Entitlement Text Summary…", action: entitlements.chooseTextExport)
                     .disabled(entitlements.isBusy || fileOpen.blocksActions || entitlements.model.report == nil)
             }
             CommandMenu("Analysis") {
@@ -189,7 +204,8 @@ final class AIRSApplicationDelegate: NSObject, NSApplicationDelegate {
 
     /// Keep refusal visible even when a pending entitlement report is off-screen.
     func settleBeforeQuit() async -> Bool {
-        await fileOpen?.finishBeforeQuit()
+        let fileReady = await fileOpen?.finishBeforeQuit() ?? true
+        guard fileReady else { fileOpen?.resumeAfterCancelledQuit(); return false }
         let entitlementReady = await entitlements?.finishBeforeQuit() ?? true
         let shouldQuit: Bool
         if entitlementReady {

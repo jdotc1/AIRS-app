@@ -502,4 +502,18 @@ final class CFGReportTests: XCTestCase {
         XCTAssertThrowsError(try AuditReport.decode(JSONSerialization.data(withJSONObject: item)))
     }
 
+    func testV32CLZRetainsScopeAndRejectsInvalidSupportedEncoding() throws {
+        var item=try object()
+        var generator=try XCTUnwrap(item["generator"] as? [String:Any])
+        generator["analysis_model_version"]="arm64-bounded-clz-v32";item["generator"]=generator
+        var rows=try XCTUnwrap(item["findings"] as? [[String:Any]])
+        rows[0]["evidence"]=[["code":"cfg_paths_checked","message":"Scalar CLZ preserved caller state; no all-PC claim"]]
+        item["findings"]=rows
+        let report=try AuditReport.decode(JSONSerialization.data(withJSONObject:item))
+        XCTAssertEqual(report.generator.analysisModelVersion,"arm64-bounded-clz-v32")
+        XCTAssertEqual(report.findings[0].scope,"modeled_leaf_body")
+        rows[0]["encoding"]="0x02000001";item["findings"]=rows
+        XCTAssertThrowsError(try AuditReport.decode(JSONSerialization.data(withJSONObject:item)))
+    }
+
 }

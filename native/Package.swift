@@ -20,7 +20,8 @@ let package = Package(
         ]),
         .target(name: "AIRSCore"),
         .target(name: "AIRSEntitlements", dependencies: ["AIRSCore",
-            .product(name: "EntitlementDiffCore", package: "EntitlementDiff")]),
+            .product(name: "EntitlementDiffCore", package: "EntitlementDiff"),
+            .product(name: "EntitlementDiffSecurity", package: "EntitlementDiff")]),
         .executableTarget(
             name: "AIRSApp",
             dependencies: ["AIRSCore", "AIRSEntitlements",

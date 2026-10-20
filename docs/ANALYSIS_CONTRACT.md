@@ -1,6 +1,11 @@
 # Analysis contract
 
-Current model `arm64-bounded-sequential-loops-v31` admits at most two disjoint,
+Current model `arm64-bounded-clz-v32` adds scalar CLZ W/X only, with exact fixed-bit
+admission, concrete width-masked leading-zero count, conservative unknown values,
+raw stack-provenance rejection and unchanged flags/recovery scope. See CLZ.md and
+CLZ_RESULTS.md. No memory, loop, CFI or asynchronous scope expands.
+
+Previous model `arm64-bounded-sequential-loops-v31` admits at most two disjoint,
 address-ordered natural loops. It retains the existing per-path state, shared
 budget, all explored exits, unknown precedence and checked-PC recovery scope.
 See `SEQUENTIAL_LOOPS.md` and `SEQUENTIAL_LOOPS_RESULTS.md`. Decoded loop count

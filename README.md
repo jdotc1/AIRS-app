@@ -1,63 +1,56 @@
-# AIRS 0.1.1
+# AIRS 0.2.0
 
-**Read-only ARM64 binary analysis and entitlement review for macOS security research.**
+Shipping source preparation for A/B-RC1, build 3. This snapshot is not a signed,
+notarized or published release. Existing public binaries remain 0.1.1 until a
+separately authorized release.
 
-AIRS is a native macOS workspace for examining ARM64 Mach-O unwind behavior and
-comparing application entitlements on Apple silicon. It brings bounded unwind
-diagnostics and entitlement differences into a local review workflow, reading
-selected files as data without loading or executing the inspected applications.
+AIRS is a native macOS evidence-review workspace with a separately executable,
+standard-library-only Python ARM64 Mach-O unwind analyzer. Selected binaries are
+input data and are never loaded or executed by the analyzer.
 
-Use it to inspect supported unwind patterns and review changes in declared
-entitlements. Findings remain tied to supported analysis coverage, with
-ambiguous and unsupported cases reported as unresolved.
+The A/B feature set includes entitlement inspection and retained baselines,
+review archives, component inventory/comparison, explicitly scoped assessments,
+inspection projects and batch-history associations, owned-build policy review,
+and bounded coverage presentation with the CLZ-v32 engine extension.
 
-Download the app from the [public releases](https://github.com/jdotc1/AIRS-app/releases).
+Unsupported instructions, ambiguous state and missing evidence remain visible.
+Entitlements are declarations; a historical result does not establish current
+permissions, trust, safety or distribution acceptance. Review the analysis and
+format contracts in docs/ before interpreting findings.
 
-Distribution status: Developer ID signed and Apple-notarized preview.
-The exported app carries a validated staple and passed Gatekeeper assessment.
+## Build and verification
 
-## Changes in 0.1.1
+macOS 14 or newer, Apple silicon; Swift 6.1 or newer. Python source requires
+3.11 or newer. Local accepted qualification used Swift 6.4.2 and Python 3.15.0;
+minimum-toolchain and clean-Mac qualification remain separate gates.
 
-- Empty entitlement results explain the current search/category state and offer
-  an explicit recovery action while preserving sorting and comparison data.
-- Unwind review identifies a selected function hidden by filters and offers
-  Show Selected Function or Report Overview without replacing its evidence.
-- No-match function guidance keeps the overview row available. Reason codes and
-  evidence appear before the longer function identity details.
-- Native function-list selection uses view-local state with guarded workspace
-  synchronization, avoiding publication during the native list update callback.
+```
+swift build --package-path native --configuration release --product AIRSApp
+swift build --package-path native --configuration release --product airs-entitlements
+python3 -I -B airs_cli.py --version
+```
 
-Analysis coverage, report schemas and supported conclusions are unchanged.
+Lumen and EntitlementDiff are vendored. A developer bundle can be assembled with
+`bash scripts/package-app.sh --release --external-python`. A standalone bundle
+requires the prepared private Python runtime; see docs/PRIVATE_PYTHON.md and
+`python3 scripts/prepare-private-python.py --help`. Packaging/signing commands are
+operator actions, not actions performed by this snapshot preparation.
 
-## Requirements
+For a new source identity requiring verification, the portable entry point is
+`python3 -I -B scripts/verify-python.py --fail-on-skip --receipt build/python.json`.
+Native checks are described by `scripts/verify-macos.sh`. Reuse valid accepted
+receipts for unchanged inputs; these commands are not a request to replay them.
+The supplied CI workflow is source qualification, not distribution approval.
 
-The distributed app supports Apple silicon Macs running macOS 14 or newer.
-It includes private Python 3.15.0; no separate Python installation is required.
-The app is an initial preview. Clean-Mac and Intel-app qualification remain open.
+## Included code and evidence
 
-## Evidence and limits
-
-Keep coverage, verdict and scope separate. Unsupported instructions and
-ambiguous states remain unresolved. Missing metadata alone is not a defect.
-Read docs/ANALYSIS_CONTRACT.md for supported subsets and their boundaries.
-MacScope integration is a future consumer contract, not an installed integration.
-
-## Build from source
-
-Use a macOS Swift toolchain supporting Swift 6.1 or newer. The Lumen and
-EntitlementDiff dependencies are vendored; no developer-specific checkout path
-is required. Run `swift build --package-path native --configuration release`.
-For an external-Python developer app, run
-`bash scripts/package-app.sh --release --external-python`.
-A standalone package requires a prepared private runtime; see
-`python3 scripts/prepare-private-python.py --help` for its preparation interface.
-
-The Python engine remains independently executable:
-`python3 -I -B airs_cli.py --help`.
-
-## Included code
-
-LumenTokens and LumenUI are included with the owner's distribution authorization;
-see native/Vendor/Lumen/PROVENANCE.md. EntitlementDiff's MIT license is preserved.
-Python's upstream license and third-party notices accompany the binary app.
+LumenTokens/LumenUI retain the owner's distribution authorization in
+native/Vendor/Lumen/PROVENANCE.md. EntitlementDiff's MIT license is preserved.
 No additional open-source license grant is made for AIRS or Lumen here.
+Python's upstream license accompanies the binary runtime, which is not included
+in this source snapshot.
+
+This export excludes private history, maintainer instructions, handoffs, local
+receipts/logs, corpus artifact locations, screenshots, compiled app/runtime and
+historical internal status documents. Tests and owned parser/data fixtures are
+included. See RELEASE_NOTES.md, SOURCE_SNAPSHOT.json and SOURCE_FILES.txt.

@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AIRS review policy schema 1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "reviewModel",
+    "rules",
+    "acknowledgements"
+  ],
+  "properties": {
+    "kind": {
+      "const": "airs.review-policy"
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "reviewModel": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check",
+          "componentRelativePath"
+        ],
+        "properties": {
+          "check": {
+            "enum": [
+              "requiredArchitectures",
+              "acknowledgedEntitlementChanges",
+              "signatureValidity",
+              "symbolMatches"
+            ]
+          },
+          "componentRelativePath": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "architecture": {
+            "enum": [
+              "arm64",
+              "x86_64"
+            ]
+          },
+          "scopeDescription": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "check": {
+                "const": "signatureValidity"
+              },
+              "componentRelativePath": {
+                "const": "@app-root"
+              }
+            },
+            "required": [
+              "scopeDescription"
+            ],
+            "not": {
+              "required": [
+                "architecture"
+              ]
+            }
+          },
+          {
+            "properties": {
+              "check": {
+                "enum": [
+                  "requiredArchitectures",
+                  "acknowledgedEntitlementChanges",
+                  "symbolMatches"
+                ]
+              }
+            },
+            "required": [
+              "architecture"
+            ],
+            "not": {
+              "required": [
+                "scopeDescription"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "acknowledgements": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reviewDigest",
+          "reportDigest",
+          "componentRelativePath",
+          "architecture",
+          "keyUTF8"
+        ],
+        "properties": {
+          "reviewDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "reportDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "componentRelativePath": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "architecture": {
+            "enum": [
+              "arm64",
+              "x86_64"
+            ]
+          },
+          "keyUTF8": {
+            "type": "string",
+            "contentEncoding": "base64"
+          },
+          "beforeValue": {
+            "type": "string",
+            "contentEncoding": "base64",
+            "description": "Canonical typed EntitlementValue JSON bytes; absent property means absent value."
+          },
+          "afterValue": {
+            "type": "string",
+            "contentEncoding": "base64"
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "beforeValue"
+            ]
+          },
+          {
+            "required": [
+              "afterValue"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

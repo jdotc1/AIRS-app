@@ -1,0 +1,11 @@
+{
+  "version": "0.2.0",
+  "build": "3",
+  "source_revision": "afcea3169c611f7798d6c3761279cf1289757b57",
+  "export_policy": "allowlist; no history, runtime, private evidence or corpus locations",
+  "files": 499,
+  "sanitation": "bounded maintainer-path and credential-marker scan passed",
+  "lumen_source_gate": "unchanged accepted 92-file vendor receipt reused; not rescanned",
+  "limitation": "Pattern inspection is not proof that arbitrary confidential text cannot exist",
+  "distribution_actions_performed": false
+}

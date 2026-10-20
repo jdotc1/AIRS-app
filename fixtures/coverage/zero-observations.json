@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "report_kind": "airs.coverage_inventory",
+  "status": "complete",
+  "summary": {
+    "duplicate_report_count": 0,
+    "function_count": 0,
+    "agreement_count": 0,
+    "inconsistency_count": 0,
+    "unresolved_count": 0,
+    "input_report_count": 1,
+    "unique_image_model_config_count": 1,
+    "conflicting_report_count": 0
+  },
+  "reports": [
+    {
+      "index": 0,
+      "image": {
+        "display_name": "Owned saved coverage fixture",
+        "slice_sha256": "47ace7a3d0c85c70b2a016b92395b9610c5e01a79eba806aef9e00b7a52c5c15",
+        "architecture": "arm64",
+        "cpu_subtype": 0,
+        "uuid": "2bf3bb71-3a89-55b8-bebb-f554eba88960"
+      },
+      "model": "arm64-linear-v1",
+      "analysis_config": {
+        "limits": {
+          "max_evidence_per_function": 32,
+          "max_file_bytes": 536870912,
+          "max_functions": 50000,
+          "max_instructions_per_function": 16384,
+          "max_load_commands": 4096,
+          "max_observations_per_function": 256,
+          "max_sections": 4096,
+          "max_total_evidence": 8192,
+          "max_total_instructions": 1000000,
+          "max_unwind_entries": 200000
+        }
+      },
+      "summary": {
+        "agreement_count": 0,
+        "checked_pc_count": 0,
+        "function_count": 0,
+        "inconsistency_count": 0,
+        "metadata_entry_count": 0,
+        "unresolved_count": 0
+      },
+      "duplicate_of": null
+    }
+  ],
+  "conflicting_report_indices": [],
+  "models": {
+    "arm64-linear-v1": 1
+  },
+  "reasons": [],
+  "limitations": [
+    "This inventory describes only the supplied saved reports; it is not real-world prevalence.",
+    "Duplicate image/model/configuration reports with equal findings are counted once; conflicting variants remain visible and are counted separately.",
+    "Reason counts can overlap when an unresolved finding has multiple reasons. No semantic support is added.",
+    "Symbols or source labels do not prove that functions across builds have the same source identity."
+  ]
+}

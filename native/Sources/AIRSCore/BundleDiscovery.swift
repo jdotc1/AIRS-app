@@ -29,6 +29,7 @@ public struct BundleDiscoveryResult: Identifiable, Sendable {
     public var cancelled: Bool
     public var visited: Int
     public var headerBytes: Int
+    public var searchedLocations: [String] = []
 }
 
 /// Narrow adaptation of MacScope ReconstructionContainerManifestBuilder's
@@ -157,6 +158,7 @@ public struct BundleDiscovery: Sendable {
         for location in Self.codeLocations {
             if stopped { break }
             let relative = "Contents/" + location
+            result.searchedLocations.append(relative)
             do {
                 let directory = try openRelative(fd, components: relative.split(separator: "/").map(String.init), directory: true)
                 defer { Darwin.close(directory) }
@@ -185,6 +187,12 @@ public struct BundleDiscovery: Sendable {
     }
 
     public static func validate(_ provenance: BundleImageProvenance, input: URL) throws {
+        try withValidatedImage(provenance, input: input) { _ in () }
+    }
+
+    /// Keeps the same no-follow descriptor open through the caller's bounded read.
+    static func withValidatedImage<T>(_ provenance: BundleImageProvenance, input: URL,
+                                      body: (Int32) throws -> T) throws -> T {
         let scanner = BundleDiscovery()
         let components = provenance.relativePath.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
         guard components.count >= 3, components.allSatisfy(scanner.safe), components[0] == "Contents",
@@ -201,6 +209,25 @@ public struct BundleDiscovery: Sendable {
               info.st_size == expected.size, Int64(info.st_mtimespec.tv_sec) == expected.modifiedSeconds,
               Int64(info.st_mtimespec.tv_nsec) == expected.modifiedNanos,
               Int64(info.st_ctimespec.tv_sec) == expected.changedSeconds, Int64(info.st_ctimespec.tv_nsec) == expected.changedNanos else { throw scanner.failure("Discovered image changed; discover and select it again.") }
+        let result = try body(file)
+        guard scanner.same(info, try scanner.metadata(file)) else { throw scanner.failure("Image changed during metadata read.") }
+        return result
+    }
+
+    static func readMetadata(_ provenance: BundleImageProvenance, relativePath: String) throws -> Data {
+        let scanner = BundleDiscovery()
+        let parts = relativePath.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        guard !parts.isEmpty, parts.allSatisfy(scanner.safe), relativePath.utf8.count <= 4096 else { throw scanner.failure("Invalid metadata path.") }
+        let root = Darwin.open(provenance.bundle.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)
+        guard root >= 0 else { throw scanner.failure("Bundle root unavailable.") }; defer { Darwin.close(root) }
+        let info = try scanner.metadata(root)
+        guard UInt64(UInt32(bitPattern: info.st_dev)) == provenance.rootDevice, info.st_ino == provenance.rootInode else { throw scanner.failure("Bundle root changed.") }
+        let file = try scanner.openRelative(root, components: parts, directory: false); defer { Darwin.close(file) }
+        let before = try scanner.metadata(file)
+        guard (before.st_mode & S_IFMT) == S_IFREG, before.st_size > 0, before.st_size <= 65_536 else { throw scanner.failure("Metadata must be a bounded regular file.") }
+        let bytes = try scanner.prefix(file, count: Int(before.st_size))
+        guard scanner.same(before, try scanner.metadata(file)) else { throw scanner.failure("Metadata changed while reading.") }
+        return bytes
     }
 
     private func openRelative(_ root: Int32, components: [String], directory: Bool) throws -> Int32 {

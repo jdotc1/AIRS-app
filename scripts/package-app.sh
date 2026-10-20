@@ -167,8 +167,8 @@ cat > "$CONTENTS/Info.plist" <<'PLIST'
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
     <key>CFBundleName</key><string>AIRS</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>0.1.1</string>
-    <key>CFBundleVersion</key><string>2</string>
+    <key>CFBundleShortVersionString</key><string>0.2.0</string>
+    <key>CFBundleVersion</key><string>3</string>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>CFBundleDocumentTypes</key>
@@ -176,7 +176,22 @@ cat > "$CONTENTS/Info.plist" <<'PLIST'
         <key>CFBundleTypeName</key><string>AIRS and Entitlement Comparison Reports</string>
         <key>CFBundleTypeRole</key><string>Viewer</string>
         <key>LSHandlerRank</key><string>Alternate</string>
-        <key>LSItemContentTypes</key><array><string>public.json</string></array>
+        <key>LSItemContentTypes</key><array><string>public.json</string><string>dev.airs.inspection</string><string>dev.airs.review</string></array>
+    </dict></array>
+    <key>UTExportedTypeDeclarations</key><array><dict>
+        <key>UTTypeIdentifier</key><string>dev.airs.inspection</string>
+        <key>UTTypeDescription</key><string>AIRS Inspection</string>
+        <key>UTTypeConformsTo</key><array><string>public.json</string></array>
+        <key>UTTypeTagSpecification</key><dict>
+            <key>public.filename-extension</key><array><string>airsinspect</string></array>
+        </dict>
+    </dict><dict>
+        <key>UTTypeIdentifier</key><string>dev.airs.review</string>
+        <key>UTTypeDescription</key><string>AIRS Review Archive</string>
+        <key>UTTypeConformsTo</key><array><string>public.json</string></array>
+        <key>UTTypeTagSpecification</key><dict>
+            <key>public.filename-extension</key><array><string>airsreview</string></array>
+        </dict>
     </dict></array>
 </dict>
 </plist>

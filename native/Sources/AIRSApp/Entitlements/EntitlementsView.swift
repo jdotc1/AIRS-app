@@ -10,7 +10,9 @@ struct EntitlementsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if workspace.showingBatchRecovery {
+            if workspace.showingInspectionLibrary {
+                InspectionLibraryView(workspace: workspace)
+            } else if workspace.showingBatchRecovery {
                 EntitlementBatchRecoveryView(workspace: workspace)
             } else if workspace.showingBatchHistory {
                 EntitlementBatchHistoryView(workspace: workspace)
@@ -26,12 +28,35 @@ struct EntitlementsView: View {
                     Text(report.notices.joined(separator: " "))
                         .font(.caption).foregroundStyle(.secondary)
                         .padding(.horizontal, 16).padding(.vertical, 6)
+                } else if let input = workspace.standaloneInspection {
+                    StandaloneEntitlementsView(input: input,
+                        disabled: workspace.isBusy || !navigationAllowed)
+                        .id(input.id)
                 } else {
                     EntitlementsEmptyView(workspace: workspace)
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .sheet(item: $workspace.inspectionReview) { context in
+            InspectionReviewView(context: context, adopt: workspace.adoptInspection,
+                cancel: { workspace.inspectionReview = nil }).interactiveDismissDisabled()
+        }
+        .sheet(isPresented: Binding(get: { workspace.captureSide != nil }, set: { if !$0 { workspace.captureSide = nil } })) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Capture Baseline").font(.title2.bold())
+                TextField("Baseline name", text: $workspace.captureName).textFieldStyle(.roundedBorder)
+                HStack {
+                    Button("Cancel") { workspace.captureSide = nil }.keyboardShortcut(.cancelAction)
+                    Spacer()
+                    Button("Keep Baseline") {
+                        let side = workspace.captureSide
+                        workspace.captureSide = nil
+                        if let side { workspace.captureBaseline(side, label: workspace.captureName) }
+                    }.disabled(workspace.captureName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }.padding(24).frame(width: 440)
+        }
         .sheet(item: $workspace.batchManifestReview) { review in
             EntitlementBatchManifestReviewView(review: review,
                 adopt: { workspace.adoptBatchManifest(review.id) },
@@ -63,24 +88,41 @@ private struct EntitlementsHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppDesign.Space.regular) {
             HStack(spacing: AppDesign.Space.regular) {
-                Text("Compare Entitlements").font(AppDesign.Layout.pageTitle)
+                Text(workspace.standaloneInspection == nil ? "Compare Entitlements" : "Inspect Entitlements")
+                    .font(AppDesign.Layout.pageTitle)
                 Spacer(minLength: AppDesign.Space.regular)
                 Picker("Architecture", selection: Binding(
                     get: { workspace.model.architecture }, set: workspace.setArchitecture
                 )) {
                     ForEach(Architecture.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }.frame(width: 200).disabled(workspace.isBusy)
+                }.frame(width: 200).disabled(!workspace.canChangeArchitecture).help(workspace.architectureChangeReason)
             }
+            Button("Inspection Baselines…") { workspace.openInspectionLibrary() }.disabled(workspace.isBusy)
             Text("Main executable and requested architecture only. Extraction is not signature validation, effective permissions, Gatekeeper evaluation or a trust verdict.")
                 .font(.caption).foregroundStyle(.secondary)
             HStack(alignment: .top, spacing: AppDesign.Space.regular) {
-                pane(.previous, state: workspace.model.previous)
-                pane(.current, state: workspace.model.current)
+                capturePane(.previous, state: workspace.model.previous)
+                capturePane(.current, state: workspace.model.current)
             }
         }
         .padding(.horizontal, AppDesign.Space.section)
         .padding(.vertical, AppDesign.Space.regular)
     }
+    private func capturePane(_ side: ComparisonSide, state: InputState) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            pane(side, state: state)
+            if let context = workspace.inspectionContexts[side] {
+                Text("Captured \(context.document.capturedAt.formatted())").font(.caption).foregroundStyle(.secondary)
+                HStack {
+                    Button("Capture Baseline…") { workspace.requestCapture(side) }
+                    Button("Export Inspection…") { workspace.chooseInspectionExport(side) }
+                }.disabled(workspace.isBusy)
+            } else if state.snapshot?.isSavedBaseline == true {
+                Text("Capture metadata unavailable in this legacy report.").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+
     private func pane(_ side: ComparisonSide, state: InputState) -> some View {
         SourcePane(side: side, state: state, disabled: workspace.isBusy,
                    sourceURL: workspace.model.selectedSourceURL(for: side), reveal: { workspace.reveal(side) },
@@ -136,9 +178,10 @@ struct EntitlementsBrowser: View {
                                     sortOrder: $model.browser.sortOrder, revealID: workspace.findRevealID,
                                     revealRevision: workspace.findRevealRevision)
                             .frame(minHeight: 100)
-                        detailView
-                            .id(model.reportRevision).id(model.browser.selectedRow?.id)
-                            .frame(minHeight: min(300, max(200, geometry.size.height * 0.55)))
+                        VStack(alignment: .leading, spacing: 6) {
+                            if let row = model.browser.selectedRow { EntitlementReferenceView(key: row.key) }
+                            detailView.id(model.reportRevision).id(model.browser.selectedRow?.id)
+                        }.frame(minHeight: min(300, max(200, geometry.size.height * 0.55)))
                     }
                 }
             }
@@ -193,8 +236,8 @@ private struct EntitlementsEmptyView: View {
                         .textSelection(.enabled)
                 }
                 VStack(alignment: .leading, spacing: AppDesign.Space.medium) {
-                    LumenEmptyState(systemImage: "square.split.2x1", title: "Review the difference between two builds",
-                        message: "Choose Previous and Current above, or drop one app into each input. AIRS compares the embedded entitlement dictionaries for the selected architecture.")
+                    LumenEmptyState(systemImage: "square.split.2x1", title: "Inspect one app or compare two builds",
+                        message: "Choose or drop one app into either input to browse its typed entitlements. Load the other input to compare both captured dictionaries for the selected architecture.")
                     HStack(spacing: 8) {
                         Button("Open Saved Comparison…", action: workspace.chooseSavedReport)
                         Button("Load Example", action: workspace.loadExample)

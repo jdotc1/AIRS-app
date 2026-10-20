@@ -118,7 +118,7 @@ final class FileOpenRoutingTests: XCTestCase {
         XCTAssertEqual(audit.reportRevision, auditRevision)
         entitlements.openSavedComparison()
         XCTAssertTrue(entitlements.model.previous.snapshot?.isSavedBaseline == true)
-        XCTAssertEqual(entitlements.protectedInputs, [entitlementURL])
+        XCTAssertTrue(entitlements.protectedInputs.contains(entitlementURL))
         XCTAssertNotEqual(entitlements.model.reportRevision, original)
     }
 

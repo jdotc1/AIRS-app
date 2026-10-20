@@ -40,6 +40,7 @@ struct BatchHistoryView: View {
                             BatchHistoryRow(entry: entry, isBusy: workspace.isBusy,
                                 open: { workspace.loadBatchHistory(entry.id) },
                                 remove: { workspace.removeBatchHistory(entry.id) })
+                            if let ids=workspace.projectHistoryIDs[entry.id],!ids.isEmpty {Text("Project IDs: "+ids.map(\.uuidString).joined(separator:", ")).textSelection(.enabled).foregroundStyle(.secondary)}
                             Divider()
                         }
                     }

@@ -147,7 +147,7 @@ public final class ComparisonModel {
         architecture = snapshot.architecture
         previous = .ready(.init(sourceName: snapshot.sourceName, signingIdentifier: snapshot.signingIdentifier,
                                 architecture: snapshot.architecture, presence: snapshot.presence,
-                                origin: snapshot.origin, entitlements: snapshot.entitlements, isSavedBaseline: true))
+                                origin: snapshot.origin, entitlements: snapshot.entitlements, identity: snapshot.identity, isSavedBaseline: true))
         updateReport()
     }
 
