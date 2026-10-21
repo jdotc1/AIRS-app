@@ -30,7 +30,7 @@ class CLZTests(unittest.TestCase):
             state=PathState();state.flags=(True,False,True,False);state.registers[1]=Value('constant',1)
             state.apply(decode_instruction(clz(width)));self.assertEqual(state.flags,(True,False,True,False))
     def test_neighbors_and_other_one_source_families_stay_unsupported(self):
-        for word in [0xdac00000,0xdac01400,0x9ac10800,clz()^(1<<30),clz()^(1<<29),clz()^(1<<16),clz()^(1<<21)]:
+        for word in [0x5ac00000,0xdac01400,0x9ac10c00,clz()^(1<<30),clz()^(1<<29),clz()^(1<<16),clz()^(1<<21)]:
             with self.assertRaises(ModelError):decode_instruction(word)
     def test_owned_compiler_bodies_gain_only_the_selected_family(self):
         # Apple llvm-objdump retained in AIRS-b6-owned-20261020. Literal complete
@@ -39,7 +39,7 @@ class CLZTests(unittest.TestCase):
                                ([0xd10043ff,0xb9000fe0,0xb9400fe8,0x5ac01100,0x910043ff,0xd65f03c0],0x02001000)]:
             outcome=check(words=words,encoding=encoding)
             self.assertEqual(outcome.verdict,'agreement');self.assertTrue(outcome.checked_pcs)
-        self.assertEqual(check(words=[0xdac00008,0xdac01100,0xd65f03c0],encoding=0x02000000).verdict,'unresolved')
+        self.assertEqual(check(words=[0xdac00008,0xdac01100,0xd65f03c0],encoding=0x02000000).verdict,'agreement')
     def test_preserved_register_and_resource_boundaries(self):
         self.assertEqual(check(words=[clz(64,19,0),0xd65f03c0],encoding=0x02000000).verdict,'unresolved')
         self.assertEqual(check(words=[clz(),0xd65f03c0],encoding=0x02000000,limits=Limits(max_cfg_steps_per_function=0)).verdict,'unresolved')

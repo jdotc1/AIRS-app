@@ -192,7 +192,7 @@ class V32AdmissionCandidateTests(unittest.TestCase):
     def test_unknown_models_keep_generic_import_without_becoming_known_models(self):
         # These remain wire-format imports only. No prefix or future version is
         # treated as a registered v32 semantic model by this maintenance patch.
-        for model in ("future-owned-model", "arm64-bounded-clz-v32-extra", "arm64-bounded-rbit-v33"):
+        for model in ("future-owned-model", "arm64-bounded-clz-v32-extra", "future-owned-model-v35"):
             with self.subTest(model=model):
                 report = synthetic_report(model)
                 report["image"]["cpu_subtype"] = 0x80000000

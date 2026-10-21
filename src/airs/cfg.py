@@ -20,6 +20,13 @@ MASK32 = (1 << 32) - 1
 def decode_instruction(word: int, address: int = 0) -> Instruction:
     if not 0 <= word <= 0xffffffff:
         raise ModelError('invalid_instruction_word','Instruction is not a 32-bit word',address)
+    # Owned MacScope two-source field mapping; fix all nonoperand bits.
+    # X-only UDIV: Rn/Rm/Rd31 are ZR, never SP.
+    if word & 0xffe0fc00 == 0x9ac00800:
+        return Instruction(address,word,'xudiv',word&31,(word>>5)&31,(word>>16)&31)
+    # X-only RBIT: fix every nonoperand bit; Rn/Rd31 are ZR.
+    if word & 0xfffffc00 == 0xdac00000:
+        return Instruction(address,word,'xrbit',word&31,(word>>5)&31)
     # Owned MacScope one-source sf/opcode2/opcode dispatch; CLZ only.
     # Fix every nonoperand bit, including S and opcode2; Rn/Rd31 mean ZR.
     if word & 0x7ffffc00 == 0x5ac01000:
@@ -135,6 +142,12 @@ def decode_instruction(word: int, address: int = 0) -> Instruction:
             return Instruction(address,word,'wlsl',word&31,(word>>5)&31,immediate=32-immr)
         kind=('x' if word&(1<<31) else 'w')+('sbfm','bfm','ubfm')[(word>>29)&3]
         return Instruction(address,word,kind,word&31,(word>>5)&31,immediate=imms,addressing=str(immr))
+    # Owned MacScope scalar size/opc and imm12 scaling; X SP-only subset.
+    form = word & 0xffc00000
+    if form in (0xf9000000,0xf9400000):
+        if (word>>5)&31 != 31:
+            raise ModelError('cfg_memory_base_not_modeled','X accesses require unsigned offset from SP',address)
+        return Instruction(address,word,'xstr' if form == 0xf9000000 else 'xldr',word&31,31,immediate=((word>>10)&0xfff)*8)
     form = word & 0xffc00000
     if form in (0xb9000000,0xb9400000):
         if (word>>5)&31 != 31:
@@ -219,6 +232,31 @@ class PathState(MachineState):
 
     def apply(self, instruction: Instruction) -> None:
         kind,address = instruction.kind,instruction.address
+        if kind == 'xudiv':
+            left,right=self.read_register(instruction.rn),self.read_register(instruction.rt2)
+            if left.kind == 'stack' or right.kind == 'stack':
+                raise ModelError('udiv_stack_address_not_modeled','UDIV source is a derived stack address',address)
+            value=Value('unknown','Both UDIV sources must be concrete')
+            if left.kind == right.kind == 'constant':
+                mask=(1<<64)-1
+                numerator,divisor=int(left.value)&mask,int(right.value)&mask
+                value=Value('constant',0 if divisor == 0 else numerator//divisor)
+            self._write_register(instruction.rd,value)
+            return
+        if kind == 'xrbit':
+            raw=self.read_register(instruction.rn)
+            if raw.kind == 'stack':
+                raise ModelError('rbit_stack_address_not_modeled','RBIT source is a derived stack address',address)
+            value=Value('unknown','RBIT source must be concrete')
+            if raw.kind == 'constant':
+                bits=int(raw.value)&((1<<64)-1)
+                reversed_bits=0
+                for _ in range(64):
+                    reversed_bits=(reversed_bits<<1)|(bits&1)
+                    bits>>=1
+                value=Value('constant',reversed_bits)
+            self._write_register(instruction.rd,value)
+            return
         if kind in ('wclz','xclz'):
             raw=self.read_register(instruction.rn)
             if raw.kind == 'stack':
@@ -480,6 +518,18 @@ class PathState(MachineState):
             if wide: self._write_register(instruction.rd,value)
             else: self.write_w(instruction.rd,value)
             return
+        if kind in ('xstr','xldr'):
+            offset=self._memory_offset(self.sp.add(instruction.immediate),instruction,size=8)
+            if kind == 'xstr':
+                value=self.read_register(instruction.rd)
+                if value.kind == 'constant': value=Value('constant',int(value.value)&((1<<64)-1))
+                self._store(offset,value)
+            else:
+                value=self.memory.get(offset)
+                if value is None or not value.known:
+                    raise ModelError('unknown_stack_read','X load requires a known complete 64-bit slot',address)
+                self._write_register(instruction.rd,value)
+            return
         if kind in ('wstr','wldr'):
             if self.sp.kind != 'stack':
                 raise ModelError('unknown_memory_address','SP does not identify a known stack frame',address)
@@ -701,7 +751,7 @@ def audit_cfg_function(image: MachOImage, function: FunctionRange, entry: Unwind
                 if index not in body_indices:
                     raise ModelError('cfg_call_outside_body','A direct call is outside the shared frame body',ins.address)
                 call_targets[index]=target
-            if index in body_indices and (ins.changes_sp or ins.changes_fp or (ins.kind in ('wclz','xclz','wadc','wadcs','wsbc','wsbcs','xadc','xadcs','xsbc','xsbcs','wadd','wadds','wsubs','xadds','xsubs','wadds_reg','wsubs_reg','xadds_reg','xsubs_reg','wadds_ext','wsubs_ext','xadds_ext','xsubs_ext','smulh','umulh','smaddl','smsubl','umaddl','umsubl','wmadd','wmsub','xmadd','xmsub','wlslv','wlsrv','wasrv','wrorv','xlslv','xlsrv','xasrv','xrorv','wextr','xextr','wsbfm','wbfm','wubfm','xsbfm','xbfm','xubfm','wlsl','wcsel','wcsinc','wcsinv','wcsneg','xcsel','xcsinc','xcsinv','xcsneg','wldr','wands','wbics','xands','xbics','wands_imm','xands_imm','wand_imm','worr_imm','weor_imm','xand_imm','xorr_imm','xeor_imm','wand_reg','wbic_reg','worr_reg','worn_reg','weor_reg','weon_reg','xand_reg','xbic_reg','xorr_reg','xorn_reg','xeor_reg','xeon_reg') and ins.rd==29)):
+            if index in body_indices and (ins.changes_sp or ins.changes_fp):
                 raise ModelError('cfg_frame_transition_not_modeled','Frame transitions inside CFG body are not supported',ins.address)
             if ins.kind in ('b','bcond'):
                 target=ins.address+ins.immediate

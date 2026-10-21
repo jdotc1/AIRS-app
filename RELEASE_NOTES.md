@@ -1,27 +1,26 @@
-# AIRS 0.3.0/build 4 preview
+# AIRS 0.3.1 Preview — build 5
 
-- Retain bounded Info.plist and existing privacy declaration observations when
-  CFBundleExecutable is absent, with explicit unresolved principal and partial
-  inventory. Declaration-only records do not authorize image or entitlement reads.
-- Use shared requested-slice applicability for component entitlement actions,
-  visible unavailable reasons and handler preconditions. Final live preflight,
-  identity/freshness and cancellation checks remain authoritative.
-- Preview, export and reconstruct portable inspection projects in a fresh local
-  store using existing evidence/archive admission and protected output boundaries.
-- Preserve original project-manifest bytes across export, reconstruction and
-  re-export. Validate newly written staged packages before publication.
-- Apply exact CLZ-v32 import-admission rules in Python while retaining unknown-model
-  and historical admission behavior. No analysis model or schema changes.
+This update brings the public app to the completed private v35 checkpoint.
+The engine baseline is 2b4b958, with signing fix b9988e8 and dSYM fix
+74d5a47 from private main. In-progress v36 is excluded.
 
-Existing entitlement, archive, assessment, policy and bounded unwind workflows
-remain. The stronger C4 AIRS request/acknowledgment foundation is included; the
-external consumer and complete paired exchange remain unqualified. Missing
-resources and unsupported analysis remain explicit; no whole-app trust or
-compatibility verdict is implied.
+- X-only RBIT and UDIV, with exact model admission in Python and native reports.
+- Bounded SP-relative, unsigned scaled aligned 8-byte X stack loads/stores.
+  Full known slots, allocation bounds, overlap invalidation, frame lifetime and
+  pointer-escape checks remain required. Unsupported forms remain unresolved.
+- Shared frame-effect classification preserves the existing X29/SP guard.
+- Architecture-specific signing metadata coverage and dSYM picker attachment routing.
+- All previously released 0.3.0 component, project and exchange features remain.
 
-Accepted unchanged behavior and dependency/runtime receipts are reused. Changed
-boundary and distribution evidence is supplied separately with the release.
-No new engine corpus aggregate is claimed. macOS 14+, Apple silicon preview;
-clean older-OS, Intel-host, second-machine reconstruction and capacity evidence
-remain outside the qualified scope. Native visual capture has a documented
-AppKit indicator-geometry limitation on the development host.
+Report schema remains 1. The engine model is arm64-bounded-x-stack-v35.
+Accepted focused semantic/native import and independent review receipts are
+reused. The retained owned two-library v35 observation was 16 functions,
+16 agreement, zero inconsistency and zero unresolved; this is a bounded prior
+measurement, not a new corpus run or general support claim.
+
+The standalone app is Developer ID signed, Apple notarized and stapled.
+New-container signature verification, ticket validation and local macOS
+distribution assessment passed. Release qualification is recorded separately. No unchanged suite, corpus,
+source/runtime provenance hash or dependency qualification is repeated.
+Minimum-OS, Intel-host, clean-Mac and broader workload qualification remain open.
+The stronger external MacScope consumer/paired workflow remains separate.

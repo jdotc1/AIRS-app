@@ -1,15 +1,21 @@
 {
-  "version": "0.3.0",
-  "build": "4",
-  "source_revision": "377cf2baa82e335bb42ebf75fe454e7be30c83e2",
+  "version": "0.3.1",
+  "build": "5",
+  "source_revision": "8ef2412c5ccb9dbbe685d1e9c7234ba28104e863",
   "export_policy": "allowlist; no history, runtime, private evidence or corpus locations",
-  "files": 520,
+  "files": 540,
   "source_status": "release",
   "sanitation": "bounded maintainer-path and credential-marker scan passed on new/changed files",
-  "sanitation_inspected_files": 1,
-  "sanitation_reused_files": 519,
+  "sanitation_inspected_files": 35,
+  "sanitation_reused_files": 505,
   "sanitation_reuse": "exact byte equality to supplied accepted snapshot; no repeated hashes or tests",
   "lumen_source_gate": "unchanged accepted 92-file vendor receipt reused; not rescanned",
   "limitation": "Pattern inspection is not proof that arbitrary confidential text cannot exist",
-  "distribution_actions_performed": false
+  "distribution_actions_performed": false,
+  "implementation_baseline": "2b4b958",
+  "analysis_model": "arm64-bounded-x-stack-v35",
+  "additional_private_commits": [
+    "b9988e8",
+    "74d5a47"
+  ]
 }

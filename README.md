@@ -4,7 +4,7 @@ A native macOS evidence-review workspace with a separately executable,
 standard-library-only Python ARM64 Mach-O unwind analyzer. Selected binaries are
 input data and are never loaded or executed by the analyzer.
 
-## Preview 0.3.0/build 4
+## Preview 0.3.1/build 5
 
 This preview includes bounded missing-principal bundle declaration observation,
 shared component entitlement-read availability, portable inspection projects,
@@ -12,6 +12,9 @@ exact project-manifest preservation with staged-package preflight, and Python
 CLZ-v32 report import-admission parity. Missing executable declarations do not
 create executable identity or entitlement authority. No asset-catalog or
 Interface Builder inspection is added.
+
+This update also includes architecture-specific signing-metadata coverage and
+dSYM picker attachment routing from the private main branch.
 
 SOURCE_SNAPSHOT.json identifies the corresponding frozen source revision.
 Distribution qualification and remaining limits are recorded with the release.
@@ -26,7 +29,11 @@ See [the public protocol contract](docs/MACSCOPE_BOUND_CONTRACT.md).
 The existing A/B feature set includes entitlement inspection and retained
 baselines, review archives, component inventory/comparison, scoped assessments,
 inspection projects and batch-history associations, owned-build policy review,
-and bounded coverage presentation with the CLZ-v32 engine.
+and bounded coverage presentation. The engine now uses model
+`arm64-bounded-x-stack-v35`: X-only RBIT, X-only UDIV, and bounded
+SP-relative aligned X stack loads/stores. W forms, signed division,
+FP-relative single accesses and broader memory addressing remain unsupported.
+Frame-effect classification is consolidated without widening admission.
 
 Unsupported instructions, ambiguous state and missing evidence remain visible.
 Entitlements are declarations; historical observations and imported receipts do

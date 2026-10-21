@@ -22,6 +22,29 @@ class ModelError(ValueError):
         self.code, self.address = code, address
 
 
+# Single-destination effects shared by legacy and CFG frame-body admission.
+# Loads write Rd; stores/compares/branches do not. Pair data/base effects remain
+# explicit below. Adding a decoder family must classify its FP-writing effect.
+_FP_DESTINATION_KINDS = frozenset((
+    'add', 'sub', 'mov', 'movz', 'movn', 'xudiv',
+    'xrbit', 'wclz', 'xclz', 'wadc', 'wadcs', 'wsbc',
+    'wsbcs', 'xadc', 'xadcs', 'xsbc', 'xsbcs', 'wadd',
+    'wadds', 'wsubs', 'xadds', 'xsubs', 'wadds_reg', 'wsubs_reg',
+    'xadds_reg', 'xsubs_reg', 'wadds_ext', 'wsubs_ext', 'xadds_ext', 'xsubs_ext',
+    'smulh', 'umulh', 'smaddl', 'smsubl', 'umaddl', 'umsubl',
+    'wmadd', 'wmsub', 'xmadd', 'xmsub', 'wlslv', 'wlsrv',
+    'wasrv', 'wrorv', 'xlslv', 'xlsrv', 'xasrv', 'xrorv',
+    'wextr', 'xextr', 'wsbfm', 'wbfm', 'wubfm', 'xsbfm',
+    'xbfm', 'xubfm', 'wlsl', 'wcsel', 'wcsinc', 'wcsinv',
+    'wcsneg', 'xcsel', 'xcsinc', 'xcsinv', 'xcsneg', 'xldr',
+    'wldr', 'wands', 'wbics', 'xands', 'xbics', 'wands_imm',
+    'xands_imm', 'wand_imm', 'worr_imm', 'weor_imm', 'xand_imm', 'xorr_imm',
+    'xeor_imm', 'wand_reg', 'wbic_reg', 'worr_reg', 'worn_reg', 'weor_reg',
+    'weon_reg', 'xand_reg', 'xbic_reg', 'xorr_reg', 'xorn_reg', 'xeor_reg',
+    'xeon_reg',
+))
+
+
 @dataclass(frozen=True)
 class Instruction:
     address: int
@@ -41,7 +64,7 @@ class Instruction:
 
     @property
     def changes_fp(self) -> bool:
-        return ((self.kind in ("add", "sub", "mov", "movz", "movn") and self.rd == 29) or
+        return ((self.kind in _FP_DESTINATION_KINDS and self.rd == 29) or
                 (self.kind == "ldp" and 29 in (self.rd, self.rt2)) or
                 (self.kind in ("stp", "ldp") and self.rn == 29 and
                  self.addressing != "offset"))

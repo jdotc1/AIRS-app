@@ -5,6 +5,31 @@ import AIRSCore
 
 final class SourceWorkspaceTests: XCTestCase {
     @MainActor
+    func testBinaryPickerGuidesDSYMSelectionWithoutReport() {
+        let workspace = AuditWorkspace()
+        workspace.openSelectedBinaryOrApp(URL(fileURLWithPath: "/tmp/example.dSYM"))
+        XCTAssertTrue(workspace.showingError)
+        XCTAssertFalse(workspace.isBusy)
+        XCTAssertNil(workspace.report)
+        XCTAssertTrue(workspace.errorMessage.contains("matching binary or audit report first"))
+    }
+
+    @MainActor
+    func testBinaryPickerRoutesDWARFMemberToAttachment() async throws {
+        _ = try EngineConfiguration.resolve(pythonSetting: "")
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let workspace = AuditWorkspace()
+        workspace.importReport(root.appendingPathComponent("examples/before.audit.json"))
+        try await settle(workspace)
+        let original = try XCTUnwrap(workspace.report)
+        workspace.openSelectedBinaryOrApp(URL(fileURLWithPath: "/tmp/example.dSYM/Contents/Resources/DWARF/example"))
+        try await settle(workspace)
+        XCTAssertTrue(workspace.showingError)
+        XCTAssertTrue(workspace.errorMessage.contains("unavailable"))
+        XCTAssertEqual(workspace.report?.image.sliceSHA256, original.image.sliceSHA256)
+    }
+
+    @MainActor
     func testRejectedDSYMPreservesCurrentReportAndSelectedFinding() async throws {
         _ = try EngineConfiguration.resolve(pythonSetting: "")
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()

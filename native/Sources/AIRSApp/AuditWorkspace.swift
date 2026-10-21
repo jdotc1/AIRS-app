@@ -522,7 +522,38 @@ final class AuditWorkspace: ObservableObject {
         panel.allowsMultipleSelection = false
         panel.treatsFilePackagesAsDirectories = false
         guard panel.runModal() == .OK, let url = panel.url else { return }
+        openSelectedBinaryOrApp(url)
+    }
+
+    /// The binary picker can select a debug companion; retain the existing
+    /// identity-gated attachment workflow instead of auditing its DWARF image.
+    func openSelectedBinaryOrApp(_ url: URL) {
+        guard !isBusy else { return }
+        if isDSYMSelection(url) {
+            guard rawReport != nil else {
+                let guidance = "Open the matching binary or audit report first, then attach this dSYM."
+                errorMessage = guidance
+                status = guidance
+                showingError = true
+                return
+            }
+            attachDSYM(url)
+            return
+        }
         analyze(url)
+    }
+
+    private func isDSYMSelection(_ url: URL) -> Bool {
+        if url.pathExtension.caseInsensitiveCompare("dSYM") == .orderedSame { return true }
+        let dwarfDirectory = url.deletingLastPathComponent()
+        guard dwarfDirectory.lastPathComponent == "DWARF",
+              dwarfDirectory.deletingLastPathComponent().lastPathComponent == "Resources",
+              dwarfDirectory.deletingLastPathComponent().deletingLastPathComponent().lastPathComponent == "Contents" else {
+            return false
+        }
+        return dwarfDirectory.deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .pathExtension.caseInsensitiveCompare("dSYM") == .orderedSame
     }
 
     func analyze(_ url: URL) {

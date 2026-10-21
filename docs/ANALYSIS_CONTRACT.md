@@ -1,6 +1,41 @@
 # Analysis contract
 
-Current model `arm64-bounded-clz-v32` adds scalar CLZ W/X only, with exact fixed-bit
+Current engine navigation: CURRENT_ENGINE_MATRIX.md identifies the isolated v35
+subset, conservative boundaries, accepted receipts and separate release gates.
+Frame-effect maintenance now shares one Instruction.changes_fp classification
+across legacy and CFG body admission, preserving the prior v35 policy/model.
+Five new and three affected methods pass; see FRAME_EFFECT_RESULTS.md. No native
+or whole-image check was repeated for this source-only maintenance.
+
+Isolated development checkpoint (21 October 2026): bounded SP-relative X stack
+slots are implemented under `arm64-bounded-x-stack-v35`. Exact unsigned scaled
+STR/LDR, known whole-slot reads, mixed-width invalidation, pointer escape/lifetime
+and frame guards are qualified with 23 new Python methods, three new native
+methods and three affected identity checks in composed receipts. The real native
+debug products built; independent review and its corrected test typo are recorded
+in X_STACK_SLOTS_RESULTS.md. See X_STACK_SLOTS.md for the bounded contract.
+The subsequently authorized two-library comparison measured 16 agreement,
+0 inconsistency, 0 unresolved with the same 16-function denominator, five
+cumulative gains and no observed regressions. See V35_WHOLE_IMAGE_COMPARISON.md.
+Release integration and GUI qualification are not claimed.
+
+Previous isolated development checkpoint (21 October 2026): X-only UDIV is implemented
+under model `arm64-bounded-udiv-v34`, following the accepted v33 RBIT change.
+Sixteen new Python methods and five affected selectors pass in composed receipts;
+independent semantic review found no actionable defect. Exact Python/native model
+registration is qualified: the real native debug target built and all three new
+admission tests passed after competing compilations cleared. This is not release
+integration or a new aggregate result. See UDIV.md and UDIV_RESULTS.md. Subsequent older checkpoints
+retain their original scope.
+
+Previous isolated development model `arm64-bounded-rbit-v33` adds X-only scalar
+RBIT with exact fixed-bit admission, concrete 64-bit reversal, conservative
+unknowns, stack-provenance refusal and unchanged NZCV/recovery scope. Python and
+native admission register its exact identity. See RBIT_X.md and RBIT_X_RESULTS.md.
+This branch is separate from the release lane; no memory/CFI/loop/asynchronous
+scope expands.
+
+Previous model `arm64-bounded-clz-v32` adds scalar CLZ W/X only, with exact fixed-bit
 admission, concrete width-masked leading-zero count, conservative unknown values,
 raw stack-provenance rejection and unchanged flags/recovery scope. See CLZ.md and
 CLZ_RESULTS.md. No memory, loop, CFI or asynchronous scope expands. Python report import

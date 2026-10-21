@@ -1,0 +1,204 @@
+{
+  "kind": "airs.owned-nonleaf-workload-proposal",
+  "schema_version": 1,
+  "status": "prepared_not_compiled_or_run",
+  "source_base_revision": "cb55b46",
+  "analysis_model": "arm64-bounded-x-stack-v35",
+  "execution_authorized": false,
+  "expected_image_count": 1,
+  "expected_function_denominator": 8,
+  "expected_nonleaf_count": 7,
+  "expected_sink_count": 1,
+  "expectation_basis": "Manual fixed-width instruction counting, explicit compact rules, ABI/frame layout and accepted AIRS contracts; not engine-generated or observed results",
+  "preconditions": [
+    "Fresh explicit authorization for this one compiler/disassembly/audit pass",
+    "Retain the actual source revision and toolchain/commands without rehashing accepted inputs",
+    "Independently confirm exactly these eight LC_FUNCTION_STARTS ranges and original BL offsets",
+    "Independently confirm compact modes/encodings and that every BL resolves directly to the owned sink",
+    "Confirm no stub, extra function, padding or linker rewrite changes the source-derived extents before evaluating expected results",
+    "Stop on any failed prerequisite; preserve evidence and do not retry or revise expectations from analyzer output"
+  ],
+  "expected_summary_if_preconditions_hold": {
+    "agreement_count": 3,
+    "inconsistency_count": 1,
+    "unresolved_count": 4,
+    "unique_checked_pc_count": 5
+  },
+  "cases": [
+    {
+      "symbol": "_airs_nl_pressure_branch",
+      "expected_size_bytes": 116,
+      "compact_encoding": "0x04000007",
+      "expected_verdict": "agreement",
+      "expected_scope": "synchronous_call_sites",
+      "expected_checked_pc_offsets": [
+        76,
+        88
+      ],
+      "source_bl_offsets": [
+        76,
+        88
+      ],
+      "expected_reason": "supported_model_agreement",
+      "basis": "Six saved callee registers occupy the three declared pairs; both unknown-condition paths recover originals from intact saves; W/X locals do not overlap saves",
+      "complete_body_blockers": []
+    },
+    {
+      "symbol": "_airs_nl_call_loop",
+      "expected_size_bytes": 64,
+      "compact_encoding": "0x04000007",
+      "expected_verdict": "agreement",
+      "expected_scope": "synchronous_call_sites",
+      "expected_checked_pc_offsets": [
+        28
+      ],
+      "source_bl_offsets": [
+        28
+      ],
+      "expected_reason": "supported_model_agreement",
+      "basis": "Known x19 counter 2 then 1; each call retains original recovery through the saved pair; one original BL PC may have multiple state observations",
+      "complete_body_blockers": []
+    },
+    {
+      "symbol": "_airs_nl_wrong_rule",
+      "expected_size_bytes": 56,
+      "compact_encoding": "0x04000000",
+      "expected_verdict": "inconsistency",
+      "expected_scope": "synchronous_call_sites",
+      "expected_checked_pc_offsets": [
+        28
+      ],
+      "source_bl_offsets": [
+        28
+      ],
+      "expected_recovery_witness": {
+        "register": "x19",
+        "expected": "original x19",
+        "observed": "constant 0x6"
+      },
+      "basis": "Intentional metadata omission uses live x19=6 although a real original save exists; return restoration is intact",
+      "complete_body_blockers": []
+    },
+    {
+      "symbol": "_airs_nl_unknown_recovery",
+      "expected_size_bytes": 56,
+      "compact_encoding": "0x04000000",
+      "expected_verdict": "unresolved",
+      "expected_scope": "synchronous_call_sites",
+      "expected_checked_pc_offsets": [],
+      "source_bl_offsets": [
+        28
+      ],
+      "expected_reason": "unknown_recovery_value",
+      "basis": "UDIV of original x0/x1 remains unknown; omitted pair rule cannot justify a concrete mismatch",
+      "complete_body_blockers": [
+        {
+          "offset": 28,
+          "kind": "unknown_required_recovery",
+          "register": "x19"
+        }
+      ]
+    },
+    {
+      "symbol": "_airs_nl_unsupported",
+      "expected_size_bytes": 60,
+      "compact_encoding": "0x04000007",
+      "expected_verdict": "unresolved",
+      "expected_scope": "metadata_only",
+      "expected_checked_pc_offsets": [],
+      "source_bl_offsets": [
+        32
+      ],
+      "expected_reason": "unsupported_instruction",
+      "complete_body_blockers": [
+        {
+          "offset": 24,
+          "kind": "ISA_valid_outside_policy",
+          "instruction": "sdiv x0,x0,x1"
+        },
+        {
+          "offset": 28,
+          "kind": "ISA_valid_outside_policy",
+          "instruction": "ldr x0,[x29]"
+        }
+      ]
+    },
+    {
+      "symbol": "_airs_nl_invalid",
+      "expected_size_bytes": 56,
+      "compact_encoding": "0x04000007",
+      "expected_verdict": "unresolved",
+      "expected_scope": "metadata_only",
+      "expected_checked_pc_offsets": [],
+      "source_bl_offsets": [
+        28
+      ],
+      "expected_reason": "invalid_bitfield_encoding",
+      "complete_body_blockers": [
+        {
+          "offset": 24,
+          "kind": "reserved_encoding",
+          "word": "0x93000000",
+          "basis": "SBFM sf=1,N=0 violates the required width/N combination"
+        }
+      ]
+    },
+    {
+      "symbol": "_airs_nl_pointer_escape",
+      "expected_size_bytes": 64,
+      "compact_encoding": "0x04000007",
+      "expected_verdict": "unresolved",
+      "expected_scope": "metadata_only",
+      "expected_checked_pc_offsets": [],
+      "source_bl_offsets": [
+        36
+      ],
+      "expected_reason": "stack_address_escapes_call",
+      "complete_body_blockers": [
+        {
+          "offset": 36,
+          "kind": "stored_stack_pointer_escape",
+          "slot": "entrySP-80",
+          "basis": "Cleared x0 does not clear the live pointer slot"
+        }
+      ]
+    },
+    {
+      "symbol": "_airs_nl_sink",
+      "expected_size_bytes": 8,
+      "compact_encoding": "0x02000000",
+      "expected_verdict": "agreement",
+      "expected_scope": "modeled_leaf_body",
+      "expected_checked_pc_offsets": [
+        0
+      ],
+      "source_bl_offsets": [],
+      "expected_reason": "supported_model_agreement",
+      "complete_body_blockers": []
+    }
+  ],
+  "proposed_run_limits": {
+    "maximum_images": 1,
+    "maximum_audits": 1,
+    "maximum_elapsed_seconds": 120,
+    "max_file_bytes": 8388608,
+    "max_functions": 8,
+    "max_instructions_per_function": 256,
+    "max_total_instructions": 1024,
+    "max_cfg_steps_per_function": 512,
+    "max_total_cfg_steps": 4096,
+    "max_observations_per_function": 64,
+    "max_cfg_paths_per_function": 32,
+    "max_evidence_per_function": 32,
+    "max_total_evidence": 256
+  },
+  "limits_basis": "Proposed bounded budget, not observed runtime or measured sufficiency; all other Limits fields retain accepted defaults",
+  "observed_results": null,
+  "artifact_identity": null,
+  "limitations": [
+    "Prepared source/expectations only: no assembler, linker, disassembler or analyzer was run",
+    "The eight-function proposed denominator is separate from the accepted prior sixteen-function corpus",
+    "This exact assembly packet is not an optimization-level comparison or a real-application prevalence sample",
+    "No general CFI, indirect call, asynchronous correctness or runtime function-output validation is claimed"
+  ]
+}
