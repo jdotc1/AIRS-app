@@ -139,7 +139,15 @@ struct AIRSApp: App {
                     .disabled(workspace.report == nil || workspace.isBusy || entitlements.isBusy || fileOpen.blocksActions)
                 Button("Compare Baseline…") { navigation.performAudit { workspace.chooseBaseline() } }
                     .disabled(workspace.report == nil || workspace.isBusy || entitlements.isBusy || fileOpen.blocksActions)
+                Button("Import Consumer Acknowledgment…") { navigation.performAudit { workspace.chooseConsumerAcknowledgment() } }
+                    .disabled(workspace.blocksFileOpen || entitlements.isBusy || fileOpen.blocksActions)
+                Button("Retain Bound Request Archive…") { navigation.performAudit { workspace.chooseBoundRequestArchive() } }
+                    .disabled(workspace.blocksFileOpen || entitlements.isBusy || fileOpen.blocksActions)
+                Button("Review Consumer Acknowledgments") { navigation.performAudit { workspace.reviewConsumerAcknowledgments() } }
+                    .disabled(workspace.blocksFileOpen || entitlements.isBusy || fileOpen.blocksActions)
                 if let finding = workspace.selectedFinding {
+                    Button("Export Selected Bound Review…") { navigation.performAudit { workspace.exportBoundRequest(finding) } }
+                        .disabled(workspace.blocksFileOpen || entitlements.isBusy || fileOpen.blocksActions)
                     Button("Export Selected Handoff JSON…") { navigation.performAudit { workspace.exportHandoff(finding) } }
                         .disabled(workspace.isBusy || entitlements.isBusy || fileOpen.blocksActions)
                 }

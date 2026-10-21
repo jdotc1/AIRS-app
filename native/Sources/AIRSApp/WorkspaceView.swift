@@ -61,6 +61,9 @@ struct WorkspaceView: View {
         .onChange(of: listSelection) { _, selection in
             if workspace.selection != selection { workspace.selection = selection }
         }
+        .sheet(isPresented: Binding(get:{ workspace.boundReviewReceipts != nil },set:{ if !$0 { workspace.boundReviewReceipts = nil } })) {
+            BoundReviewReceiptsView(entries:workspace.boundReviewReceipts ?? [],close:{ workspace.boundReviewReceipts = nil })
+        }
         .sheet(item: $workspace.bundleDiscovery) { inventory in
             BundleDiscoveryView(inventory: inventory, workspace: workspace)
         }
