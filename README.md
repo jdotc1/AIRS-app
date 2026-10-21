@@ -16,7 +16,7 @@ Interface Builder inspection is added.
 SOURCE_SNAPSHOT.json identifies the corresponding frozen source revision.
 Distribution qualification and remaining limits are recorded with the release.
 
-The AIRS side also includes the AIRS side of stronger C4 review exchange: selected
+The AIRS side also includes stronger C4 review exchange: selected
 finding bound-request export, exact original report/configuration binding,
 acknowledgment import and retained receipt review. The stronger MacScope consumer
 and paired workflow remain pending. The existing manual-v1 handoff is separate
