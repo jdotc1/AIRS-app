@@ -11,6 +11,7 @@ docs/COMPONENT_INVENTORY_FORMAT.md
 docs/COMPONENT_REVIEW_FORMAT.md
 docs/INSPECTION_ARCHIVE_FORMAT.md
 docs/INSPECTION_DOCUMENT_FORMAT.md
+docs/MACSCOPE_BOUND_CONTRACT.md
 docs/PRIVATE_PYTHON.md
 docs/PROJECT_FORMAT.md
 docs/REVIEW_POLICY_FORMAT.md
@@ -102,6 +103,7 @@ native/Sources/AIRSApp/AssessmentReviewView.swift
 native/Sources/AIRSApp/AuditWorkspace.swift
 native/Sources/AIRSApp/BatchComparisonView.swift
 native/Sources/AIRSApp/BatchHistoryView.swift
+native/Sources/AIRSApp/BoundReviewReceiptsView.swift
 native/Sources/AIRSApp/BundleDiscoveryView.swift
 native/Sources/AIRSApp/ComparisonView.swift
 native/Sources/AIRSApp/ComponentInventoryView.swift
@@ -185,6 +187,10 @@ native/Sources/AIRSEntitlements/AssessmentContentIdentity.swift
 native/Sources/AIRSEntitlements/AssessmentEvidence.swift
 native/Sources/AIRSEntitlements/AssessmentProcess.swift
 native/Sources/AIRSEntitlements/AssessmentRunner.swift
+native/Sources/AIRSEntitlements/BoundReviewAcknowledgment.swift
+native/Sources/AIRSEntitlements/BoundReviewFiles.swift
+native/Sources/AIRSEntitlements/BoundReviewLedger.swift
+native/Sources/AIRSEntitlements/BoundReviewRequest.swift
 native/Sources/AIRSEntitlements/CodeUnitEntitlementReader.swift
 native/Sources/AIRSEntitlements/ComponentInfoDeclarations.swift
 native/Sources/AIRSEntitlements/ComponentInventoryDocument.swift
@@ -213,6 +219,7 @@ native/Tests/AIRSAppTests/ArchiveFileOpenTests.swift
 native/Tests/AIRSAppTests/AssessmentWorkspaceTests.swift
 native/Tests/AIRSAppTests/BatchComparisonWorkspaceTests.swift
 native/Tests/AIRSAppTests/BatchHistoryWorkspaceTests.swift
+native/Tests/AIRSAppTests/BoundReviewWorkspaceTests.swift
 native/Tests/AIRSAppTests/BundleDiscoveryWorkspaceTests.swift
 native/Tests/AIRSAppTests/ComponentInventoryWorkspaceTests.swift
 native/Tests/AIRSAppTests/ComponentReviewWorkspaceTests.swift
@@ -266,6 +273,7 @@ native/Tests/AIRSCoreTests/ReportLibraryTests.swift
 native/Tests/AIRSCoreTests/SourceAnnotationsTests.swift
 native/Tests/AIRSEntitlementsTests/AssessmentRunnerTests.swift
 native/Tests/AIRSEntitlementsTests/AssessmentTests.swift
+native/Tests/AIRSEntitlementsTests/BoundReviewTests.swift
 native/Tests/AIRSEntitlementsTests/CodeUnitReaderTests.swift
 native/Tests/AIRSEntitlementsTests/ComponentInventoryArchiveTests.swift
 native/Tests/AIRSEntitlementsTests/ComponentReviewTests.swift

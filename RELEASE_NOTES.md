@@ -1,27 +1,37 @@
-# AIRS 0.2.0 — build 3 (prepared)
+# Development source update — stronger C4 AIRS exchange
 
-Consolidates the A/B-RC1 feature set: entitlement inspection and saved baselines;
-review archives; bounded component inventory/comparison; scoped assessments;
-inspection projects, notes and batch-history links; explicit owned-build policy
-review and CLI parity; coverage presentation and bounded CLZ-v32 analysis.
+This source update adds the AIRS producer/archive and consumer-acknowledgment
+admission boundary. It supplies no new downloadable app and makes no new signing,
+notarization, installed-app or full paired-integration claim.
 
-Accepted local A/B-RC1 qualification is reused for unchanged behavior. Both batch
-association families persisted across ordinary Quit/relaunch, and native policy
-JSON matched CLI output. B6 retains its 16-function owned-fixture denominator:
-11 agreement, zero inconsistency, five unresolved, with three expected gains and
-13 otherwise unchanged findings. These are retained observations, not a fresh
-public-snapshot build or corpus execution.
+- Preserve original audit bytes and bind the selected finding/configuration in a
+  distinct two-attachment request archive; retain the legacy manual-v1 export.
+- Import strictly validated terminal acknowledgments, correlate exact retained
+  request/source/finding identity, and keep unmatched receipts unassociated.
+- Retain original request/receipt bytes across sessions, reject conflicting IDs,
+  and invalidate cached evidence when file witnesses change.
+- Add explicit native commands for bound export, receipt import/review and request
+  retention; native interaction acceptance remains pending.
+- Include focused protocol/workspace tests and a public wire-contract description.
+  Test output roots are portable and optionally controlled by AIRS_TEST_OUTPUT_ROOT.
 
-Version metadata changed from 0.1.1/build 2 to 0.2.0/build 3. Test helpers now
-use unique temporary folders instead of maintainer-specific home paths; 55
-affected native tests have passing receipts. One output-parent fixture failure
-was repaired and only that failed check was rerun. Analysis model and report schemas are unchanged.
+The original implementation's 12 focused contract tests and one workspace test
+passed locally. Their receipts are reused for unchanged behavior. Public-source
+portability edits affect only five test output-directory expressions; affected
+selector results are recorded in the source-update pull request. No full suite,
+sealed source hash, signing/dependency gate, GUI or corpus check is repeated.
 
-Known limits include AppKit geometry and AppIntents/preferences diagnostics,
-unsupported/ambiguous analysis cases, bounded inventory scope and historical
-assessment authority. No warning-free or universal trust claim is made.
+## Published app: 0.2.0/build 3
 
-Signing, notarization/stapling, final packaged-artifact qualification, downloaded/
-quarantined/offline launch, clean supported-OS and upgrade/settings checks,
-broader CI/toolchain/pilot/performance evidence, publication and installation
-remain separate gates. No new shipping binary is supplied by this snapshot.
+The existing preview remains signed, notarized/stapled, published and installed
+within its recorded qualification scope. It consolidates entitlement inspection,
+review archives, component comparison, scoped assessments, projects/history,
+owned-build policy review and CLZ-v32 bounded analysis.
+
+Accepted B6 observations retain the same 16-function denominator: 11 agreement,
+zero inconsistency, five unresolved, three expected gains and 13 otherwise
+unchanged findings. These are retained observations, not a new corpus execution.
+Known native diagnostics and clean-Mac/older-OS limits remain explicit.
+
+The stronger C4 consumer and paired acknowledgment workflow are not part of that
+released binary. Existing release tags/assets are unchanged by this source update.

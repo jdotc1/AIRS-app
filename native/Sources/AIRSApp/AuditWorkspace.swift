@@ -3,6 +3,7 @@ import Combine
 import Foundation
 import UniformTypeIdentifiers
 import AIRSCore
+import AIRSEntitlements
 import enum EntitlementDiffCore.ReportDestination
 
 enum WorkspaceSelection: Hashable {
@@ -40,6 +41,8 @@ private enum WorkspaceResult: Sendable {
     case symbols(OpenedAudit, symbolInput: URL)
     case comparison(ComparisonDocument)
     case handoff(Data, filename: String)
+    case boundRequest(BoundReviewRequest)
+    case boundReceipts([BoundReviewReceiptEntry])
     case exported(String)
     case library([ReportLibraryEntry], message: String)
     case retained(OpenedAudit, provenance: LibraryProvenance)
@@ -55,6 +58,27 @@ private enum WorkspaceResult: Sendable {
 
 /// File I/O and JSON decoding occur away from the main actor.
 private actor DocumentWorker {
+    let boundLedger: BoundReviewLedger
+    init(boundLedger: BoundReviewLedger) { self.boundLedger = boundLedger }
+    func boundRequest(_ data: Data, findingID: String) throws -> BoundReviewRequest {
+        try BoundReviewRequest.create(report:data,findingID:findingID)
+    }
+    func exportBoundRequest(_ request: BoundReviewRequest,to url: URL) async throws {
+        try Task.checkCancellation()
+        // Retain before delivery so an exported request is always correlatable.
+        // A failed external write may leave a prepared request, never a false acknowledgment.
+        try await boundLedger.retain(request)
+        try request.archiveBytes.write(to:url,options:.withoutOverwriting)
+    }
+    func retainBoundArchive(_ url: URL) async throws {
+        _ = try await boundLedger.importArchive(BoundReviewFiles.read(url,limit:InspectionArchive.maximumBytes))
+    }
+    func importAcknowledgment(_ url: URL) async throws -> [BoundReviewReceiptEntry] {
+        _ = try await boundLedger.importAcknowledgment(BoundReviewFiles.read(url,limit:1_048_576))
+        return try await boundLedger.entries()
+    }
+    func acknowledgments() async throws -> [BoundReviewReceiptEntry] { try await boundLedger.entries() }
+
     func load(_ url: URL) throws -> OpenedAudit {
         let data = try ReportFiles.readBounded(url)
         return OpenedAudit(report: try AuditReport.decode(data), data: data)
@@ -102,6 +126,7 @@ final class AuditWorkspace: ObservableObject {
     @Published var selection: WorkspaceSelection? = .overview
     @Published var search = ""
     @Published var verdictFilter: VerdictFilter = .all
+    @Published var boundReviewReceipts: [BoundReviewReceiptEntry]?
     @Published var showingError = false
     @Published private(set) var errorMessage = ""
     @Published var bundleDiscovery: BundleDiscoveryResult?
@@ -133,7 +158,7 @@ final class AuditWorkspace: ObservableObject {
     }
 
     private let runner = EngineRunner()
-    private let documents = DocumentWorker()
+    private let documents: DocumentWorker
     private let library: ReportLibrary
     private let analysisReuse: AnalysisReuse
     private let recents: any WorkspaceRecentsRecording
@@ -155,9 +180,11 @@ final class AuditWorkspace: ObservableObject {
 
     init(library: ReportLibrary? = nil, recents: (any WorkspaceRecentsRecording)? = nil,
          batchAudit: (@Sendable (URL) async throws -> Data)? = nil, batchHistory: BatchHistory? = nil,
-         batchCompare: (@Sendable (Data, Data) async throws -> Data)? = nil) {
+         batchCompare: (@Sendable (Data, Data) async throws -> Data)? = nil,
+         boundReviewLedger: BoundReviewLedger? = nil) {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
+        self.documents = DocumentWorker(boundLedger:boundReviewLedger ?? BoundReviewLedger(root:support.appendingPathComponent("AIRS/BoundReviews",isDirectory:true)))
         self.library = library ?? ReportLibrary(root: support.appendingPathComponent("AIRS/ReportLibrary", isDirectory: true))
         self.analysisReuse = AnalysisReuse(root: support.appendingPathComponent("AIRS/AnalysisReuse"), library: self.library)
         self.recents = recents ?? SystemDocumentRecents()
@@ -199,7 +226,7 @@ final class AuditWorkspace: ObservableObject {
     }
     var blocksWorkspaceNavigation: Bool {
         isBusy || terminationRequested || showingError ||
-        bundleDiscovery != nil || batchComparisonPlan != nil || comparisonDocument != nil
+        bundleDiscovery != nil || batchComparisonPlan != nil || comparisonDocument != nil || boundReviewReceipts != nil
     }
     var canResumeBatch: Bool {
         guard let snapshot = batchSnapshot, !isBusy, !hasUnretainedBatchReports, !hasUnsavedBatchHistory,
@@ -673,6 +700,62 @@ final class AuditWorkspace: ObservableObject {
         } catch { present(error) }
     }
 
+    func exportBoundRequest(_ finding: Finding) {
+        guard !isBusy,let data = rawReport else { return }
+        perform("Preparing bound review…") { [documents] in
+            .boundRequest(try await documents.boundRequest(data,findingID:finding.id))
+        }
+    }
+
+    func chooseConsumerAcknowledgment() {
+        guard !isBusy,let url = chooseJSON(title:"Import Consumer Acknowledgment",prompt:"Import") else { return }
+        importConsumerAcknowledgment(url)
+    }
+
+    @discardableResult
+    func importConsumerAcknowledgment(_ url: URL) -> Task<Void,Never>? {
+        perform("Importing consumer acknowledgment…",cancellable:false) { [documents] in
+            .boundReceipts(try await documents.importAcknowledgment(url))
+        }
+        return activeTask
+    }
+
+    @discardableResult
+    func reviewConsumerAcknowledgments() -> Task<Void,Never>? {
+        perform("Loading consumer acknowledgments…") { [documents] in
+            .boundReceipts(try await documents.acknowledgments())
+        }
+        return activeTask
+    }
+
+    func chooseBoundRequestArchive() {
+        guard !isBusy else { return }
+        let panel = NSOpenPanel()
+        panel.title = "Retain Bound Request Archive"
+        panel.message = "Retain an AIRS bound request to associate its exact consumer receipts. This does not navigate or launch MacScope."
+        panel.allowedContentTypes = [UTType(filenameExtension:"airsreview") ?? .json,.json]
+        panel.canChooseDirectories = false; panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK,let url = panel.url else { return }
+        perform("Retaining bound request…",cancellable:false) { [documents] in
+            try await documents.retainBoundArchive(url)
+            return .boundReceipts(try await documents.acknowledgments())
+        }
+    }
+
+    private func saveBoundRequest(_ request: BoundReviewRequest) {
+        let panel = NSSavePanel()
+        panel.title = "Export Bound Review Request"
+        panel.message = "Contains the original report and selected finding. Requires a future bound-protocol consumer; current manual-v1 import remains separate. Choose a new file."
+        panel.allowedContentTypes = [UTType(filenameExtension:"airsreview") ?? .json]
+        panel.nameFieldStringValue = "airs-bound-review.airsreview"
+        guard panel.runModal() == .OK,let url = panel.url else { return }
+        do { try validateExportDestination(url,protectedInputs:[]) } catch { present(error); return }
+        perform("Exporting bound review…",cancellable:false) { [documents] in
+            try await documents.exportBoundRequest(request,to:url)
+            return .exported(url.lastPathComponent)
+        }
+    }
+
     func cancel() {
         guard isBusy, canCancel else { return }
         status = "Cancelling…"
@@ -840,6 +923,12 @@ final class AuditWorkspace: ObservableObject {
             showingLibrary = false
             comparisonDocument = document
             status = "Baseline comparison ready."
+        case .boundRequest(let request):
+            status = "Bound request prepared; choose a new export file."
+            saveBoundRequest(request)
+        case .boundReceipts(let entries):
+            boundReviewReceipts = entries
+            status = "Consumer acknowledgments loaded as imported evidence; recovery semantics remain source-reported."
         case .handoff(let data, let filename):
             status = "Handoff JSON is ready to export."
             saveJSON(data, suggestedFilename: filename)
