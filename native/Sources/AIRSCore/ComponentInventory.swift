@@ -132,6 +132,22 @@ public struct ComponentInventoryBuilder: Sendable {
                     readIssues: [error is CancellationError ? "Metadata read cancelled; unavailable." : "Metadata unavailable: " + error.localizedDescription]))
             }
         }
+        var declarationComponentID: UUID?
+        if let declarations = discovery.resourceDeclarations {
+            if records.count < 128 {
+                let plist = try PropertyListSerialization.propertyList(from: declarations.info, format: nil) as? [String: Any]
+                func label(_ key: String) -> String? {
+                    guard let text = plist?[key] as? String, !text.isEmpty, text.utf8.count <= 256,
+                          !text.unicodeScalars.contains(where: { $0.value < 32 || $0.value == 127 }) else { return nil }
+                    return text
+                }
+                let record = ComponentRecord(relativePath: "Contents/Info.plist", kind: "appDeclarations",
+                    declaredBundleID: label("CFBundleIdentifier"), declaredVersion: label("CFBundleShortVersionString"),
+                    readIssues: ["Principal executable unresolved: CFBundleExecutable is absent. Declaration observation only."])
+                declarationComponentID = record.id
+                records.append(record)
+            } else { issues.append("Root declaration record omitted by component record budget.") }
+        }
         // Use exact UTF-8 container ancestry. No name/identifier matching.
         let main = records.first { $0.kind == "app" && ComponentMetadataReader.container(for: $0.relativePath).isEmpty }
         records = records.map { record in
@@ -155,7 +171,7 @@ public struct ComponentInventoryBuilder: Sendable {
             guard known.contains(entry.id), let provenance = entry.provenance else { return nil }
             return (entry.id, provenance)
         })
-        return .init(inventory: inventory, units: units)
+        return .init(inventory: inventory, units: units, resourceDeclarations: declarationComponentID.flatMap { id in discovery.resourceDeclarations.map { (id, $0) } })
     }
 }
 
@@ -163,5 +179,8 @@ public struct ComponentInventoryBuilder: Sendable {
 public struct LiveComponentInventory: Sendable {
     public let inventory: ComponentInventory
     public let units: [UUID: BundleImageProvenance]
-    public init(inventory: ComponentInventory, units: [UUID: BundleImageProvenance]) { self.inventory = inventory; self.units = units }
+    public let resourceDeclarations: (componentID: UUID, bytes: BundleResourceDeclarations)?
+    public init(inventory: ComponentInventory, units: [UUID: BundleImageProvenance], resourceDeclarations: (UUID, BundleResourceDeclarations)? = nil) {
+        self.inventory = inventory; self.units = units; self.resourceDeclarations = resourceDeclarations
+    }
 }

@@ -3,7 +3,11 @@
 Current model `arm64-bounded-clz-v32` adds scalar CLZ W/X only, with exact fixed-bit
 admission, concrete width-masked leading-zero count, conservative unknown values,
 raw stack-provenance rejection and unchanged flags/recovery scope. See CLZ.md and
-CLZ_RESULTS.md. No memory, loop, CFI or asynchronous scope expands.
+CLZ_RESULTS.md. No memory, loop, CFI or asynchronous scope expands. Python report import
+now registers the exact v32 model in the existing supported-finding admission
+checks, matching native registration. Unknown model labels retain generic
+wire-format handling; import acceptance is not semantic verification. See
+V32_IMPORT_ADMISSION_RESULTS.md.
 
 Previous model `arm64-bounded-sequential-loops-v31` admits at most two disjoint,
 address-ordered natural loops. It retains the existing per-path state, shared

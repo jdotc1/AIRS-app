@@ -140,4 +140,72 @@ final class BundleDiscoveryTests: XCTestCase {
         XCTAssertTrue(result.entries.contains { $0.state == "invalid_name" })
     }
 
+    func testMissingPrincipalRetainsDeclarationsWithoutInventingCodeUnit() throws {
+        let (root, app) = try fixture(); defer { try? FileManager.default.removeItem(at: root) }
+        let info = try PropertyListSerialization.data(fromPropertyList: ["CFBundleIdentifier": "example.resources", "CFBundleShortVersionString": "1.0"], format: .xml, options: 0)
+        try info.write(to: app.appendingPathComponent("Contents/Info.plist"))
+        let privacy = try PropertyListSerialization.data(fromPropertyList: ["NSPrivacyTracking": false], format: .xml, options: 0)
+        try privacy.write(to: app.appendingPathComponent("Contents/Resources/PrivacyInfo.xcprivacy"))
+        let result = try BundleDiscovery().discover(app)
+        XCTAssertTrue(result.partial)
+        XCTAssertEqual(result.resourceDeclarations?.info, info)
+        XCTAssertEqual(result.resourceDeclarations?.privacy, privacy)
+        XCTAssertTrue(result.entries.contains { $0.state == "principal_unresolved" && !$0.selectable })
+        XCTAssertFalse(result.entries.contains { $0.message.contains(" · Principal executable") })
+        XCTAssertEqual(result.entries.filter(\.selectable).count, 4, "Independently discovered images retain existing provenance admission")
+        let unit = try XCTUnwrap(result.entries.first { $0.relativePath == "Contents/MacOS/OwnedMain" }?.provenance)
+        XCTAssertThrowsError(try CodeUnitPreflight.inspect(unit), "Missing declaration must not authorize entitlement reads")
+        let nestedInfo = app.appendingPathComponent("Contents/XPCServices/Owned.xpc/Contents/Info.plist")
+        try PropertyListSerialization.data(fromPropertyList: ["CFBundleExecutable": "service"], format: .xml, options: 0).write(to: nestedInfo)
+        let nested = try XCTUnwrap(result.entries.first { $0.relativePath.hasSuffix("/service") }?.provenance)
+        XCTAssertNoThrow(try CodeUnitPreflight.inspect(nested), "Independent exact-path code unit retains its existing preflight")
+        let live = try ComponentInventoryBuilder().capture(app)
+        let declaration = try XCTUnwrap(live.resourceDeclarations)
+        XCTAssertNil(live.units[declaration.componentID])
+        XCTAssertEqual(live.inventory.components.first { $0.id == declaration.componentID }?.declaredBundleID, "example.resources")
+        XCTAssertEqual(live.inventory.scope.completion, .partial)
+    }
+    func testDeclaredPrincipalControlDoesNotAddDeclarationOnlyRecord() throws {
+        let (root, app) = try fixture(); defer { try? FileManager.default.removeItem(at: root) }
+        let result = try BundleDiscovery().discover(app)
+        XCTAssertNil(result.resourceDeclarations)
+        let unit = try XCTUnwrap(result.entries.first { $0.message.contains(" · Principal executable") }?.provenance)
+        XCTAssertNoThrow(try CodeUnitPreflight.inspect(unit))
+        XCTAssertNil(try ComponentInventoryBuilder().capture(app).resourceDeclarations)
+    }
+    func testInvalidPrincipalAndMalformedOrLinkedInfoRemainRejected() throws {
+        let (root, app) = try fixture(); defer { try? FileManager.default.removeItem(at: root) }
+        let info = app.appendingPathComponent("Contents/Info.plist")
+        for value: Any in ["../escape", "/absolute", "a/b", "a\\b", "", 3] {
+            try PropertyListSerialization.data(fromPropertyList: ["CFBundleExecutable": value], format: .xml, options: 0).write(to: info)
+            XCTAssertThrowsError(try BundleDiscovery().discover(app))
+        }
+        try Data("invalid plist".utf8).write(to: info)
+        XCTAssertThrowsError(try BundleDiscovery().discover(app))
+        try PropertyListSerialization.data(fromPropertyList: ["array"], format: .xml, options: 0).write(to: info)
+        XCTAssertThrowsError(try BundleDiscovery().discover(app))
+        let outside = root.appendingPathComponent("outside.plist")
+        try PropertyListSerialization.data(fromPropertyList: [:], format: .xml, options: 0).write(to: outside)
+        try FileManager.default.removeItem(at: info)
+        try FileManager.default.createSymbolicLink(at: info, withDestinationURL: outside)
+        XCTAssertThrowsError(try BundleDiscovery().discover(app))
+    }
+    func testMissingPrincipalPrivacyLinkUnavailableAndEmptyBundleHasNoImageAuthority() throws {
+        let (root, app) = try fixture(); defer { try? FileManager.default.removeItem(at: root) }
+        try PropertyListSerialization.data(fromPropertyList: [:], format: .xml, options: 0).write(to: app.appendingPathComponent("Contents/Info.plist"))
+        let privacy = app.appendingPathComponent("Contents/Resources/PrivacyInfo.xcprivacy")
+        try FileManager.default.createSymbolicLink(at: privacy, withDestinationURL: app.appendingPathComponent("Contents/Info.plist"))
+        let linked = try BundleDiscovery().discover(app)
+        XCTAssertNil(linked.resourceDeclarations?.privacy)
+        XCTAssertNotNil(linked.resourceDeclarations?.privacyIssue)
+        for location in BundleDiscovery.codeLocations {
+            try? FileManager.default.removeItem(at: app.appendingPathComponent("Contents/" + location))
+        }
+        let live = try ComponentInventoryBuilder().capture(app)
+        XCTAssertEqual(live.inventory.components.count, 1)
+        XCTAssertTrue(live.units.isEmpty)
+        XCTAssertNotNil(live.resourceDeclarations)
+        XCTAssertTrue(try BundleDiscovery().discover(app).entries.filter(\.selectable).isEmpty)
+    }
+
 }

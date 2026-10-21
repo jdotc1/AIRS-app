@@ -47,8 +47,9 @@ public actor InspectionProjectStore {
             guard try await checked(existing) == bytes else {throw InspectionArchiveError.invalid};return project
         }
         guard project.evidence.count < 128 else {throw full()}
-        let retained=try await snapshots.keep(bytes,provenance:.init(sourceLabel:"Project evidence"))
+        // Complete fallible interpretation before retaining a new copy.
         let summary=try describe(archive)
+        let retained=try await snapshots.keep(bytes,provenance:.init(sourceLabel:"Project evidence"))
         let reference=ProjectEvidenceReference(id:retained,digest:digest,savedAt:Date(),extractionTimes:summary.0,producerModels:summary.1,appVersions:summary.2,kinds:archive.attachments.map(\.kind))
         // keep already validated/wrote exact bytes. Cache only with fresh file and
         // receipt stamps; subsequent metadata edits never reopen/rehash observations.
@@ -118,6 +119,38 @@ public actor InspectionProjectStore {
         let lease=try lock();defer {unlock(lease)}
         try directory(folder(id));try FileManager.default.trashItem(at:folder(id),resultingItemURL:nil)
     }
+    /// Freeze one coherent project revision; reuse validated retained bytes/witnesses.
+    public func exportPortableProject(_ id: UUID, to destination: URL, expectedRevision: Int? = nil) async throws {
+        guard !destination.standardizedFileURL.path.hasPrefix(storageRoot.standardizedFileURL.path+"/"),destination.standardizedFileURL != storageRoot.standardizedFileURL else { throw invalid("Export outside the source project store.") }
+        let lease = try lock(); defer { unlock(lease) }
+        let snapshot = try manifestSnapshot(id)
+        let project = snapshot.project
+        try expect(project,expectedRevision)
+        var evidence: [UUID:Data] = [:]
+        for reference in project.evidence {
+            try Task.checkCancellation()
+            evidence[reference.id] = try await checked(reference)
+        }
+        try PortableProjectWriter.write(project: project, metadata: snapshot.bytes, evidence: evidence, to: destination)
+    }
+
+    // Only the fresh owned reconstruction stage calls this path. Existing stores
+    // and revision transactions are never overwritten by a transported manifest.
+    func restorePortable(_ project: InspectionProject, metadata: Data, evidence: [UUID:Data]) async throws {
+        let lease = try lock(); defer { unlock(lease) }
+        guard try folders().isEmpty, try await snapshots.storedIDs().isEmpty else { throw invalid("Reconstruction requires an empty staging store.") }
+        try project.validate()
+        for reference in project.evidence {
+            try Task.checkCancellation()
+            guard let bytes = evidence[reference.id] else { throw InspectionArchiveError.invalid }
+            let retained = try await snapshots.keep(bytes, provenance: .init(sourceLabel:"Imported portable project evidence"), retainingID:reference.id)
+            cache[retained] = try cached(retained, bytes, reference.digest)
+        }
+        let target = folder(project.id)
+        try FileManager.default.createDirectory(at:target,withIntermediateDirectories:false)
+        try publish(metadata,target.appendingPathComponent("manifest.json"))
+    }
+
     private func commit(_ proposal:InspectionProject,expectedRevision:Int,action:String) async throws {
         try proposal.validate()
         let target=folder(proposal.id).appendingPathComponent("manifest.json")
@@ -173,7 +206,7 @@ public actor InspectionProjectStore {
     }
     private func describe(_ archive:InspectionArchive) throws -> ([Date],[String],[String]) {
         var dates:[Date]=[],models:[String]=[],versions:[String]=[]
-        for item in archive.attachments where item.schemaVersion == 1 {
+        for item in archive.attachments where item.schemaVersion == 1 && item.mediaType == "application/json" {
             if item.kind == InspectionDocument.kind {
                 let document=try InspectionDocumentCodec.decode(item.bytes);dates.append(document.capturedAt);models.append("extractor: "+document.producerVersion)
                 if let identity=document.identity {versions += [identity.version,identity.build].compactMap{$0}.map{"app declaration: "+$0}}
@@ -193,6 +226,14 @@ public actor InspectionProjectStore {
     }
     private func readID(_ url:URL) throws -> InspectionProject {
         guard let id=UUID(uuidString:url.lastPathComponent) else {throw InspectionArchiveError.invalid};return try read(id)
+    }
+    private func manifestSnapshot(_ id:UUID) throws -> (project:InspectionProject,bytes:Data) {
+        try directory(storageRoot);try directory(storageRoot.appendingPathComponent("Projects"));try directory(folder(id))
+        let file=folder(id).appendingPathComponent("manifest.json");try noLink(file)
+        let (bytes,_)=try BoundReviewFiles.snapshot(file,limit:2_097_152)
+        let project=try InspectionProject.decode(bytes)
+        guard project.id == id else {throw InspectionArchiveError.invalid}
+        return (project,bytes)
     }
     private func read(_ id:UUID) throws -> InspectionProject {
         try directory(storageRoot);try directory(storageRoot.appendingPathComponent("Projects"));try directory(folder(id))

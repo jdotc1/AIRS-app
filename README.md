@@ -4,15 +4,19 @@ A native macOS evidence-review workspace with a separately executable,
 standard-library-only Python ARM64 Mach-O unwind analyzer. Selected binaries are
 input data and are never loaded or executed by the analyzer.
 
-## Development source and published app
+## Preview 0.3.0/build 4
 
-**Public main includes development source beyond the published app.**
-The downloadable [AIRS 0.2.0/build 3 preview](https://github.com/jdotc1/AIRS-app/releases/tag/v0.2.0)
-is Developer ID signed, notarized and stapled. This source update does not change
-that app, its release tag or assets. SOURCE_SNAPSHOT.json identifies this export
-and its development status; unchanged version/build constants retain 0.2.0/3.
+This preview includes bounded missing-principal bundle declaration observation,
+shared component entitlement-read availability, portable inspection projects,
+exact project-manifest preservation with staged-package preflight, and Python
+CLZ-v32 report import-admission parity. Missing executable declarations do not
+create executable identity or entitlement authority. No asset-catalog or
+Interface Builder inspection is added.
 
-Development source adds the AIRS side of stronger C4 review exchange: selected
+SOURCE_SNAPSHOT.json identifies the corresponding frozen source revision.
+Distribution qualification and remaining limits are recorded with the release.
+
+The AIRS side also includes the AIRS side of stronger C4 review exchange: selected
 finding bound-request export, exact original report/configuration binding,
 acknowledgment import and retained receipt review. The stronger MacScope consumer
 and paired workflow remain pending. The existing manual-v1 handoff is separate
@@ -68,5 +72,5 @@ sanitation. Pattern inspection is bounded, not proof that all confidential text
 can be detected. See RELEASE_NOTES.md for the source-update scope.
 
 The stronger consumer, actual selection readback/receipt production, native AIRS
-export/import interaction and paired exchange remain qualification gates. Signing,
-notarization, publication of a new app binary and installation are separate actions.
+export/import interaction and paired exchange remain qualification gates. Broader operating-system, second-machine reconstruction and capacity qualification
+remain separate from this bounded preview.

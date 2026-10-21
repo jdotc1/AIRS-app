@@ -91,7 +91,13 @@ final class AIRSFileOpen {
     var archiveReview: ArchiveReview?
     var inventoryReview: ComponentInventoryReview?
     var projectReview:ProjectReviewSession?
-    let projectStore:InspectionProjectStore
+    private(set) var projectStore:InspectionProjectStore
+    var portableProjectPreview: PortableProjectPreview?
+    private var portablePreviewGeneration = UUID()
+    private var originalProjectContext: (store:InspectionProjectStore, selected:UUID?)?
+    var canReturnToOriginalProjectStore: Bool { originalProjectContext != nil }
+    private let portableExport: @Sendable (InspectionProjectStore,UUID,Int,URL) async throws -> Void
+    private let portableReconstruct: @Sendable (PortableProjectAdmission,URL) async throws -> InspectionProjectStore
     private var selectedProjectID:UUID?
     private var projectImports:[URL]=[]
     private var projectAssociationGeneration=UUID()
@@ -122,8 +128,14 @@ final class AIRSFileOpen {
          }, inventoryBuild: @escaping @Sendable (URL) throws -> ComponentInventory = { try ComponentInventoryBuilder().build($0) },
          inventoryWrite: @escaping @Sendable (Data, URL) async throws -> Void = { data, url in
              try await Task.detached { try data.write(to: url, options: .atomic) }.value
-         }, componentBuild: @escaping @Sendable (URL,URL,Architecture) throws -> ComponentReviewSession = { try ComponentReviewOperations.build($0,$1,$2) }, assessmentRunner: AssessmentRunner = AssessmentRunner(), projectStore:InspectionProjectStore?=nil) {
+         }, componentBuild: @escaping @Sendable (URL,URL,Architecture) throws -> ComponentReviewSession = { try ComponentReviewOperations.build($0,$1,$2) }, assessmentRunner: AssessmentRunner = AssessmentRunner(), projectStore:InspectionProjectStore?=nil,
+         portableExport: @escaping @Sendable (InspectionProjectStore,UUID,Int,URL) async throws -> Void = { store,id,revision,url in
+             try await store.exportPortableProject(id,to:url,expectedRevision:revision)
+         }, portableReconstruct: @escaping @Sendable (PortableProjectAdmission,URL) async throws -> InspectionProjectStore = {
+             try await PortableProjectReader.reconstruct($0,to:$1)
+         }) {
         self.projectStore=projectStore ?? InspectionProjectStore(root:Self.defaultProjectRoot)
+        self.portableExport=portableExport;self.portableReconstruct=portableReconstruct
         self.assessmentRunner=assessmentRunner
         self.componentBuild = componentBuild
         self.inventoryBuild = inventoryBuild; self.inventoryWrite = inventoryWrite
@@ -312,6 +324,7 @@ final class AIRSFileOpen {
         if !isWritingInventory { activeTask?.cancel() }
         await activeTask?.value
         if inventoryWriteFailedDuringQuit { return false }
+        portableProjectPreview=nil
         inventoryReview = nil; coverageReview=nil; policyReview=nil; projectReview=nil; assessmentReview = nil; componentReview = nil; componentPairReview = nil; pendingComponentPair = nil
         return true
     }
@@ -642,7 +655,8 @@ final class AIRSFileOpen {
         let selected=selectedProjectID
         _=projectOperation("Loading projects…",writing:false,audit:audit,entitlements:entitlements) {_ in selected}
     }
-    private func projectState(_ selected:UUID?,sessionID:UUID) async throws -> ProjectReviewSession {
+    private func projectState(_ selected:UUID?,sessionID:UUID,store:InspectionProjectStore?=nil) async throws -> ProjectReviewSession {
+        let projectStore=store ?? self.projectStore
         let entries=try await projectStore.entries()
         // A remembered ID is a selection hint, not authority to hide the list
         // when that manifest is unavailable. Reuse the parsed entry metadata.
@@ -661,7 +675,7 @@ final class AIRSFileOpen {
     @discardableResult
     func projectOperation(_ label:String,writing:Bool,audit:AuditWorkspace,entitlements:EntitlementsWorkspace,
                           operation:@escaping @Sendable (InspectionProjectStore)async throws->UUID?) -> Task<Void,Never>? {
-        guard let session=projectReview,!isBusy,!isTerminating else {return nil}
+        guard let session=projectReview,portableProjectPreview == nil,!isBusy,!isTerminating else {return nil}
         let store=projectStore;isBusy=true;isWritingInventory=writing;inventoryWriteFailedDuringQuit=false;status=label
         let task=Task {
             defer {isBusy=false;isWritingInventory=false;activeTask=nil}
@@ -724,7 +738,7 @@ final class AIRSFileOpen {
         }
     }
     func chooseProjectEvidence(audit:AuditWorkspace,entitlements:EntitlementsWorkspace) {
-        guard projectReview?.project != nil,!isBusy else {return}
+        guard portableProjectPreview == nil,projectReview?.project != nil,!isBusy else {return}
         isPresentingPanel=true
         let panel=NSOpenPanel();panel.title="Import Immutable Project Evidence";panel.allowsMultipleSelection=false
         panel.allowedContentTypes=[.json,UTType(filenameExtension:"airsreview") ?? .data,UTType(filenameExtension:"airsinspect") ?? .data]
@@ -733,7 +747,7 @@ final class AIRSFileOpen {
     }
     @discardableResult
     func importProjectEvidence(_ url:URL,audit:AuditWorkspace,entitlements:EntitlementsWorkspace) -> Task<Void,Never>? {
-        guard let project=projectReview?.project,!isBusy else {return nil}
+        guard portableProjectPreview == nil,let project=projectReview?.project,!isBusy else {return nil}
         if !projectImports.contains(url) {projectImports.append(url)}
         configureProjectProtection(audit:audit,entitlements:entitlements)
         return projectOperation("Retaining original evidence…",writing:true,audit:audit,entitlements:entitlements) {store in
@@ -762,7 +776,7 @@ final class AIRSFileOpen {
         return try InspectionArchive(attachments:[.init(id:id,kind:kind,schemaVersion:1,mediaType:"application/json",sha256:digest,byteCount:data.count,bytes:data)]).encode()
     }
     func reviewProjectEvidence(_ id:UUID,audit:AuditWorkspace,entitlements:EntitlementsWorkspace) {
-        guard let project=projectReview?.project,!isBusy,!isTerminating else {return}
+        guard portableProjectPreview == nil,let project=projectReview?.project,!isBusy,!isTerminating else {return}
         let a=audit.reportRevision,b=entitlements.model.reportRevision,store=projectStore,session=projectReview?.id
         isBusy=true;status="Opening retained historical evidence…"
         let task=Task {
@@ -780,7 +794,7 @@ final class AIRSFileOpen {
     }
     @discardableResult
     func exportProjectEvidence(_ id:UUID?,to destination:URL?=nil,audit:AuditWorkspace,entitlements:EntitlementsWorkspace) -> Task<Void,Never>? {
-        guard let session=projectReview,!isBusy,!isTerminating else {return nil}
+        guard portableProjectPreview == nil,let session=projectReview,!isBusy,!isTerminating else {return nil}
         let store=projectStore,write=inventoryWrite,inputs=[store.storageRoot]+projectImports
         isBusy=true;isWritingInventory=true;inventoryWriteFailedDuringQuit=false;status="Exporting project evidence…"
         let task=Task {
@@ -805,6 +819,123 @@ final class AIRSFileOpen {
         }
         activeTask=task;return task
     }
-    func closeProjects() {guard !isBusy else {return};projectReview=nil;status=""}
+    func previewPortableProjectExport() {
+        guard portableProjectPreview == nil,!isBusy,!isTerminating,let session=projectReview,let project=session.project else {return}
+        portablePreviewGeneration=UUID()
+        portableProjectPreview = .init(sessionID:session.id,purpose:.export,project:project,admission:nil)
+        status="Review the original evidence and notes included in this package."
+    }
+    func cancelPortableProjectPreview() {
+        guard !isWritingInventory else {return}
+        if isBusy {activeTask?.cancel()}
+        portablePreviewGeneration=UUID();portableProjectPreview=nil
+    }
+    func choosePortableProjectPackage() {
+        guard projectReview != nil,!isBusy,!isTerminating else {return}
+        isPresentingPanel=true
+        let panel=NSOpenPanel();panel.title="Preview Portable Project";panel.prompt="Preview"
+        panel.canChooseDirectories=true;panel.canChooseFiles=false;panel.allowsMultipleSelection=false
+        panel.treatsFilePackagesAsDirectories=true
+        let accepted=panel.runModal() == .OK,url=panel.url;isPresentingPanel=false
+        if accepted,let url {_=previewPortableProjectPackage(url)}
+    }
+    @discardableResult
+    func previewPortableProjectPackage(_ url:URL) -> Task<Void,Never>? {
+        guard portableProjectPreview == nil,let session=projectReview,!isBusy,!isTerminating else {return nil}
+        let generation=UUID();portablePreviewGeneration=generation;portableProjectPreview=nil
+        isBusy=true;status="Validating portable package for preview…"
+        let task=Task {
+            defer {isBusy=false;activeTask=nil}
+            do {
+                let worker=Task.detached(priority:.userInitiated) {
+                    let access=url.startAccessingSecurityScopedResource();defer {if access {url.stopAccessingSecurityScopedResource()}}
+                    return try PortableProjectReader.prepare(at:url)
+                }
+                let admission=try await withTaskCancellationHandler(operation:{try await worker.value},onCancel:{worker.cancel()})
+                try Task.checkCancellation()
+                guard !isTerminating,projectReview?.id == session.id,portablePreviewGeneration == generation else {return}
+                portableProjectPreview = .init(sessionID:session.id,purpose:.reconstruct,project:admission.project,admission:admission)
+                status="Package validated. Reconstruction will create a separate new store."
+            } catch {status=error.localizedDescription}
+        }
+        activeTask=task;return task
+    }
+    func choosePortableProjectDestination(audit:AuditWorkspace,entitlements:EntitlementsWorkspace) {
+        guard let preview=portableProjectPreview,!isBusy,!isTerminating else {return}
+        isPresentingPanel=true
+        let panel=NSSavePanel();panel.canCreateDirectories=true
+        panel.title=preview.purpose == .export ? "Export Portable Project" : "Reconstruct into New Project Store"
+        panel.nameFieldStringValue=preview.purpose == .export ? "Project.airsproject" : "Reconstructed AIRS Store"
+        panel.message="Choose a new directory name. Existing destinations will be preserved."
+        let accepted=panel.runModal() == .OK,url=panel.url;isPresentingPanel=false
+        guard accepted,let url else {return}
+        if preview.purpose == .export {_=exportPortableProject(to:url,confirmed:true,audit:audit,entitlements:entitlements)}
+        else {_=reconstructPortableProject(to:url,audit:audit,entitlements:entitlements)}
+    }
+    @discardableResult
+    func exportPortableProject(to url:URL,confirmed:Bool,audit:AuditWorkspace,entitlements:EntitlementsWorkspace) -> Task<Void,Never>? {
+        guard confirmed,let preview=portableProjectPreview,preview.purpose == .export,
+              preview.sessionID == projectReview?.id,!isBusy,!isTerminating else {return nil}
+        let store=projectStore,export=portableExport
+        isBusy=true;isWritingInventory=true;inventoryWriteFailedDuringQuit=false;status="Exporting portable project…"
+        let task=Task {
+            defer {isBusy=false;isWritingInventory=false;activeTask=nil}
+            do {
+                try ReportDestination.validate(url,excluding:entitlements.protectedInputs+[store.storageRoot]+projectImports)
+                try audit.validateExportDestination(url,protectedInputs:[store.storageRoot]+projectImports)
+                try await export(store,preview.project.id,preview.project.revision,url)
+                status="Portable project exported. Original observations and source store preserved."
+                guard !isTerminating,portableProjectPreview?.id == preview.id else {return}
+                portableProjectPreview=nil
+            } catch {if isTerminating {inventoryWriteFailedDuringQuit=true};status=error.localizedDescription}
+        }
+        activeTask=task;return task
+    }
+    @discardableResult
+    func reconstructPortableProject(to url:URL,audit:AuditWorkspace,entitlements:EntitlementsWorkspace) -> Task<Void,Never>? {
+        guard let preview=portableProjectPreview,preview.purpose == .reconstruct,let admission=preview.admission,
+              preview.sessionID == projectReview?.id,!isBusy,!isTerminating else {return nil}
+        let reconstruct=portableReconstruct,sourceStore=projectStore,selected=projectReview?.project?.id
+        isBusy=true;isWritingInventory=true;inventoryWriteFailedDuringQuit=false;status="Reconstructing a fresh project store…"
+        let task=Task {
+            defer {isBusy=false;isWritingInventory=false;activeTask=nil}
+            do {
+                try ReportDestination.validate(url,excluding:entitlements.protectedInputs+[sourceStore.storageRoot,admission.packageURL]+projectImports)
+                try audit.validateExportDestination(url,protectedInputs:[sourceStore.storageRoot,admission.packageURL]+projectImports)
+                let worker=Task.detached(priority:.userInitiated) {
+                    let access=admission.packageURL.startAccessingSecurityScopedResource()
+                    defer {if access {admission.packageURL.stopAccessingSecurityScopedResource()}}
+                    return try await reconstruct(admission,url)
+                }
+                let store=try await worker.value
+                let state=try await projectState(admission.project.id,sessionID:preview.sessionID,store:store)
+                status="New store reconstructed at \(url.path). Original store preserved."
+                guard !isTerminating,projectReview?.id == preview.sessionID,portableProjectPreview?.id == preview.id else {return}
+                if originalProjectContext == nil {originalProjectContext=(sourceStore,selected)}
+                projectImports += [sourceStore.storageRoot,admission.packageURL]
+                projectStore=store;selectedProjectID=state.project?.id;projectReview=state;portableProjectPreview=nil
+                configureProjectProtection(audit:audit,entitlements:entitlements)
+            } catch {if isTerminating {inventoryWriteFailedDuringQuit=true};status=error.localizedDescription}
+        }
+        activeTask=task;return task
+    }
+    @discardableResult
+    func returnToOriginalProjectStore(audit:AuditWorkspace,entitlements:EntitlementsWorkspace) -> Task<Void,Never>? {
+        guard let context=originalProjectContext,let session=projectReview,portableProjectPreview == nil,!isBusy,!isTerminating else {return nil}
+        isBusy=true;status="Opening original project store…"
+        let task=Task {
+            defer {isBusy=false;activeTask=nil}
+            do {
+                let state=try await projectState(context.selected,sessionID:session.id,store:context.store)
+                try Task.checkCancellation();guard !isTerminating,projectReview?.id == session.id else {return}
+                projectImports.append(projectStore.storageRoot)
+                projectStore=context.store;selectedProjectID=state.project?.id;projectReview=state;originalProjectContext=nil
+                configureProjectProtection(audit:audit,entitlements:entitlements)
+                status="Original project store reopened. Reconstructed store remains on disk."
+            } catch {status=error.localizedDescription}
+        }
+        activeTask=task;return task
+    }
+    func closeProjects() {guard !isBusy else {return};cancelPortableProjectPreview();projectReview=nil;status=""}
 
 }

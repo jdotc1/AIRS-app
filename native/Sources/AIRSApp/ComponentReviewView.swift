@@ -42,7 +42,7 @@ struct ComponentReviewView: View {
             List(session.review.matching.matches) { match in
                 ComponentReviewRow(match:match,previous:session.review.previous.components.first{$0.id == match.previousID},
                     current:session.review.current.components.first{$0.id == match.currentID},differences:session.differences[match.id] ?? [],
-                    outcome:session.review.entitlementResults.first{$0.matchID == match.id},canRead:session.live != nil && match.relation == .sameLocation && !busy,
+                    outcome:session.review.entitlementResults.first{$0.matchID == match.id},availability:ComponentReviewOperations.readAvailability(session,matchID:match.id,busy:busy),
                     read:{read(match.id)})
             }
             Text(status).foregroundStyle(.secondary)
@@ -57,7 +57,7 @@ private struct ComponentReviewRow: View {
     let current: ComponentRecord?
     let differences: [DeclarationDifference]
     let outcome: ComponentEntitlementResult?
-    let canRead: Bool
+    let availability: ComponentReadAvailability
     let read: () -> Void
     var body: some View {
         VStack(alignment:.leading,spacing:6) {
@@ -86,7 +86,8 @@ private struct ComponentReviewRow: View {
                     }
                 }
             }
-            Button("Read Entitlements for Requested Slice",action:read).disabled(!canRead)
+            Button("Read Entitlements for Requested Slice",action:read).disabled(!availability.available)
+            Text(availability.reason).foregroundStyle(.secondary)
         }.padding(.vertical,8)
     }
 }

@@ -157,6 +157,8 @@ native/Sources/AIRSApp/Entitlements/StandaloneEntitlementInspection.swift
 native/Sources/AIRSApp/Entitlements/StandaloneEntitlementsView.swift
 native/Sources/AIRSApp/ImageBatchView.swift
 native/Sources/AIRSApp/PolicyReviewView.swift
+native/Sources/AIRSApp/PortableProjectPreview.swift
+native/Sources/AIRSApp/PortableProjectPreviewView.swift
 native/Sources/AIRSApp/ProjectReviewView.swift
 native/Sources/AIRSApp/ReportLibraryView.swift
 native/Sources/AIRSApp/ReportViews.swift
@@ -211,6 +213,10 @@ native/Sources/AIRSEntitlements/InspectionDocument.swift
 native/Sources/AIRSEntitlements/InspectionLibrary.swift
 native/Sources/AIRSEntitlements/InspectionProject.swift
 native/Sources/AIRSEntitlements/InspectionProjectStore.swift
+native/Sources/AIRSEntitlements/PortableProject.swift
+native/Sources/AIRSEntitlements/PortableProjectCommand.swift
+native/Sources/AIRSEntitlements/PortableProjectReader.swift
+native/Sources/AIRSEntitlements/PortableProjectWriter.swift
 native/Sources/AIRSEntitlements/ReviewPolicy.swift
 native/Sources/AIRSEntitlements/ReviewPolicyCommand.swift
 native/Tests/AIRSAppTests/AppIntakeTests.swift
@@ -244,6 +250,7 @@ native/Tests/AIRSAppTests/InspectionSummaryTests.swift
 native/Tests/AIRSAppTests/InterfaceLayoutReviewTests.swift
 native/Tests/AIRSAppTests/PolicyWorkspaceTests.swift
 native/Tests/AIRSAppTests/PortableEntitlementManifestWorkspaceTests.swift
+native/Tests/AIRSAppTests/PortableProjectWorkspaceTests.swift
 native/Tests/AIRSAppTests/ProjectWorkspaceTests.swift
 native/Tests/AIRSAppTests/ReportLibraryWorkspaceTests.swift
 native/Tests/AIRSAppTests/SecondaryDialogLayoutTests.swift
@@ -289,6 +296,9 @@ native/Tests/AIRSEntitlementsTests/InspectionDocumentTests.swift
 native/Tests/AIRSEntitlementsTests/InspectionLibraryTests.swift
 native/Tests/AIRSEntitlementsTests/InspectionProjectStoreTests.swift
 native/Tests/AIRSEntitlementsTests/PortableEntitlementManifestTests.swift
+native/Tests/AIRSEntitlementsTests/PortableProjectPreflightTests.swift
+native/Tests/AIRSEntitlementsTests/PortableProjectTests.swift
+native/Tests/AIRSEntitlementsTests/ProjectAdmissionRegressionTests.swift
 native/Tests/AIRSEntitlementsTests/ReviewPolicyCommandTests.swift
 native/Tests/AIRSEntitlementsTests/ReviewPolicyTests.swift
 native/Vendor/EntitlementDiff/LICENSE
@@ -431,6 +441,7 @@ schemas/review-policy-request-v1.schema.json
 schemas/review-policy-v1.schema.json
 schemas/source-annotations-v1.schema.json
 scripts/build-owned-fixtures-macos.sh
+scripts/capture-native-state.py
 scripts/check-entitlement-batch-cli.py
 scripts/check-entitlement-cli.py
 scripts/check-portable-entitlement-manifest.py
@@ -504,4 +515,6 @@ tests/test_dwarf_cfi.py
 tests/test_engine_report.py
 tests/test_macho.py
 tests/test_release_content.py
+tests/test_report_v32_admission_candidate.py
+tests/test_report_v32_import_integration.py
 tests/test_verify_python.py

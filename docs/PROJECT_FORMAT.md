@@ -46,3 +46,11 @@ Cached validated bytes are bound to observed report and receipt file identities;
 changed files require validation again. This is a cooperative local store, not an
 adversarial-filesystem atomic snapshot or tamper-proof audit ledger. No analysis,
 signature, distribution or slice semantics change in B4.
+
+## C5 follow-up — 20 October 2026
+
+The metadata-only UI export remains distinct from the new portable project
+directory format. The native command now exports complete referenced evidence
+and reconstructs a fresh local store while preserving project/evidence IDs,
+baseline, notes and history. See PORTABLE_PROJECTS.md for limits, explicit
+confirmation, seven focused passes and remaining native/second-machine gates.

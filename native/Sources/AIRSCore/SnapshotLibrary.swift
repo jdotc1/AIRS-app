@@ -73,7 +73,7 @@ public actor SnapshotLibrary<Report: Sendable> {
 
     public func load(_ id: UUID) throws -> RetainedSnapshot<Report> { try read(id).0 }
 
-    public func keep(_ data: Data, provenance: LibraryProvenance) throws -> UUID {
+    public func keep(_ data: Data, provenance: LibraryProvenance, retainingID: UUID? = nil) throws -> UUID {
         guard data.count <= maximumReportBytes else { throw ReportError.tooLarge(maximumReportBytes) }
         _ = try decode(data)
         let folders = try entryFolders()
@@ -83,6 +83,7 @@ public actor SnapshotLibrary<Report: Sendable> {
             total += size
             // Equality is byte equality, not a filename, UUID, or symbol join.
             if size == data.count, let id = UUID(uuidString: folder.lastPathComponent),
+               retainingID == nil || retainingID == id,
                let existing = try? read(id).0, existing.data == data,
                existing.provenance.sourceLabel == provenance.sourceLabel,
                existing.provenance.inspectedInput == provenance.inspectedInput,
@@ -93,7 +94,8 @@ public actor SnapshotLibrary<Report: Sendable> {
             throw invalid("Report library is full (\(maximumEntries) reports / \(maximumTotalBytes) bytes). Remove a retained copy before keeping another.")
         }
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        let id = UUID()
+        let id = retainingID ?? UUID()
+        guard !FileManager.default.fileExists(atPath: folder(id).path) else { throw invalid("Retained snapshot ID already exists.") }
         let stage = root.appendingPathComponent(".stage-\(id.uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: stage, withIntermediateDirectories: false)
         defer { try? FileManager.default.removeItem(at: stage) }

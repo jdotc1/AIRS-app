@@ -33,6 +33,14 @@ struct ProjectReviewView:View {
     let review:(UUID)->Void
     let export:(UUID)->Void
     let exportMetadata:()->Void
+    let portablePreview:PortableProjectPreview?
+    let storePath:String
+    let canReturnToOriginalStore:Bool
+    let previewPortable:()->Void
+    let choosePortablePackage:()->Void
+    let confirmPortable:()->Void
+    let cancelPortable:()->Void
+    let returnToOriginalStore:()->Void
     let remove:(UUID)->Void
     let removeUnreferenced:(UUID)->Void
     let removeProject:(UUID)->Void
@@ -48,11 +56,21 @@ struct ProjectReviewView:View {
         VStack(alignment:.leading,spacing:12) {
             Text("Inspection Projects").font(.title2).bold()
             Text("Projects retain original evidence bytes and separate review metadata. Membership or a pinned baseline does not retain an original app or establish trust.")
+            Text("Store: \(storePath)").font(.caption).textSelection(.enabled)
+            HStack {
+                Button("Preview Portable Export…",action:previewPortable).disabled(session.project == nil || portablePreview != nil)
+                Button("Reconstruct Package…",action:choosePortablePackage).disabled(portablePreview != nil)
+                if canReturnToOriginalStore {Button("Return to Original Store",action:returnToOriginalStore).disabled(portablePreview != nil)}
+            }
+            if let portablePreview {
+                PortableProjectPreviewView(preview:portablePreview,busy:busy,confirm:confirmPortable,cancel:cancelPortable).id(portablePreview.id)
+            }
             HStack {
                 TextField("Project name",text:$name).textFieldStyle(.roundedBorder)
                 Button("New Project") {create(name)}.disabled(name.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)
                 Button("Rename Selected") {rename(name)}.disabled(session.project == nil)
             }
+            .disabled(portablePreview != nil)
             HStack(alignment:.top,spacing:16) {
                 List(session.entries) {entry in
                     VStack(alignment:.leading,spacing:4) {
@@ -98,16 +116,19 @@ struct ProjectReviewView:View {
                     }
                 } else {Text("Choose or create a project.").frame(maxWidth:.infinity,maxHeight:.infinity)}
             }
+            .disabled(portablePreview != nil)
             DisclosureGroup("Unreferenced retained copies (\(session.unreferenced.count))") {
                 ForEach(session.unreferenced,id:\.self) {id in
                     HStack {Text(id.uuidString);Button("Export") {export(id)};Button("Move Copy to Trash…") {orphanRemoval=id}}
                 }
                 if let issue=session.retentionIssue {Text(issue).foregroundStyle(.secondary)}
             }
+            .disabled(portablePreview != nil)
             Text("Capacity: 64 projects, 128 retained archives / 256 MiB. Nothing is evicted. Unpin before removing a baseline; remove membership before deleting a retained copy. Project metadata export contains references and notes, not evidence bytes.").foregroundStyle(.secondary)
             Text(status).foregroundStyle(.secondary)
             HStack {Spacer();Button("Done",action:close).keyboardShortcut(.cancelAction)}
         }.padding(24).frame(minWidth:1000,idealWidth:1200,minHeight:650,idealHeight:800).disabled(busy)
+        .onChange(of:storePath) {_,_ in name=session.project?.name ?? "";noteText="";acknowledged=false}
         .onChange(of:session.project?.id) {_,_ in name=session.project?.name ?? "";noteText="";acknowledged=false}
         .confirmationDialog("Remove evidence membership?",isPresented:Binding(get:{removal != nil},set:{if !$0 {removal=nil}})) {
             Button("Remove from Project",role:.destructive) {if let id=removal {remove(id)};removal=nil}

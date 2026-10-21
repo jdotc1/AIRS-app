@@ -21,6 +21,13 @@ public struct BundleDiscoveryEntry: Identifiable, Sendable {
     public var selectable: Bool { provenance != nil }
 }
 
+/// Captured declaration bytes do not confer an executable or code-unit capability.
+public struct BundleResourceDeclarations: Sendable {
+    public let info: Data
+    public let privacy: Data?
+    public let privacyIssue: String?
+}
+
 public struct BundleDiscoveryResult: Identifiable, Sendable {
     public let id: UUID
     public let bundle: URL
@@ -30,6 +37,7 @@ public struct BundleDiscoveryResult: Identifiable, Sendable {
     public var visited: Int
     public var headerBytes: Int
     public var searchedLocations: [String] = []
+    public var resourceDeclarations: BundleResourceDeclarations? = nil
 }
 
 /// Narrow adaptation of MacScope ReconstructionContainerManifestBuilder's
@@ -75,8 +83,12 @@ public struct BundleDiscovery: Sendable {
         let plistStat = try metadata(plistFD)
         guard (plistStat.st_mode & S_IFMT) == S_IFREG, plistStat.st_size > 0, plistStat.st_size <= 65_536 else { throw failure("Info.plist must be a bounded regular file.") }
         let plist = try prefix(plistFD, count: Int(plistStat.st_size))
-        guard let object = try PropertyListSerialization.propertyList(from: plist, format: nil) as? [String: Any],
-              let executable = object["CFBundleExecutable"] as? String, safe(executable), executable.utf8.count <= 255 else { throw failure("App Info.plist has no safe principal executable name.") }
+        guard let object = try PropertyListSerialization.propertyList(from: plist, format: nil) as? [String: Any] else { throw failure("App Info.plist is not a dictionary.") }
+        let executable: String?
+        if let declared = object["CFBundleExecutable"] {
+            guard let name = declared as? String, safe(name), name.utf8.count <= 255 else { throw failure("App Info.plist has no safe principal executable name.") }
+            executable = name
+        } else { executable = nil }
         var result = BundleDiscoveryResult(id: UUID(), bundle: bundle, entries: [], partial: false, cancelled: false, visited: 0, headerBytes: 0)
         var seen = Set<String>()
         var candidates = 0
@@ -146,7 +158,7 @@ public struct BundleDiscovery: Sendable {
                             device: UInt64(UInt32(bitPattern: before.st_dev)), inode: before.st_ino, size: before.st_size,
                             modifiedSeconds: Int64(before.st_mtimespec.tv_sec), modifiedNanos: Int64(before.st_mtimespec.tv_nsec),
                             changedSeconds: Int64(before.st_ctimespec.tv_sec), changedNanos: Int64(before.st_ctimespec.tv_nsec))
-                        row(path, "candidate", classification.2 + (path == "Contents/MacOS/\(executable)" ? " · Principal executable" : ""),
+                        row(path, "candidate", classification.2 + (executable.map { path == "Contents/MacOS/" + $0 } == true ? " · Principal executable" : ""),
                             BundleImageProvenance(bundle: bundle, relativePath: path, inventoryID: result.id,
                                 rootDevice: UInt64(UInt32(bitPattern: rootStat.st_dev)), rootInode: rootStat.st_ino, fileIdentity: identity))
                     } catch { result.partial = true; row(path, "unreadable", error.localizedDescription) }
@@ -169,11 +181,31 @@ public struct BundleDiscovery: Sendable {
             }
         }
         if Task.isCancelled { result.cancelled = true; result.partial = true }
-        if !result.entries.contains(where: { $0.relativePath == "Contents/MacOS/\(executable)" && $0.selectable }) {
-            result.partial = true; row("[principal]", "principal_unavailable", "Declared principal executable was not captured in the bounded inventory.")
+        if let executable {
+            if !result.entries.contains(where: { $0.relativePath == "Contents/MacOS/" + executable && $0.selectable }) {
+                result.partial = true; row("[principal]", "principal_unavailable", "Declared principal executable was not captured in the bounded inventory.")
+            }
+        } else {
+            result.partial = true
+            row("[principal]", "principal_unresolved", "CFBundleExecutable is absent; principal executable unresolved. Declarations do not authorize image selection or entitlement reads.")
+            var privacy: Data?, privacyIssue: String?
+            if Task.isCancelled { result.cancelled = true; privacyIssue = "Privacy declaration capture cancelled." }
+            else {
+                do {
+                    let file = try openRelative(fd, components: ["Contents", "Resources", "PrivacyInfo.xcprivacy"], directory: false)
+                    defer { Darwin.close(file) }
+                    let before = try metadata(file)
+                    guard (before.st_mode & S_IFMT) == S_IFREG, before.st_size > 0, before.st_size <= 65_536 else { throw failure("Privacy metadata must be a bounded regular file.") }
+                    privacy = try prefix(file, count: Int(before.st_size))
+                    guard same(before, try metadata(file)) else { throw failure("Privacy metadata changed during capture.") }
+                } catch let error as NSError where error.domain == NSPOSIXErrorDomain && error.code == Int(ENOENT) { }
+                catch { privacy = nil; privacyIssue = error.localizedDescription }
+            }
+            result.resourceDeclarations = .init(info: plist, privacy: privacy, privacyIssue: privacyIssue)
         }
         let finalPlist = try metadata(plistFD), finalRoot = try metadata(fd)
         if !same(plistStat, finalPlist) || !same(rootStat, finalRoot) {
+            result.resourceDeclarations = nil
             result.partial = true; row("[bundle-changed]", "changed", "App root or Info.plist changed during discovery.")
         }
         let partial = result.partial, cancelled = result.cancelled
