@@ -70,3 +70,31 @@ class LumenSourceTests(unittest.TestCase):
             (root / '.env').write_text('fixture')
             with self.assertRaisesRegex(ValueError, 'Unexpected hidden'):
                 release_content.check_source(root)
+
+    def test_root_license_is_allowed_and_inspected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'Package.swift').write_text('package')
+            (root / 'Sources').mkdir()
+            (root / 'Sources/One.swift').write_text('owned code')
+            license_file = root / 'LICENSE'
+            license_file.write_text('MIT License')
+            with contextlib.redirect_stdout(io.StringIO()):
+                release_content.check_source(root)
+            license_file.write_text('/Users/person/private')
+            with self.assertRaisesRegex(ValueError, 'Publication marker'):
+                release_content.check_source(root)
+
+    def test_license_exception_does_not_admit_other_files(self):
+        for name in ('UNREVIEWED.txt', 'LICENSE/extra.txt'):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / 'Package.swift').write_text('package')
+                (root / 'Sources').mkdir()
+                (root / 'Sources/One.swift').write_text('owned code')
+                (root / 'Sources/Two.swift').write_text('owned code')
+                extra = root / name
+                extra.parent.mkdir(parents=True, exist_ok=True)
+                extra.write_text('unreviewed')
+                with self.assertRaisesRegex(ValueError, 'Unexpected source payload'):
+                    release_content.check_source(root)

@@ -9,6 +9,7 @@ description = "Bounded, offline ARM64 Mach-O unwind diagnostics"
 requires-python = ">=3.11"
 dependencies = []
 readme = "README.md"
+license = {file = "LICENSE"}
 
 [project.scripts]
 airs = "airs.cli:main"

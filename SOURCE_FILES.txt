@@ -1,8 +1,10 @@
 .github/workflows/verify.yml
 .gitignore
+LICENSE
 Makefile
 README.md
 RELEASE_NOTES.md
+THIRD_PARTY_NOTICES.md
 airs_cli.py
 docs/ANALYSIS_CONTRACT.md
 docs/ARCHITECTURE.md
@@ -350,6 +352,7 @@ native/Vendor/EntitlementDiff/Sources/EntitlementDiffModel/InspectionRequests.sw
 native/Vendor/EntitlementDiff/Sources/EntitlementDiffModel/InspectorProjectionSession.swift
 native/Vendor/EntitlementDiff/Sources/EntitlementDiffSecurity/SecurityEntitlementReader.swift
 native/Vendor/EntitlementDiff/UPSTREAM.md
+native/Vendor/Lumen/LICENSE
 native/Vendor/Lumen/PROVENANCE.md
 native/Vendor/Lumen/Package.swift
 native/Vendor/Lumen/Sources/LumenTokens/LumenColor.swift

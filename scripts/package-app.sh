@@ -117,7 +117,10 @@ if [ ! -d "$LUMEN_RESOURCES" ]; then
 fi
 /usr/bin/ditto "$LUMEN_RESOURCES" "$CONTENTS/Resources/Lumen_LumenUI.bundle"
 cp "$PROJECT_DIR/airs_cli.py" "$ENGINE_DIR/airs_cli.py"
+cp "$PROJECT_DIR/LICENSE" "$CONTENTS/Resources/AIRS-LICENSE.txt"
+cp "$PROJECT_DIR/THIRD_PARTY_NOTICES.md" "$CONTENTS/Resources/THIRD_PARTY_NOTICES.md"
 mkdir -p "$CONTENTS/Resources/ThirdPartyNotices"
+cp "$PROJECT_DIR/native/Vendor/Lumen/LICENSE" "$CONTENTS/Resources/ThirdPartyNotices/Lumen-LICENSE.txt"
 cp "$PROJECT_DIR/native/Vendor/EntitlementDiff/LICENSE" "$CONTENTS/Resources/ThirdPartyNotices/EntitlementDiff-LICENSE.txt"
 if [ "$EXTERNAL_PYTHON" -eq 0 ]; then
     mkdir -p "$CONTENTS/Frameworks" "$CONTENTS/Resources/RuntimeNotices"

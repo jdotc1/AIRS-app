@@ -64,12 +64,15 @@ explicit local test-artifact parent. Unchanged checks are not replayed merely
 because files were exported. Source CI is not distribution approval; this
 publication intentionally skips hosted CI under the verification-reuse policy.
 
-## Source scope and remaining gates
+## License
 
-LumenTokens/LumenUI retain the owner's distribution authorization in
-native/Vendor/Lumen/PROVENANCE.md. EntitlementDiff's MIT license is preserved.
-No additional open-source license grant is made for AIRS or Lumen here.
-Python's upstream license accompanies the binary runtime, excluded from source.
+AIRS is licensed under the [MIT License](LICENSE). The bundled LumenTokens and
+LumenUI snapshot is also [MIT-licensed](native/Vendor/Lumen/LICENSE).
+EntitlementDiff retains its existing MIT license and attribution. Python runtime
+components and Apple platform resources retain their applicable terms; see
+[third-party notices](THIRD_PARTY_NOTICES.md).
+
+## Source scope and remaining gates
 
 The export excludes private history, maintainer instructions, internal handoffs,
 local receipt logs, corpus locations, screenshots and compiled apps/runtimes.

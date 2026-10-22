@@ -18,7 +18,8 @@ def check_source(root):
         if item.is_symlink() or any(part.startswith('.') for part in relative.parts):
             raise ValueError(f'Unexpected hidden file or symlink: {relative}')
         if item.is_file():
-            if relative.parts[0] not in {'Package.swift', 'PROVENANCE.md', 'Sources'}:
+            if (relative.as_posix() != 'LICENSE'
+                    and relative.parts[0] not in {'Package.swift', 'PROVENANCE.md', 'Sources'}):
                 raise ValueError(f'Unexpected source payload file: {relative}')
             if any(pattern.search(item.read_bytes()) for pattern in patterns):
                 raise ValueError(f'Publication marker in Lumen source: {relative}')

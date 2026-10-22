@@ -7,4 +7,6 @@ captures and development files are excluded.
 
 Lumen and AIRS share the same owner. On 2026-10-19 the owner confirmed
 authorship of both and authorized including Lumen with AIRS for distribution.
-No standalone open-source license is assigned by this snapshot.
+On 2026-10-22 the owner licensed this bundled snapshot under the [MIT License](LICENSE).
+Third-party platform material retains its applicable terms; see
+[third-party notices](../../../THIRD_PARTY_NOTICES.md).
