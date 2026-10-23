@@ -1,8 +1,8 @@
-# Development source synchronization
+# AIRS 0.3.2 Preview — build 6
 
-This source snapshot advances beyond public v0.3.1/build 5 without creating a new
-binary release. The published tag/assets and their accepted qualification remain
-unchanged. No next version or release date is assigned.
+This release candidate packages the published development source as version 0.3.2
+(build 6), including the revised native Settings pane and engine model v40.
+Distribution qualification is pending; accepted focused feature evidence is reused.
 
 - Adopt the complete Lumen Settings scaffold and its native compact-toolbar fix,
   including one sidebar control, aligned category history/title and related pane

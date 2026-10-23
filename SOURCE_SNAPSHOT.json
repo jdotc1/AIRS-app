@@ -5,10 +5,10 @@
     "build": "5",
     "tag": "v0.3.1"
   },
-  "release_identity_assigned": false,
+  "release_identity_assigned": true,
   "export_policy": "allowlist; no history, runtime, private evidence or corpus locations",
   "files": 595,
-  "source_status": "development",
+  "source_status": "release-candidate",
   "sanitation": "bounded maintainer-path and credential-marker scan passed on new/changed files",
   "sanitation_inspected_files": 95,
   "sanitation_reused_files": 500,
@@ -46,5 +46,12 @@
     },
     "new_release_created": false
   },
-  "sanitation_counts_scope": "Original base export; post_export_amendment records the separate version-preservation delta"
+  "sanitation_counts_scope": "Original base export; post_export_amendment records the separate version-preservation delta",
+  "release_candidate": {
+    "version": "0.3.2",
+    "build": "6",
+    "public_base_commit": "b20a6f000afb57229b1be5229dd29516d6352c4b",
+    "distribution_qualification": "pending",
+    "sanitation": "Existing export receipt reused; release metadata and notes are a separate reviewed delta"
+  }
 }
