@@ -91,6 +91,25 @@ public struct EntitlementBatchHistory: Sendable {
         try await store.keep(data, provenance: LibraryProvenance(sourceLabel: "Entitlement batch history"))
     }
     public func load(_ id: UUID) async throws -> EntitlementBatchRecord { try await store.load(id).report }
+    /// Bind selected library IDs to their admitted original bytes, not a re-encoded
+    /// result batch ID. Missing membership stays absent; invalid present entries
+    /// throw rather than being mislabeled as missing portable evidence.
+    func portableRecords(for ids: Set<UUID>) async throws -> [UUID: Data] {
+        guard ids.count <= 128 else { throw InspectionArchiveError.limit }
+        try Task.checkCancellation()
+        guard !ids.isEmpty else { return [:] }
+        let stored = try await store.storedIDs()
+        var records: [UUID: Data] = [:]
+        for id in ids.sorted(by: { $0.uuidString < $1.uuidString }) where stored.contains(id) {
+            try Task.checkCancellation()
+            // SnapshotLibrary verifies the requested receipt ID and digest and
+            // returns those same decoded bytes. Repeated project links share one
+            // load here; never serialize the decoded record to recover its bytes.
+            records[id] = try await store.load(id).data
+        }
+        try Task.checkCancellation()
+        return records
+    }
     public func remove(_ id: UUID) async throws { try await store.remove(id) }
     public func entries() async throws -> [EntitlementBatchHistoryEntry] {
         try await store.entries { record in

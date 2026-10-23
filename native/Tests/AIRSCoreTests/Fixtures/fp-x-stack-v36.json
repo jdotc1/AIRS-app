@@ -1,0 +1,158 @@
+{
+  "analysis_config": {
+    "limits": {
+      "max_cfg_paths_per_function": 64,
+      "max_cfg_steps_per_function": 4096,
+      "max_cfi_bytes": 8388608,
+      "max_cfi_instructions": 200000,
+      "max_cfi_records": 4096,
+      "max_cfi_rows": 50000,
+      "max_evidence_per_function": 32,
+      "max_file_bytes": 536870912,
+      "max_functions": 50000,
+      "max_instructions_per_function": 16384,
+      "max_load_commands": 4096,
+      "max_observations_per_function": 256,
+      "max_sections": 4096,
+      "max_total_cfg_steps": 100000,
+      "max_total_evidence": 8192,
+      "max_total_instructions": 1000000,
+      "max_unwind_entries": 200000
+    }
+  },
+  "findings": [
+    {
+      "checked_pcs": [
+        "0x1020"
+      ],
+      "coverage": "compact",
+      "encoding": "0x04000000",
+      "evidence": [
+        {
+          "code": "caller_state_recovered",
+          "message": "Modeled recovery preserves entry SP and original x19\u2013x30 at every listed conservative CFG observation"
+        },
+        {
+          "address": "0x1020",
+          "code": "cfg_call_site",
+          "expected": "constant 0x1024",
+          "message": "BL suspension at 0x1020, target 0x1100; callee ABI summary only, not analyzed",
+          "observed": "constant 0x1024"
+        },
+        {
+          "code": "cfg_paths_checked",
+          "message": "1 terminal paths checked; 0 with uncertain reachability; 13 state visits; 1 path-state observations; states retained separately at reconvergence; 0 paths without call observations"
+        }
+      ],
+      "function": {
+        "address": "0x1000",
+        "boundary_source": "lc_function_starts",
+        "end_address": "0x1034",
+        "image_offset": "0x0",
+        "name": "owned_fp_x_call",
+        "size": 52
+      },
+      "id": "airsf-0be0e7dcb5008209bd8b9fe747c2e0e89df2cd284b983bbb7cce57cc6ec17a33",
+      "instruction_count": 13,
+      "limitations": [
+        "Only the documented, bounded integer instruction subset is interpreted.",
+        "Checks describe selected modeled states; they do not establish whole-function or asynchronous unwind correctness.",
+        "SIMD, pointer authentication, CFI outside the bounded subset, personality and LSDA semantics are outside this model.",
+        "Direct callees are summarized as ABI-conforming returns preserving SP, x19\u2013x29 and unescaped allocated stack storage; callees are not analyzed.",
+        "Only forward compact-frame paths with shared setup and independently checked return regions with bounded forward EQ\u2013LE or unconditional suffix transfers and direct calls to independent function entries are modeled; no CFI CFG extension.",
+        "Unknown supported NZCV conditions explore both successors without merging identities; possible-only discrepancies remain unresolved."
+      ],
+      "mode": "frame",
+      "reason_codes": [
+        "supported_model_agreement"
+      ],
+      "scope": "synchronous_call_sites",
+      "verdict": "agreement"
+    },
+    {
+      "checked_pcs": [
+        "0x1100"
+      ],
+      "coverage": "compact",
+      "encoding": "0x02000000",
+      "evidence": [
+        {
+          "code": "caller_state_recovered",
+          "message": "The unwind rule recovers entry SP and original x19\u2013x30 at every listed modeled observation"
+        }
+      ],
+      "function": {
+        "address": "0x1100",
+        "boundary_source": "lc_function_starts",
+        "end_address": "0x1108",
+        "image_offset": "0x100",
+        "name": "owned_sink",
+        "size": 8
+      },
+      "id": "airsf-b6c722d45409b29f6d8e1f53b587bd48d4fc3be6797b5550561313a7222c8880",
+      "instruction_count": 2,
+      "limitations": [
+        "Only the documented, bounded integer instruction subset is interpreted.",
+        "Checks describe selected modeled states; they do not establish whole-function or asynchronous unwind correctness.",
+        "SIMD, pointer authentication, CFI outside the bounded subset, personality and LSDA semantics are outside this model.",
+        "Leaf observations are states before identified body instructions, excluding recognized prologue and epilogue transitions."
+      ],
+      "mode": "frameless",
+      "reason_codes": [
+        "supported_model_agreement"
+      ],
+      "scope": "modeled_leaf_body",
+      "verdict": "agreement"
+    }
+  ],
+  "generator": {
+    "analysis_model_version": "arm64-bounded-fp-x-stack-v36",
+    "name": "AIRS",
+    "version": "0.2.0"
+  },
+  "image": {
+    "architecture": "arm64",
+    "container_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "cpu_subtype": 0,
+    "display_name": "synthetic-fp-x.bin",
+    "file_type": "dylib",
+    "preferred_base": "0x1000",
+    "slice_offset": 0,
+    "slice_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "slice_size": 264,
+    "uuid": null
+  },
+  "issues": [],
+  "limitations": [
+    "This is a bounded static model, not a proof that a binary always unwinds correctly.",
+    "Compact unwind is checked at supported synchronous call states or explicitly labeled leaf-body states; no asynchronous or all-PC guarantee is made.",
+    "Unsupported instructions, flow outside the bounded CFG and at-most-two sequential disjoint natural-loop subset, unsupported CFI, ARM64e/PAC and SIMD saves remain unresolved.",
+    "Exception personalities, LSDA behavior, runtime stack contents and executable behavior are not validated.",
+    "The inspected file is read as data and is never loaded or executed.",
+    "Selecting a .app analyzes its principal executable; embedded images are not recursively scanned in this version."
+  ],
+  "metadata_ranges": [
+    {
+      "encoding": "0x04000000",
+      "end": "0x1034",
+      "mode": "frame",
+      "start": "0x1000"
+    },
+    {
+      "encoding": "0x02000000",
+      "end": "0x1108",
+      "mode": "frameless",
+      "start": "0x1100"
+    }
+  ],
+  "report_kind": "airs.audit",
+  "schema_version": 1,
+  "summary": {
+    "agreement_count": 2,
+    "checked_pc_count": 2,
+    "function_count": 2,
+    "inconsistency_count": 0,
+    "metadata_entry_count": 2,
+    "unresolved_count": 0
+  }
+}

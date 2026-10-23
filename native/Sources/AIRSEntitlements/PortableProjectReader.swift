@@ -7,6 +7,7 @@ public struct PortableProjectAdmission: Sendable {
     public let inventory: PortableProjectInventory
     public let project: InspectionProject
     public let packageURL: URL
+    let manifestBytes: Data
     let projectBytes: Data
     fileprivate let evidence: [UUID:Data]
     fileprivate let stamps: [URL:ResumeFileIdentity]
@@ -42,11 +43,11 @@ public enum PortableProjectReader {
             stamps[url]=stamp;evidence[entry.id]=bytes;total += bytes.count
         }
         stamps[manifestURL]=initialManifest
-        let admission=PortableProjectAdmission(inventory:inventory,project:project,packageURL:package,projectBytes:projectBytes,evidence:evidence,stamps:stamps)
+        let admission=PortableProjectAdmission(inventory:inventory,project:project,packageURL:package,manifestBytes:manifestBytes,projectBytes:projectBytes,evidence:evidence,stamps:stamps)
         try validateCurrent(admission)
         return admission
     }
-    private static func validateCurrent(_ admission: PortableProjectAdmission) throws {
+    static func validateCurrent(_ admission: PortableProjectAdmission) throws {
         let package=admission.packageURL,evidenceRoot=package.appendingPathComponent("evidence")
         try PortableProjectFiles.physicalDirectory(package);try PortableProjectFiles.physicalDirectory(evidenceRoot)
         for (url,stamp) in admission.stamps {
@@ -76,5 +77,23 @@ public enum PortableProjectReader {
         try Task.checkCancellation();try beforePublish();try Task.checkCancellation();try validateCurrent(admitted)
         try FileManager.default.moveItem(at:stage,to:target)
         return InspectionProjectStore(root:target)
+    }
+}
+
+// Copy only admitted bytes, never an unchecked directory tree. This preserves the
+// schema-1 child exactly when explicitly wrapping it with historical outcomes.
+extension PortableProjectReader {
+    static func writeAdmitted(_ admission: PortableProjectAdmission, to target: URL) throws {
+        try validateCurrent(admission)
+        try FileManager.default.createDirectory(at: target, withIntermediateDirectories: false)
+        try FileManager.default.createDirectory(at: target.appendingPathComponent("evidence"), withIntermediateDirectories: false)
+        try admission.manifestBytes.write(to: target.appendingPathComponent("manifest.json"), options: .withoutOverwriting)
+        try admission.projectBytes.write(to: target.appendingPathComponent("project.json"), options: .withoutOverwriting)
+        for entry in admission.inventory.evidence {
+            try Task.checkCancellation()
+            guard let bytes = admission.evidence[entry.id] else { throw InspectionArchiveError.invalid }
+            try bytes.write(to: target.appendingPathComponent(entry.path), options: .withoutOverwriting)
+        }
+        try validateCurrent(admission)
     }
 }

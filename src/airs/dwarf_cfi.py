@@ -18,6 +18,10 @@ def fail(message: str) -> None:
     raise InputError('dwarf_cfi_unsupported', message)
 
 
+class LocalProgramRefusal(Exception):
+    """An admitted FDE header with an unsupported row-state program."""
+
+
 class Reader:
     def __init__(self, data: bytes, start: int, end: int):
         self.data, self.pos, self.end = data, start, end
@@ -85,8 +89,11 @@ class FDE:
     start: int
     end: int
     rows: tuple[Row, ...]
+    refusal: str | None = None
 
     def row_at(self, pc: int) -> Row:
+        if self.refusal is not None:
+            fail(self.refusal)
         if not self.start <= pc < self.end:
             fail('The requested CFI PC is outside the half-open FDE')
         index = bisect_right([row.pc for row in self.rows], pc) - 1
@@ -106,6 +113,8 @@ class CFITable:
             fail('Overlapping FDE ranges make PC selection ambiguous')
         if (fde.start, fde.end) != (function.start, function.end):
             fail('The referenced FDE does not exactly match the independent function extent')
+        if fde.refusal is not None:
+            fail(fde.refusal)
         return fde
 
 
@@ -117,6 +126,17 @@ class Budget:
         self.operations += 1
         if self.operations > self.limits.max_cfi_instructions:
             fail('CFI instruction budget exhausted')
+
+    def opaque(self, size: int) -> None:
+        # At most one opcode per byte, one row per byte plus a pending/final
+        # row. No decoding,
+        # refunds, or supported-prefix rows survive this reservation.
+        self.operations += size
+        self.rows += size + 1
+        if self.operations > self.limits.max_cfi_instructions:
+            fail('CFI instruction budget exhausted by opaque FDE remainder')
+        if self.rows > self.limits.max_cfi_rows:
+            fail('CFI row budget exhausted by opaque FDE remainder')
 
     def row(self) -> None:
         self.rows += 1
@@ -172,6 +192,9 @@ def program(reader: Reader, start: int, end: int, initial: Row | None, budget: B
             continue
         elif opcode in (7,8):
             rules[reg(reader.uleb())] = ('undefined' if opcode == 7 else 'same', 0)
+        elif opcode in (10, 11) and initial is not None:
+            budget.opaque(reader.end - reader.pos)
+            raise LocalProgramRefusal(f'CFI row-state opcode {opcode:#x} refuses the entire FDE')
         elif opcode == 12:
             number, offset = reader.uleb(), reader.uleb()
             if number not in (29,31) or offset >= 1 << 63:
@@ -229,7 +252,7 @@ def parse_eh_frame(image: MachOImage, limits: Limits = Limits()) -> CFITable:
         if reader.take(9) != b'\x01zR\0\x01\x78\x1e\x01\x10':
             fail('Only CIEv1 zR, code1/data-8, RA30, pcrel-pointer64 is supported')
         cies[offset] = program(reader,0,0,None,budget)[-1]
-    fdes = {}
+    headers = []
     for offset,(end,identifier) in records.items():
         if not identifier:
             continue
@@ -244,8 +267,17 @@ def parse_eh_frame(image: MachOImage, limits: Limits = Limits()) -> CFITable:
             fail('FDE address range is empty, overflows or is not ARM64 aligned')
         if reader.uleb() != 0:
             fail('Nonempty FDE augmentation is outside this subset')
-        rows = program(reader,start,start+size,cies[cie_offset],budget)
-        fdes[offset] = FDE(offset,cie_offset,start,start+size,rows)
+        headers.append((offset, cie_offset, start, start+size, reader.pos, end))
+    # Admit every header before interpreting any FDE program. Structural errors
+    # are never converted to a local unsupported-program outcome.
+    fdes = {}
+    for offset, cie_offset, start, end, program_start, record_end in headers:
+        reader = Reader(data, program_start, record_end)
+        try:
+            rows = program(reader, start, end, cies[cie_offset], budget)
+            fdes[offset] = FDE(offset, cie_offset, start, end, rows)
+        except LocalProgramRefusal as refusal:
+            fdes[offset] = FDE(offset, cie_offset, start, end, (), str(refusal))
     # Ordered interval sweep: flag every overlapping FDE without quadratic joins.
     overlapping = set()
     previous = None

@@ -26,8 +26,8 @@ class ModelError(ValueError):
 # Loads write Rd; stores/compares/branches do not. Pair data/base effects remain
 # explicit below. Adding a decoder family must classify its FP-writing effect.
 _FP_DESTINATION_KINDS = frozenset((
-    'add', 'sub', 'mov', 'movz', 'movn', 'xudiv',
-    'xrbit', 'wclz', 'xclz', 'wadc', 'wadcs', 'wsbc',
+    'add', 'sub', 'mov', 'movz', 'movn', 'xudiv', 'xsdiv',
+    'wrbit', 'xrbit', 'wclz', 'xclz', 'wadc', 'wadcs', 'wsbc',
     'wsbcs', 'xadc', 'xadcs', 'xsbc', 'xsbcs', 'wadd',
     'wadds', 'wsubs', 'xadds', 'xsubs', 'wadds_reg', 'wsubs_reg',
     'xadds_reg', 'xsubs_reg', 'wadds_ext', 'wsubs_ext', 'xadds_ext', 'xsubs_ext',

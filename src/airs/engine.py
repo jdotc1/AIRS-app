@@ -1,7 +1,7 @@
 """File selection, bounded analysis orchestration and stable report assembly."""
 from __future__ import annotations
 
-from bisect import bisect_right
+from bisect import bisect_left, bisect_right
 from collections import Counter
 from dataclasses import asdict, replace
 import hashlib
@@ -66,6 +66,52 @@ def _serialize_evidence(evidence: Evidence) -> dict:
     return {key: value for key, value in result.items() if value is not None}
 
 
+def _split_range_evidence(function, entries, starts, maximum):
+    """Describe bounded intersections without interpreting PC-sensitive rules."""
+    if maximum == 0:
+        return ()
+    first = max(0, bisect_right(starts, function.start) - 1)
+    if first < len(entries) and entries[first].end <= function.start:
+        first += 1
+    stop = bisect_left(starts, function.end)
+    count = stop - first
+    retained = min(count, maximum - 1)
+    summary = Evidence("range_split", "The function intersects metadata boundaries; PC-sensitive rule selection is not yet implemented", function.start,
+                       observed=f"{count} intersecting ranges; {count-retained} range details omitted")
+    details = tuple(Evidence("metadata_range", "Original metadata range intersecting this function; not a checked-PC claim", entry.start,
+                             observed=f"preferred_vm=[{hex(entry.start)}, {hex(entry.end)}) encoding=0x{entry.encoding:08x} mode={_mode(entry.encoding)}")
+                    for entry in entries[first:first+retained])
+    return (summary, *details)
+
+
+def _equivalent_compact_entry(image, function, entries, starts, maximum_ranges):
+    """Derive one analysis-only extent; never modify original metadata entries."""
+    if (image.architecture != "arm64" or image.cpu_subtype not in (0, 1)
+            or function.boundary_source != "lc_function_starts" or function.size <= 0):
+        return None
+    first = bisect_right(starts, function.start) - 1
+    stop = bisect_left(starts, function.end)
+    count = stop - first
+    if first < 0 or count < 2 or count > maximum_ranges:
+        return None
+    initial = entries[first]
+    if not initial.start <= function.start < initial.end or _mode(initial.encoding) not in ("frame", "frameless"):
+        return None
+    # Defensive typed-input guard; the production parser already rejects overlap.
+    if first > 0 and entries[first-1].end > function.start:
+        return None
+    end = initial.end
+    for index in range(first + 1, stop):
+        entry = entries[index]
+        if entry.start != end or entry.end <= entry.start or entry.encoding != initial.encoding:
+            return None
+        end = entry.end
+    if end < function.end:
+        return None
+    # source_offset remains the first real entry's offset, never a fabricated one.
+    return replace(initial, end=end), count
+
+
 def audit_path(path: Path | str, *, requested_arch: str = "auto", limits: Limits = Limits(), include_path: bool = False) -> dict:
     input_path = resolve_input(path)
     try:
@@ -101,23 +147,38 @@ def audit_path(path: Path | str, *, requested_arch: str = "auto", limits: Limits
         entry = table.entries[index] if index >= 0 and table.entries[index].start <= function.start < table.entries[index].end else None
         entry_coverage = ("dwarf_reference" if _mode(entry.encoding) == "dwarf" else "compact") if entry else "unavailable"
         # A single compact range may legitimately cover several functions. The
-        # converse requires PC-sensitive rules, deliberately not implemented here.
+        # converse requires identical contiguous compact rules or remains refused.
         split = entry is not None and entry.end < function.end
         later = bisect_right(starts, function.start)
         split = split or (later < len(starts) and starts[later] < function.end)
+        equivalent = (_equivalent_compact_entry(image, function, table.entries, starts,
+                       min(limits.max_instructions_per_function, remaining_instructions))
+                      if split and not table.issues else None)
         estimated_instructions = (function.size + 3) // 4
         if remaining_evidence < max(1, limits.max_evidence_per_function):
             evidence_budget_exhausted = True
             outcome = AuditResult("unresolved", entry_coverage, _mode(entry.encoding) if entry else "unknown", "metadata_only", ("report_evidence_budget",), limitations=("The remaining evidence budget cannot hold the next bounded analysis; this function is explicitly unresolved.",))
-        elif split:
-            outcome = AuditResult("unresolved", entry_coverage, _mode(entry.encoding) if entry else "unknown", "metadata_only", ("multiple_metadata_ranges",), evidence=(Evidence("range_split", "The function intersects multiple metadata ranges; PC-sensitive rule selection is not yet implemented", function.start),)[:limits.max_evidence_per_function])
+        elif split and equivalent is None:
+            outcome = AuditResult("unresolved", entry_coverage, _mode(entry.encoding) if entry else "unknown", "metadata_only", ("multiple_metadata_ranges",), evidence=_split_range_evidence(function, table.entries, starts, limits.max_evidence_per_function))
         elif estimated_instructions > remaining_instructions:
             budget_exhausted = True
             outcome = AuditResult("unresolved", entry_coverage, _mode(entry.encoding) if entry else "unknown", "metadata_only", ("total_instruction_budget",), limitations=("The report includes this function, but the total instruction budget prevented semantic analysis.",))
         else:
             remaining_instructions -= estimated_instructions
             effective = replace(limits,max_cfg_steps_per_function=min(limits.max_cfg_steps_per_function,remaining_cfg_steps))
-            outcome = audit_current_function(image, function, entry, effective, cfi_table=cfi_table)
+            if equivalent is None:
+                outcome = audit_current_function(image, function, entry, effective, cfi_table=cfi_table)
+            else:
+                analysis_entry, range_count = equivalent
+                note = Evidence("equivalent_compact_ranges", "Identical contiguous compact rules cover this function; original metadata ranges are retained", function.start,
+                                observed=f"{range_count} original ranges; shared encoding=0x{analysis_entry.encoding:08x}")
+                if limits.max_evidence_per_function < 2:
+                    outcome = AuditResult("unresolved", entry_coverage, _mode(entry.encoding), "metadata_only", ("evidence_limit",),
+                                          evidence=(note,)[:limits.max_evidence_per_function])
+                else:
+                    effective = replace(effective, max_evidence_per_function=limits.max_evidence_per_function-1)
+                    outcome = audit_current_function(image, function, analysis_entry, effective, cfi_table=cfi_table)
+                    outcome = replace(outcome, evidence=(note, *outcome.evidence))
             remaining_cfg_steps = max(0,remaining_cfg_steps-outcome.cfg_steps)
             if outcome.reason_codes == ("cfg_work_limit",) and remaining_cfg_steps == 0:
                 cfg_budget_exhausted = True

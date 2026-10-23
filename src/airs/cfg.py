@@ -24,9 +24,12 @@ def decode_instruction(word: int, address: int = 0) -> Instruction:
     # X-only UDIV: Rn/Rm/Rd31 are ZR, never SP.
     if word & 0xffe0fc00 == 0x9ac00800:
         return Instruction(address,word,'xudiv',word&31,(word>>5)&31,(word>>16)&31)
-    # X-only RBIT: fix every nonoperand bit; Rn/Rd31 are ZR.
-    if word & 0xfffffc00 == 0xdac00000:
-        return Instruction(address,word,'xrbit',word&31,(word>>5)&31)
+    # Same owned two-source mapping; exact scalar X signed form only.
+    if word & 0xffe0fc00 == 0x9ac00c00:
+        return Instruction(address,word,'xsdiv',word&31,(word>>5)&31,(word>>16)&31)
+    # Scalar W/X RBIT: fix every nonoperand bit except sf; Rn/Rd31 are ZR.
+    if word & 0x7ffffc00 == 0x5ac00000:
+        return Instruction(address,word,'xrbit' if word&(1<<31) else 'wrbit',word&31,(word>>5)&31)
     # Owned MacScope one-source sf/opcode2/opcode dispatch; CLZ only.
     # Fix every nonoperand bit, including S and opcode2; Rn/Rd31 mean ZR.
     if word & 0x7ffffc00 == 0x5ac01000:
@@ -142,12 +145,13 @@ def decode_instruction(word: int, address: int = 0) -> Instruction:
             return Instruction(address,word,'wlsl',word&31,(word>>5)&31,immediate=32-immr)
         kind=('x' if word&(1<<31) else 'w')+('sbfm','bfm','ubfm')[(word>>29)&3]
         return Instruction(address,word,kind,word&31,(word>>5)&31,immediate=imms,addressing=str(immr))
-    # Owned MacScope scalar size/opc and imm12 scaling; X SP-only subset.
+    # Owned MacScope scalar size/opc/base fields and imm12 scaling; X SP/FP subset.
     form = word & 0xffc00000
     if form in (0xf9000000,0xf9400000):
-        if (word>>5)&31 != 31:
-            raise ModelError('cfg_memory_base_not_modeled','X accesses require unsigned offset from SP',address)
-        return Instruction(address,word,'xstr' if form == 0xf9000000 else 'xldr',word&31,31,immediate=((word>>10)&0xfff)*8)
+        base=(word>>5)&31
+        if base not in (29,31):
+            raise ModelError('cfg_memory_base_not_modeled','X accesses require unsigned offset from SP or X29',address)
+        return Instruction(address,word,'xstr' if form == 0xf9000000 else 'xldr',word&31,base,immediate=((word>>10)&0xfff)*8)
     form = word & 0xffc00000
     if form in (0xb9000000,0xb9400000):
         if (word>>5)&31 != 31:
@@ -243,19 +247,34 @@ class PathState(MachineState):
                 value=Value('constant',0 if divisor == 0 else numerator//divisor)
             self._write_register(instruction.rd,value)
             return
-        if kind == 'xrbit':
+        if kind == 'xsdiv':
+            left,right=self.read_register(instruction.rn),self.read_register(instruction.rt2)
+            if left.kind == 'stack' or right.kind == 'stack':
+                raise ModelError('sdiv_stack_address_not_modeled','SDIV source is a derived stack address',address)
+            value=Value('unknown','Both SDIV sources must be concrete')
+            if left.kind == right.kind == 'constant':
+                mask=(1<<64)-1
+                numerator,divisor=_signed(int(left.value)&mask,64),_signed(int(right.value)&mask,64)
+                quotient=0 if divisor == 0 else abs(numerator)//abs(divisor)
+                if (numerator<0)!=(divisor<0): quotient=-quotient
+                value=Value('constant',quotient&mask)
+            self._write_register(instruction.rd,value)
+            return
+        if kind in ('wrbit','xrbit'):
             raw=self.read_register(instruction.rn)
             if raw.kind == 'stack':
                 raise ModelError('rbit_stack_address_not_modeled','RBIT source is a derived stack address',address)
             value=Value('unknown','RBIT source must be concrete')
             if raw.kind == 'constant':
-                bits=int(raw.value)&((1<<64)-1)
+                width=32 if kind == 'wrbit' else 64
+                bits=int(raw.value)&((1<<width)-1)
                 reversed_bits=0
-                for _ in range(64):
+                for _ in range(width):
                     reversed_bits=(reversed_bits<<1)|(bits&1)
                     bits>>=1
                 value=Value('constant',reversed_bits)
-            self._write_register(instruction.rd,value)
+            if kind == 'wrbit': self.write_w(instruction.rd,value)
+            else: self._write_register(instruction.rd,value)
             return
         if kind in ('wclz','xclz'):
             raw=self.read_register(instruction.rn)
@@ -519,7 +538,13 @@ class PathState(MachineState):
             else: self.write_w(instruction.rd,value)
             return
         if kind in ('xstr','xldr'):
-            offset=self._memory_offset(self.sp.add(instruction.immediate),instruction,size=8)
+            if self.sp.kind != 'stack':
+                raise ModelError('unknown_memory_address','SP does not identify a known allocated frame',address)
+            base=self.sp if instruction.rn == 31 else self.read_register(instruction.rn)
+            if instruction.rn == 29:
+                # A stale/out-of-frame FP cannot be made admissible by its offset.
+                self._memory_offset(base,instruction,size=8)
+            offset=self._memory_offset(base.add(instruction.immediate),instruction,size=8)
             if kind == 'xstr':
                 value=self.read_register(instruction.rd)
                 if value.kind == 'constant': value=Value('constant',int(value.value)&((1<<64)-1))

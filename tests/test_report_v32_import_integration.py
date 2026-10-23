@@ -12,7 +12,7 @@ from test_report_v32_admission_candidate import synthetic_report, replace_mode, 
 
 class V32ImportIntegrationTests(unittest.TestCase):
     def load(self, report):
-        root = os.environ.get('AIRS_TEST_OUTPUT_ROOT') or tempfile.gettempdir()
+        root = os.environ.get('AIRS_TEST_OUTPUT_ROOT', str(Path(tempfile.gettempdir()) / 'AIRS-v32-admission-20261021'))
         with tempfile.TemporaryDirectory(dir=root) as folder:
             path = Path(folder) / 'new-synthetic-report.json'
             path.write_text(json.dumps(report), encoding='utf-8')
@@ -56,7 +56,7 @@ class V32ImportIntegrationTests(unittest.TestCase):
                 self.assertEqual(self.load(report), report)
 
     def test_serialized_unknown_labels_keep_generic_policy(self):
-        for model in ('future-owned-model', 'arm64-bounded-clz-v32-extra', 'arm64-bounded-rbit-v33'):
+        for model in ('future-owned-model', 'arm64-bounded-clz-v32-extra', 'future-owned-model-v35'):
             with self.subTest(model=model):
                 report = synthetic_report(model)
                 report['image']['cpu_subtype'] = 0x80000000

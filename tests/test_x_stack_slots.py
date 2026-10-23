@@ -49,7 +49,7 @@ class XStackSlotTests(unittest.TestCase):
                 try:ins=decode_instruction(xmem(load)^1<<bit,BASE)
                 except ModelError:continue
                 self.assertNotIn(ins.kind,('xstr','xldr'))
-        for word in (xmem(rn=0),xmem(True,rn=29),0xf80003e0,0xf84003e0,0xf80087e0,0xf84087e0,
+        for word in (xmem(rn=0),xmem(True,rn=28),0xf80003e0,0xf84003e0,0xf80087e0,0xf84087e0,
                      0xf8206be0,0x390003e0,0x794003e0,0xfd0003e0):
             with self.subTest(word=hex(word)),self.assertRaises(ModelError):decode_instruction(word,BASE)
         self.assertEqual(decode_instruction(wmem()).kind,'wstr')
@@ -175,7 +175,7 @@ class XStackRecoveryTests(unittest.TestCase):
         self.assertEqual((result.verdict,result.reason_codes),('unresolved',('unknown_stack_read',)))
 
     def test_current_model_has_distinct_memory_identity(self):
-        self.assertEqual(ANALYSIS_MODEL_VERSION,'arm64-bounded-x-stack-v35')
+        self.assertEqual(ANALYSIS_MODEL_VERSION,'arm64-bounded-equivalent-compact-v39')
 
 
 class XStackFlowTests(unittest.TestCase):

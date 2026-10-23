@@ -4,7 +4,7 @@ import AIRSCore
 
 final class PortableProjectPreflightTests: XCTestCase {
     private func folder() throws -> URL {
-        let base=ProcessInfo.processInfo.environment["AIRS_TEST_OUTPUT_ROOT"] ?? FileManager.default.temporaryDirectory.appendingPathComponent("AIRS-C5-manifest-preflight").path
+        let base=ProcessInfo.processInfo.environment["AIRS_TEST_OUTPUT_ROOT"] ?? FileManager.default.temporaryDirectory.appendingPathComponent("AIRS-C5-manifest-preflight-20261020", isDirectory: true).path
         let root=URL(fileURLWithPath:base).appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at:root,withIntermediateDirectories:true)
         return root

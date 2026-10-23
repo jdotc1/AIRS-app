@@ -64,3 +64,18 @@ AIRS does not use bundled Python for arbitrary scripts, package installation,
 network services or GUI Python tools. Runtime updates require a new pinned
 preparation and focused qualification. AIRS supports Apple Silicon hosts only and will not support Intel-host execution.
 The underlying official runtime being universal2 does not widen that policy.
+
+### Metadata-bound reuse after device renumbering
+
+Reuse preserves the original runtime receipt. Exact inventory membership and
+inode, size, modification time, change time and mode must still match for every
+framework and notice entry. If device identifiers differ, the complete pair of
+inventories must describe one common old device and one common current device;
+partial, split or collapsed device mappings fail closed. Unchanged inventories
+retain the existing exact-metadata behavior, including multiple devices.
+
+An accepted renumbering is reported explicitly as metadata-bound evidence with
+no fresh byte verification and no claim about the operating-system cause. The
+receipt has no historical stable volume identifier, so this check cannot assert
+volume identity across a remount. No hashes, signatures, dependency checks or
+runtime execution are repeated, and the receipt is never rewritten by reuse.

@@ -15,8 +15,11 @@ struct PortableProjectPreviewView: View {
                 Text("Original evidence and notes are included verbatim and may contain sensitive strings or source paths. Original apps, dSYMs and batch checkpoints are excluded.")
                     .foregroundStyle(.secondary)
                 if preview.purpose == .reconstruct {
-                    Text("Creates a separate new store and opens it for review. Your current store is preserved; you can return to it. Batch associations remain historical references.")
+                    Text(preview.settledAdmission == nil
+                        ? "Creates a separate new store and opens it for review. Your current store is preserved; you can return to it. Batch associations remain historical references."
+                        : "Creates a separate new store with detached historical outcomes. Your current store is preserved; no queue is restored and no comparison report is included.")
                 }
+                if let settled=preview.settledAdmission {HistoricalBatchOutcomesView(history:settled.history)}
                 DisclosureGroup("Included records and notes") {
                     ScrollView {
                         VStack(alignment:.leading,spacing:6) {

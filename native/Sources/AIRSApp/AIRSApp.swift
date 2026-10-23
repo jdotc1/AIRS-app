@@ -7,14 +7,44 @@ import LumenUI
 @MainActor
 struct AIRSApp: App {
     @NSApplicationDelegateAdaptor(AIRSApplicationDelegate.self) private var applicationDelegate
-    @StateObject private var workspace = AuditWorkspace()
-    @State private var entitlements = EntitlementsWorkspace()
+    @StateObject private var workspace: AuditWorkspace
+    @State private var normalEntitlements: EntitlementsWorkspace?
+    private var entitlements: EntitlementsWorkspace {
+        guard let normalEntitlements else { preconditionFailure("Normal workspace requested during Settings review") }
+        return normalEntitlements
+    }
+    private let settingsReview: SettingsReviewConfiguration?
     @State private var navigation = AIRSNavigation()
-    @State private var fileOpen = AIRSFileOpen()
+    @State private var normalFileOpen: AIRSFileOpen?
+    private var fileOpen: AIRSFileOpen {
+        guard let normalFileOpen else { preconditionFailure("File routing requested during Settings review") }
+        return normalFileOpen
+    }
 
     init() {
+        let review: SettingsReviewConfiguration?
+        do {
+            review = try SettingsReviewConfiguration.parse(environment: ProcessInfo.processInfo.environment,
+                                                            bundleIdentifier: Bundle.main.bundleIdentifier)
+            if let review {
+                let preferences = try review.preferences()
+                _workspace = StateObject(wrappedValue: AuditWorkspace(recents: SettingsReviewRecents(),
+                    supportRoot: review.root.appendingPathComponent("data", isDirectory: true),
+                    preferences: preferences))
+            } else {
+                _workspace = StateObject(wrappedValue: AuditWorkspace())
+            }
+        } catch {
+            fatalError("Isolated Settings review rejected: \(error); no production fallback")
+        }
+        settingsReview = review
+        _normalEntitlements = State(initialValue: review == nil ? EntitlementsWorkspace() : nil)
+        _normalFileOpen = State(initialValue: review == nil ? AIRSFileOpen() : nil)
         LumenThemeStore.install(LumenThemeStore(registry: LumenRegistry(packs: [.core]),
-            configuration: LumenStoreConfiguration(appName: "AIRS", defaultThemeID: LumenThemes.standardID)))
+            configuration: LumenStoreConfiguration(appName: "AIRS",
+                themesDirectory: review?.root.appendingPathComponent("themes", isDirectory: true),
+                defaultThemeID: LumenThemes.standardID,
+                defaultsSuiteName: review.map { $0.suite + ".lumen" })))
         #if DEBUG
         // Process-local review only; never changes system appearance or saved preferences.
         if ProcessInfo.processInfo.environment["AIRS_UI_REVIEW_APPEARANCE"] == "dark" {
@@ -25,6 +55,7 @@ struct AIRSApp: App {
 
     var body: some Scene {
         Window("AIRS", id: "main") {
+            if settingsReview == nil {
             AIRSWindowView(audit: workspace, entitlements: entitlements,
                            navigation: navigation, fileOpen: fileOpen)
                 .lumenPaletteRoot()
@@ -44,11 +75,15 @@ struct AIRSApp: App {
                     set: { if !$0 { fileOpen.errorMessage = nil } }
                 )) { Button("OK") { fileOpen.errorMessage = nil } }
                 message: { Text(fileOpen.errorMessage ?? "") }
+            } else {
+                SettingsReviewLauncher()
+            }
         }
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1240, height: 800)
         .commands {
             CommandGroup(replacing: .newItem) {
+                if settingsReview == nil {
                 Button("Open Binary or App…") { navigation.showsEntitlements = false; workspace.chooseBinary() }
                     .keyboardShortcut("o")
                     .disabled(workspace.isBusy || entitlements.isBusy || fileOpen.blocksActions)
@@ -72,6 +107,8 @@ struct AIRSApp: App {
                     .disabled(workspace.isBusy || entitlements.isBusy || fileOpen.blocksActions)
                 Button("Keep Current Report") { navigation.performAudit { workspace.keepCurrentReport() } }
                     .disabled(workspace.report == nil || workspace.isBusy || entitlements.isBusy || fileOpen.blocksActions)
+                Button("Open Decoder Inventory…") {fileOpen.chooseDecodeInventory(audit:workspace,entitlements:entitlements)}
+                    .disabled(workspace.blocksFileOpen || entitlements.isBusy || fileOpen.blocksActions)
                 Button("Open Coverage Inventory…") {fileOpen.chooseCoverage(audit:workspace,entitlements:entitlements)}
                     .disabled(fileOpen.blocksActions || workspace.blocksFileOpen || entitlements.isBusy)
                 Button("Review Owned Build Policy…") {fileOpen.choosePolicyReview(audit:workspace,entitlements:entitlements)}
@@ -92,8 +129,10 @@ struct AIRSApp: App {
                     .disabled(workspace.batchSnapshot == nil || entitlements.isBusy || fileOpen.blocksActions)
                 Button("Batch History") { navigation.performAudit { workspace.openBatchHistory() } }
                     .disabled(workspace.isBusy || entitlements.isBusy || fileOpen.blocksActions || workspace.hasUnsavedBatchHistory)
+                }
             }
             CommandMenu("Entitlements") {
+                if settingsReview == nil {
                 Button("Compare Entitlements") {
                     navigation.select(.entitlements, audit: workspace, entitlements: entitlements, fileOpen: fileOpen)
                 }
@@ -130,8 +169,10 @@ struct AIRSApp: App {
                     .disabled(entitlements.isBusy || fileOpen.blocksActions || entitlements.model.report == nil)
                 Button("Export Entitlement Text Summary…", action: entitlements.chooseTextExport)
                     .disabled(entitlements.isBusy || fileOpen.blocksActions || entitlements.model.report == nil)
+                }
             }
             CommandMenu("Analysis") {
+                if settingsReview == nil {
                 Button("Attach dSYM…") { navigation.performAudit { workspace.chooseDSYM() } }
                     .disabled(workspace.report == nil || workspace.isBusy || entitlements.isBusy || fileOpen.blocksActions)
                 Button("Export Audit JSON…") { navigation.performAudit { workspace.exportCurrentReport() } }
@@ -155,15 +196,17 @@ struct AIRSApp: App {
                 Button("Cancel Operation", action: workspace.cancel)
                     .keyboardShortcut(".")
                     .disabled(!workspace.canCancel)
+                }
             }
         }
 
         Settings {
-            EngineSettingsView(workspace: workspace).disabled(fileOpen.blocksActions)
+            EngineSettingsView(workspace: workspace).disabled(normalFileOpen?.blocksActions ?? false)
                 .lumenPaletteRoot()
                 .lumenMetrics(.standard)
                 .lumenDensityRoot()
         }
+        .lumenSettingsScene()
     }
 }
 

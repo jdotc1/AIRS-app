@@ -93,14 +93,22 @@ final class AIRSFileOpen {
     var projectReview:ProjectReviewSession?
     private(set) var projectStore:InspectionProjectStore
     var portableProjectPreview: PortableProjectPreview?
+    var settledProjectExportPreview:SettledProjectExportPreview?
+    var hasPortableProjectPreview:Bool {portableProjectPreview != nil || settledProjectExportPreview != nil}
+    private var settledExportGeneration=UUID()
+    private let settledExportWrite:@Sendable (SettledProjectExportPreview,URL) async throws -> Void
     private var portablePreviewGeneration = UUID()
-    private var originalProjectContext: (store:InspectionProjectStore, selected:UUID?)?
+    var importedProjectHistory: ImportedProjectHistorySnapshot?
+    private var originalProjectContext: (store:InspectionProjectStore, selected:UUID?, history:ImportedProjectHistorySnapshot?)?
     var canReturnToOriginalProjectStore: Bool { originalProjectContext != nil }
     private let portableExport: @Sendable (InspectionProjectStore,UUID,Int,URL) async throws -> Void
     private let portableReconstruct: @Sendable (PortableProjectAdmission,URL) async throws -> InspectionProjectStore
+    private let portableSettledReconstruct: @Sendable (PortableSettledBatchAdmission,URL) async throws -> InspectionProjectStore
     private var selectedProjectID:UUID?
     private var projectImports:[URL]=[]
     private var projectAssociationGeneration=UUID()
+    var decodeInventoryError:String?
+    var decodeInventoryReview:DecodeInventorySession?
     var coverageReview:CoverageReviewSession?
     var policyReview:PolicyReviewSession?
     var assessmentReview: AssessmentReviewSession?
@@ -133,16 +141,22 @@ final class AIRSFileOpen {
              try await store.exportPortableProject(id,to:url,expectedRevision:revision)
          }, portableReconstruct: @escaping @Sendable (PortableProjectAdmission,URL) async throws -> InspectionProjectStore = {
              try await PortableProjectReader.reconstruct($0,to:$1)
+         }, portableSettledReconstruct: @escaping @Sendable (PortableSettledBatchAdmission,URL) async throws -> InspectionProjectStore = {
+             try await PortableSettledBatchProject.reconstruct($0,to:$1)
+         }, settledExportWrite:@escaping @Sendable (SettledProjectExportPreview,URL) async throws -> Void = {preview,target in
+             try await Task.detached {try preview.write(to:target)}.value
          }) {
+        self.settledExportWrite=settledExportWrite
         self.projectStore=projectStore ?? InspectionProjectStore(root:Self.defaultProjectRoot)
         self.portableExport=portableExport;self.portableReconstruct=portableReconstruct
+        self.portableSettledReconstruct=portableSettledReconstruct
         self.assessmentRunner=assessmentRunner
         self.componentBuild = componentBuild
         self.inventoryBuild = inventoryBuild; self.inventoryWrite = inventoryWrite
         self.read = read; self.hasModal = hasModal
     }
 
-    var blocksActions: Bool { coverageReview != nil || policyReview != nil || intakeReview != nil || archiveReview != nil || inventoryReview != nil || componentReview != nil || assessmentReview != nil || projectReview != nil || componentPairReview != nil || isBusy || isPresentingPanel || isTerminating }
+    var blocksActions: Bool { decodeInventoryError != nil || decodeInventoryReview != nil || coverageReview != nil || policyReview != nil || intakeReview != nil || archiveReview != nil || inventoryReview != nil || componentReview != nil || assessmentReview != nil || projectReview != nil || componentPairReview != nil || isBusy || isPresentingPanel || isTerminating }
 
     func chooseReport(audit: AuditWorkspace, entitlements: EntitlementsWorkspace, navigation: AIRSNavigation) {
         guard !blocksActions, !audit.blocksFileOpen, !entitlements.isBusy, !hasModal() else { return }
@@ -324,8 +338,8 @@ final class AIRSFileOpen {
         if !isWritingInventory { activeTask?.cancel() }
         await activeTask?.value
         if inventoryWriteFailedDuringQuit { return false }
-        portableProjectPreview=nil
-        inventoryReview = nil; coverageReview=nil; policyReview=nil; projectReview=nil; assessmentReview = nil; componentReview = nil; componentPairReview = nil; pendingComponentPair = nil
+        portableProjectPreview=nil;settledProjectExportPreview=nil;settledExportGeneration=UUID();importedProjectHistory=nil
+        inventoryReview = nil; decodeInventoryError=nil; decodeInventoryReview=nil; coverageReview=nil; policyReview=nil; projectReview=nil; assessmentReview = nil; componentReview = nil; componentPairReview = nil; pendingComponentPair = nil
         return true
     }
     func resumeAfterCancelledQuit() { isTerminating = false; inventoryWriteFailedDuringQuit = false }
@@ -492,6 +506,72 @@ final class AIRSFileOpen {
         }
         activeTask = task; return task
     }
+
+    func chooseDecodeInventory(audit:AuditWorkspace,entitlements:EntitlementsWorkspace) {
+        guard !blocksActions,!audit.blocksFileOpen,!entitlements.isBusy,!hasModal() else {return}
+        isPresentingPanel=true
+        let panel=NSOpenPanel();panel.title="Open Saved Decoder Inventory";panel.allowedContentTypes=[.json];panel.allowsMultipleSelection=false
+        let outcome=panel.runModal();isPresentingPanel=false
+        if outcome == .OK,let url=panel.url {_=openDecodeInventory(url,audit:audit,entitlements:entitlements)}
+    }
+    @discardableResult
+    func openDecodeInventory(_ url:URL,audit:AuditWorkspace,entitlements:EntitlementsWorkspace)->Task<Void,Never>? {
+        guard !blocksActions,!audit.blocksFileOpen,!entitlements.isBusy else {return nil}
+        isBusy=true;status="Reading saved decoder inventory; no image analysis…"
+        let task=Task {
+            defer {isBusy=false;activeTask=nil}
+            do {
+                let inventory=try await Task.detached {try DecodeInventory.decode(ReportFiles.readBounded(url))}.value
+                try Task.checkCancellation();guard !isTerminating else {return}
+                decodeInventoryReview=DecodeInventorySession(inventory:inventory,sourceURL:url)
+                status="Saved decode observations loaded; no unwind verdict is implied."
+            } catch {
+                guard !Task.isCancelled,!isTerminating else {return}
+                decodeInventoryError=error.localizedDescription
+                status="Decoder inventory unavailable: "+error.localizedDescription
+            }
+        }
+        activeTask=task;return task
+    }
+    func chooseDecodeAudit(_ rowID:String,audit:AuditWorkspace,entitlements:EntitlementsWorkspace,navigation:AIRSNavigation) {
+        guard decodeInventoryReview != nil,!isBusy,!isTerminating,!audit.blocksFileOpen,!entitlements.isBusy else {return}
+        isPresentingPanel=true
+        let panel=NSOpenPanel();panel.title="Choose Saved Audit for Inventory Function";panel.allowedContentTypes=[.json];panel.allowsMultipleSelection=false
+        let outcome=panel.runModal();isPresentingPanel=false
+        if outcome == .OK,let url=panel.url {_=openDecodeAudit(rowID,source:url,audit:audit,entitlements:entitlements,navigation:navigation)}
+    }
+    @discardableResult
+    func openDecodeAudit(_ rowID:String,source:URL,audit:AuditWorkspace,entitlements:EntitlementsWorkspace,navigation:AIRSNavigation)->Task<Void,Never>? {
+        guard let session=decodeInventoryReview,!isBusy,!isTerminating,!audit.blocksFileOpen,!entitlements.isBusy else {return nil}
+        let revision=audit.reportRevision,entitlementRevision=entitlements.model.reportRevision
+        isBusy=true;status="Matching saved audit image and function; no image analysis…"
+        let task=Task {
+            defer {isBusy=false;activeTask=nil}
+            do {
+                let value=try await Task.detached {
+                    let bytes=try ReportFiles.readBounded(source)
+                    let resolved=try session.inventory.resolveFunction(rowID,sourceBytes:bytes)
+                    return (bytes,resolved.0,resolved.1.id)
+                }.value
+                try Task.checkCancellation()
+                guard !isTerminating,decodeInventoryReview?.id == session.id,audit.reportRevision == revision,
+                      entitlements.model.reportRevision == entitlementRevision,!audit.blocksFileOpen,!entitlements.isBusy else {
+                    status="Workspace changed; saved audit was not opened.";return
+                }
+                audit.openValidatedReport(value.1,data:value.0,from:source)
+                audit.selection = .finding(value.2);audit.revealSelectedFinding()
+                navigation.showsEntitlements=false;decodeInventoryReview=nil
+                status="Matching saved audit opened; its observations and limits remain independent of the decoder inventory."
+            } catch {
+                guard !Task.isCancelled,!isTerminating else {return}
+                status="Saved audit unavailable; inventory and workspace preserved. "+error.localizedDescription
+            }
+        }
+        activeTask=task;return task
+    }
+
+    func dismissDecodeInventoryError() {decodeInventoryError=nil}
+    func closeDecodeInventory() {guard !isBusy else {return};decodeInventoryReview=nil;status=""}
 
     func chooseCoverage(audit:AuditWorkspace,entitlements:EntitlementsWorkspace) {
         guard !blocksActions,!audit.blocksFileOpen,!entitlements.isBusy,!hasModal() else {return}
@@ -675,7 +755,7 @@ final class AIRSFileOpen {
     @discardableResult
     func projectOperation(_ label:String,writing:Bool,audit:AuditWorkspace,entitlements:EntitlementsWorkspace,
                           operation:@escaping @Sendable (InspectionProjectStore)async throws->UUID?) -> Task<Void,Never>? {
-        guard let session=projectReview,portableProjectPreview == nil,!isBusy,!isTerminating else {return nil}
+        guard let session=projectReview,!hasPortableProjectPreview,!isBusy,!isTerminating else {return nil}
         let store=projectStore;isBusy=true;isWritingInventory=writing;inventoryWriteFailedDuringQuit=false;status=label
         let task=Task {
             defer {isBusy=false;isWritingInventory=false;activeTask=nil}
@@ -738,7 +818,7 @@ final class AIRSFileOpen {
         }
     }
     func chooseProjectEvidence(audit:AuditWorkspace,entitlements:EntitlementsWorkspace) {
-        guard portableProjectPreview == nil,projectReview?.project != nil,!isBusy else {return}
+        guard !hasPortableProjectPreview,projectReview?.project != nil,!isBusy else {return}
         isPresentingPanel=true
         let panel=NSOpenPanel();panel.title="Import Immutable Project Evidence";panel.allowsMultipleSelection=false
         panel.allowedContentTypes=[.json,UTType(filenameExtension:"airsreview") ?? .data,UTType(filenameExtension:"airsinspect") ?? .data]
@@ -747,7 +827,7 @@ final class AIRSFileOpen {
     }
     @discardableResult
     func importProjectEvidence(_ url:URL,audit:AuditWorkspace,entitlements:EntitlementsWorkspace) -> Task<Void,Never>? {
-        guard portableProjectPreview == nil,let project=projectReview?.project,!isBusy else {return nil}
+        guard !hasPortableProjectPreview,let project=projectReview?.project,!isBusy else {return nil}
         if !projectImports.contains(url) {projectImports.append(url)}
         configureProjectProtection(audit:audit,entitlements:entitlements)
         return projectOperation("Retaining original evidence…",writing:true,audit:audit,entitlements:entitlements) {store in
@@ -776,7 +856,7 @@ final class AIRSFileOpen {
         return try InspectionArchive(attachments:[.init(id:id,kind:kind,schemaVersion:1,mediaType:"application/json",sha256:digest,byteCount:data.count,bytes:data)]).encode()
     }
     func reviewProjectEvidence(_ id:UUID,audit:AuditWorkspace,entitlements:EntitlementsWorkspace) {
-        guard portableProjectPreview == nil,let project=projectReview?.project,!isBusy,!isTerminating else {return}
+        guard !hasPortableProjectPreview,let project=projectReview?.project,!isBusy,!isTerminating else {return}
         let a=audit.reportRevision,b=entitlements.model.reportRevision,store=projectStore,session=projectReview?.id
         isBusy=true;status="Opening retained historical evidence…"
         let task=Task {
@@ -794,7 +874,7 @@ final class AIRSFileOpen {
     }
     @discardableResult
     func exportProjectEvidence(_ id:UUID?,to destination:URL?=nil,audit:AuditWorkspace,entitlements:EntitlementsWorkspace) -> Task<Void,Never>? {
-        guard portableProjectPreview == nil,let session=projectReview,!isBusy,!isTerminating else {return nil}
+        guard !hasPortableProjectPreview,let session=projectReview,!isBusy,!isTerminating else {return nil}
         let store=projectStore,write=inventoryWrite,inputs=[store.storageRoot]+projectImports
         isBusy=true;isWritingInventory=true;inventoryWriteFailedDuringQuit=false;status="Exporting project evidence…"
         let task=Task {
@@ -820,7 +900,7 @@ final class AIRSFileOpen {
         activeTask=task;return task
     }
     func previewPortableProjectExport() {
-        guard portableProjectPreview == nil,!isBusy,!isTerminating,let session=projectReview,let project=session.project else {return}
+        guard !hasPortableProjectPreview,!isBusy,!isTerminating,let session=projectReview,let project=session.project else {return}
         portablePreviewGeneration=UUID()
         portableProjectPreview = .init(sessionID:session.id,purpose:.export,project:project,admission:nil)
         status="Review the original evidence and notes included in this package."
@@ -829,9 +909,10 @@ final class AIRSFileOpen {
         guard !isWritingInventory else {return}
         if isBusy {activeTask?.cancel()}
         portablePreviewGeneration=UUID();portableProjectPreview=nil
+        settledExportGeneration=UUID();settledProjectExportPreview=nil
     }
     func choosePortableProjectPackage() {
-        guard projectReview != nil,!isBusy,!isTerminating else {return}
+        guard !hasPortableProjectPreview,projectReview != nil,!isBusy,!isTerminating else {return}
         isPresentingPanel=true
         let panel=NSOpenPanel();panel.title="Preview Portable Project";panel.prompt="Preview"
         panel.canChooseDirectories=true;panel.canChooseFiles=false;panel.allowsMultipleSelection=false
@@ -841,7 +922,7 @@ final class AIRSFileOpen {
     }
     @discardableResult
     func previewPortableProjectPackage(_ url:URL) -> Task<Void,Never>? {
-        guard portableProjectPreview == nil,let session=projectReview,!isBusy,!isTerminating else {return nil}
+        guard !hasPortableProjectPreview,let session=projectReview,!isBusy,!isTerminating else {return nil}
         let generation=UUID();portablePreviewGeneration=generation;portableProjectPreview=nil
         isBusy=true;status="Validating portable package for preview…"
         let task=Task {
@@ -856,6 +937,38 @@ final class AIRSFileOpen {
                 guard !isTerminating,projectReview?.id == session.id,portablePreviewGeneration == generation else {return}
                 portableProjectPreview = .init(sessionID:session.id,purpose:.reconstruct,project:admission.project,admission:admission)
                 status="Package validated. Reconstruction will create a separate new store."
+            } catch {status=error.localizedDescription}
+        }
+        activeTask=task;return task
+    }
+    func chooseSettledProjectPackage() {
+        guard !hasPortableProjectPreview,projectReview != nil,!isBusy,!isTerminating else {return}
+        isPresentingPanel=true
+        let panel=NSOpenPanel();panel.title="Preview Project with Historical Batch Outcomes";panel.prompt="Preview"
+        panel.canChooseDirectories=true;panel.canChooseFiles=false;panel.allowsMultipleSelection=false
+        panel.treatsFilePackagesAsDirectories=true
+        let accepted=panel.runModal() == .OK,url=panel.url;isPresentingPanel=false
+        if accepted,let url {_=previewSettledProjectPackage(url)}
+    }
+    @discardableResult
+    func previewSettledProjectPackage(_ url:URL) -> Task<Void,Never>? {
+        guard !hasPortableProjectPreview,let session=projectReview,!isBusy,!isTerminating else {return nil}
+        let generation=UUID();portablePreviewGeneration=generation
+        isBusy=true;status="Validating companion package and historical outcomes…"
+        let task=Task {
+            defer {isBusy=false;activeTask=nil}
+            do {
+                let worker=Task.detached(priority:.userInitiated) {
+                    let access=url.startAccessingSecurityScopedResource()
+                    defer {if access {url.stopAccessingSecurityScopedResource()}}
+                    return try PortableSettledBatchProject.prepare(at:url)
+                }
+                let admission=try await withTaskCancellationHandler(operation:{try await worker.value},onCancel:{worker.cancel()})
+                try Task.checkCancellation()
+                guard !isTerminating,projectReview?.id == session.id,portablePreviewGeneration == generation else {return}
+                portableProjectPreview = .init(sessionID:session.id,purpose:.reconstruct,project:admission.project.project,
+                    admission:admission.project,settledAdmission:admission,sourceURL:url)
+                status="Companion validated. Historical outcomes are read-only; reconstruction creates a separate new store."
             } catch {status=error.localizedDescription}
         }
         activeTask=task;return task
@@ -895,24 +1008,30 @@ final class AIRSFileOpen {
     func reconstructPortableProject(to url:URL,audit:AuditWorkspace,entitlements:EntitlementsWorkspace) -> Task<Void,Never>? {
         guard let preview=portableProjectPreview,preview.purpose == .reconstruct,let admission=preview.admission,
               preview.sessionID == projectReview?.id,!isBusy,!isTerminating else {return nil}
-        let reconstruct=portableReconstruct,sourceStore=projectStore,selected=projectReview?.project?.id
+        let reconstruct=portableReconstruct,reconstructSettled=portableSettledReconstruct
+        let sourceStore=projectStore,selected=projectReview?.project?.id,sourceHistory=importedProjectHistory
+        let sourceURL=preview.sourceURL ?? admission.packageURL
         isBusy=true;isWritingInventory=true;inventoryWriteFailedDuringQuit=false;status="Reconstructing a fresh project store…"
         let task=Task {
             defer {isBusy=false;isWritingInventory=false;activeTask=nil}
             do {
-                try ReportDestination.validate(url,excluding:entitlements.protectedInputs+[sourceStore.storageRoot,admission.packageURL]+projectImports)
-                try audit.validateExportDestination(url,protectedInputs:[sourceStore.storageRoot,admission.packageURL]+projectImports)
+                try ReportDestination.validate(url,excluding:entitlements.protectedInputs+[sourceStore.storageRoot,sourceURL]+projectImports)
+                try audit.validateExportDestination(url,protectedInputs:[sourceStore.storageRoot,sourceURL]+projectImports)
                 let worker=Task.detached(priority:.userInitiated) {
-                    let access=admission.packageURL.startAccessingSecurityScopedResource()
-                    defer {if access {admission.packageURL.stopAccessingSecurityScopedResource()}}
+                    let access=sourceURL.startAccessingSecurityScopedResource()
+                    defer {if access {sourceURL.stopAccessingSecurityScopedResource()}}
+                    if let settled=preview.settledAdmission {return try await reconstructSettled(settled,url)}
                     return try await reconstruct(admission,url)
                 }
                 let store=try await worker.value
                 let state=try await projectState(admission.project.id,sessionID:preview.sessionID,store:store)
                 status="New store reconstructed at \(url.path). Original store preserved."
                 guard !isTerminating,projectReview?.id == preview.sessionID,portableProjectPreview?.id == preview.id else {return}
-                if originalProjectContext == nil {originalProjectContext=(sourceStore,selected)}
-                projectImports += [sourceStore.storageRoot,admission.packageURL]
+                if originalProjectContext == nil {originalProjectContext=(sourceStore,selected,sourceHistory)}
+                projectImports += [sourceStore.storageRoot,sourceURL]
+                importedProjectHistory=preview.settledAdmission.map {
+                    ImportedProjectHistorySnapshot(projectID:admission.project.id,revision:admission.project.revision,storeRoot:store.storageRoot,history:$0.history)
+                }
                 projectStore=store;selectedProjectID=state.project?.id;projectReview=state;portableProjectPreview=nil
                 configureProjectProtection(audit:audit,entitlements:entitlements)
             } catch {if isTerminating {inventoryWriteFailedDuringQuit=true};status=error.localizedDescription}
@@ -921,7 +1040,7 @@ final class AIRSFileOpen {
     }
     @discardableResult
     func returnToOriginalProjectStore(audit:AuditWorkspace,entitlements:EntitlementsWorkspace) -> Task<Void,Never>? {
-        guard let context=originalProjectContext,let session=projectReview,portableProjectPreview == nil,!isBusy,!isTerminating else {return nil}
+        guard let context=originalProjectContext,let session=projectReview,!hasPortableProjectPreview,!isBusy,!isTerminating else {return nil}
         isBusy=true;status="Opening original project store…"
         let task=Task {
             defer {isBusy=false;activeTask=nil}
@@ -929,10 +1048,80 @@ final class AIRSFileOpen {
                 let state=try await projectState(context.selected,sessionID:session.id,store:context.store)
                 try Task.checkCancellation();guard !isTerminating,projectReview?.id == session.id else {return}
                 projectImports.append(projectStore.storageRoot)
-                projectStore=context.store;selectedProjectID=state.project?.id;projectReview=state;originalProjectContext=nil
+                projectStore=context.store;importedProjectHistory=context.history
+                selectedProjectID=state.project?.id;projectReview=state;originalProjectContext=nil
                 configureProjectProtection(audit:audit,entitlements:entitlements)
                 status="Original project store reopened. Reconstructed store remains on disk."
             } catch {status=error.localizedDescription}
+        }
+        activeTask=task;return task
+    }
+    func chooseSettledProjectExport(_ purpose:SettledProjectExportPreview.Purpose,entitlements:EntitlementsWorkspace) {
+        guard !hasPortableProjectPreview,projectReview?.project != nil,!isBusy,!isTerminating else {return}
+        isPresentingPanel=true
+        let panel=NSOpenPanel();panel.title="Choose Exact Package for Selected Project";panel.prompt="Preview"
+        panel.canChooseDirectories=true;panel.canChooseFiles=false;panel.allowsMultipleSelection=false
+        panel.treatsFilePackagesAsDirectories=true
+        let accepted=panel.runModal() == .OK,url=panel.url;isPresentingPanel=false
+        if accepted,let url {_=prepareSettledProjectExport(package:url,purpose:purpose,historyReader:{@Sendable project in try await entitlements.preparePortableBatchHistory(project)})}
+    }
+    @discardableResult
+    func prepareSettledProjectExport(package url:URL,purpose:SettledProjectExportPreview.Purpose,
+        historyReader:@escaping @Sendable (InspectionProject) async throws -> PortableSettledBatchEvidence) -> Task<Void,Never>? {
+        guard !hasPortableProjectPreview,let session=projectReview,let selected=session.project,!isBusy,!isTerminating else {return nil}
+        let generation=UUID();settledExportGeneration=generation
+        let store=projectStore.storageRoot
+        isBusy=true;status="Preparing original project and historical outcomes for consent…"
+        let task=Task {
+            defer {isBusy=false;activeTask=nil}
+            do {
+                let worker=Task.detached(priority:.userInitiated) {
+                    let access=url.startAccessingSecurityScopedResource()
+                    defer {if access {url.stopAccessingSecurityScopedResource()}}
+                    return try await SettledProjectExportPreview.prepare(packageURL:url,store:store,selected:selected,sessionID:session.id,purpose:purpose,historyReader:historyReader)
+                }
+                let preview=try await withTaskCancellationHandler(operation:{try await worker.value},onCancel:{worker.cancel()})
+                try Task.checkCancellation()
+                guard !isTerminating,settledExportGeneration == generation,preview.matches(session:projectReview,store:projectStore.storageRoot) else {return}
+                settledProjectExportPreview=preview
+                status="Review original evidence, notes and historical outcomes before choosing a new destination."
+            } catch {status=error.localizedDescription}
+        }
+        activeTask=task;return task
+    }
+    func cancelSettledProjectExport() {
+        guard !isWritingInventory else {return}
+        if isBusy {activeTask?.cancel()}
+        settledExportGeneration=UUID();settledProjectExportPreview=nil
+    }
+    func chooseSettledProjectExportDestination(audit:AuditWorkspace,entitlements:EntitlementsWorkspace) {
+        guard settledProjectExportPreview != nil,!isBusy,!isTerminating else {return}
+        isPresentingPanel=true
+        let panel=NSSavePanel();panel.title="Export Historical Companion to New Directory"
+        panel.nameFieldStringValue="Project with Recorded Outcomes";panel.canCreateDirectories=true
+        panel.message="Choose an absent directory. Existing destinations are preserved."
+        let accepted=panel.runModal() == .OK,url=panel.url;isPresentingPanel=false
+        if accepted,let url {_=writeSettledProjectExport(to:url,confirmed:true,audit:audit,entitlements:entitlements)}
+    }
+    @discardableResult
+    func writeSettledProjectExport(to target:URL,confirmed:Bool,audit:AuditWorkspace,entitlements:EntitlementsWorkspace) -> Task<Void,Never>? {
+        guard confirmed,let preview=settledProjectExportPreview,preview.matches(session:projectReview,store:projectStore.storageRoot),!isBusy,!isTerminating else {return nil}
+        let write=settledExportWrite
+        isBusy=true;isWritingInventory=true;inventoryWriteFailedDuringQuit=false
+        status="Writing original project and detached historical outcomes…"
+        let task=Task {
+            defer {isBusy=false;isWritingInventory=false;activeTask=nil}
+            do {
+                let protected=projectImports+[preview.sourceStore,preview.package.packageURL]
+                try ReportDestination.validate(target,excluding:entitlements.protectedInputs+protected)
+                try audit.validateExportDestination(target,protectedInputs:protected)
+                let access=preview.package.packageURL.startAccessingSecurityScopedResource()
+                defer {if access {preview.package.packageURL.stopAccessingSecurityScopedResource()}}
+                try await write(preview,target)
+                status="Historical companion exported. Original project store and live queues preserved."
+                guard !isTerminating,settledProjectExportPreview?.id == preview.id else {return}
+                settledProjectExportPreview=nil
+            } catch {if isTerminating {inventoryWriteFailedDuringQuit=true};status=error.localizedDescription}
         }
         activeTask=task;return task
     }

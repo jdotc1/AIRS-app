@@ -1,6 +1,38 @@
+Current isolated model: `arm64-bounded-equivalent-compact-v39` admits fully
+covering contiguous ranges with exactly equal frame/frameless compact encodings
+through the existing auditor. Original metadata remains unchanged; changed rules,
+gaps, overlaps, excluded modes and unknown recovery remain conservative. Sixteen
+new Python methods, sixteen affected methods and three native admission methods
+pass; the real native app debug target built. See EQUIVALENT_COMPACT.md and
+EQUIVALENT_COMPACT_RESULTS.md. Accepted v38 workloads were not rerun, and release
+integration remains separate. Historical checkpoints below retain their scope.
+
+Current isolated model: `arm64-bounded-w-rbit-v38` adds exact scalar W RBIT,
+reusing the X reversal transfer and existing zero-extending W write. Raw stack
+sources still decline, symbolic values stay unknown, NZCV is unchanged and body
+FP writes remain refused. Twelve new Python methods, three new native admission
+methods and 23 affected existing methods pass in composed receipts. The real
+native debug app target built; no prepared library was compiled or analyzed.
+See RBIT_W.md and RBIT_W_RESULTS.md. Historical checkpoints below retain their
+original scope; the release lane is unchanged.
+
 # Analysis contract
 
-Current engine navigation: CURRENT_ENGINE_MATRIX.md identifies the isolated v35
+Current isolated model: arm64-bounded-sdiv-v37 adds scalar X signed division with
+concrete signed64 truncation toward zero, explicit zero/overflow behavior and
+unchanged provenance/unknown/frame scope. Eighteen new Python methods, three new
+native methods and twelve affected selectors pass. See SDIV_X.md and
+SDIV_X_RESULTS.md. The retained complete nonleaf body gains typed call-site
+agreement; no new whole-image/workload result or release action is claimed.
+
+Previous isolated development model: arm64-bounded-fp-x-stack-v36 adds bounded
+unsigned X29-relative X STR/LDR using known allocated-frame authority and the
+existing slot/provenance/frame helpers. Eighteen new Python methods, three new
+native methods and six affected checks pass; real native debug products built.
+See FP_X_STACK.md, FP_X_STACK_RESULTS.md and CURRENT_ENGINE_MATRIX.md. The last
+whole-image receipt remains v35; the prepared nonleaf-v35 workload remains unrun.
+
+Current engine navigation: CURRENT_ENGINE_MATRIX.md identifies the isolated v37
 subset, conservative boundaries, accepted receipts and separate release gates.
 Frame-effect maintenance now shares one Instruction.changes_fp classification
 across legacy and CFG body admission, preserving the prior v35 policy/model.

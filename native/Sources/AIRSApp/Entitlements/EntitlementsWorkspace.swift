@@ -58,6 +58,10 @@ final class EntitlementsWorkspace {
     private let readBatchManifest: @Sendable (URL) async throws -> EntitlementBatchManifest
     var canImportBatchManifest: Bool { canEditBatch }
     var canExportBatchManifest: Bool { !isBusy && !batchPairs.isEmpty }
+    /// Use this workspace's actual selected history owner, never a guessed default path.
+    func preparePortableBatchHistory(_ project:InspectionProject) async throws -> PortableSettledBatchEvidence {
+        try await PortableSettledBatchEvidence.prepare(project:project,history:batchHistory)
+    }
     private let batchHistory: EntitlementBatchHistory
     private(set) var showingBatchHistory = false
     private(set) var batchHistoryEntries: [EntitlementBatchHistoryEntry] = []

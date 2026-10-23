@@ -74,10 +74,17 @@ struct AIRSWindowView: View {
                 review:{fileOpen.reviewProjectEvidence($0,audit:audit,entitlements:entitlements)},
                 export:{fileOpen.exportProjectEvidence($0,audit:audit,entitlements:entitlements)},
                 exportMetadata:{fileOpen.exportProjectEvidence(nil,audit:audit,entitlements:entitlements)},
-                portablePreview:fileOpen.portableProjectPreview,storePath:fileOpen.projectStore.storageRoot.path,
+                portablePreview:fileOpen.portableProjectPreview,
+                settledExportPreview:fileOpen.settledProjectExportPreview,
+                prepareSettledExport:{fileOpen.chooseSettledProjectExport(.export,entitlements:entitlements)},
+                prepareSettledReexport:{fileOpen.chooseSettledProjectExport(.reexport,entitlements:entitlements)},
+                confirmSettledExport:{fileOpen.chooseSettledProjectExportDestination(audit:audit,entitlements:entitlements)},
+                cancelSettledExport:fileOpen.cancelSettledProjectExport,
+                storePath:fileOpen.projectStore.storageRoot.path,
                 canReturnToOriginalStore:fileOpen.canReturnToOriginalProjectStore,
                 previewPortable:fileOpen.previewPortableProjectExport,
                 choosePortablePackage:fileOpen.choosePortableProjectPackage,
+                chooseSettledPackage:fileOpen.chooseSettledProjectPackage,importedHistory:fileOpen.importedProjectHistory,
                 confirmPortable:{fileOpen.choosePortableProjectDestination(audit:audit,entitlements:entitlements)},
                 cancelPortable:fileOpen.cancelPortableProjectPreview,
                 returnToOriginalStore:{fileOpen.returnToOriginalProjectStore(audit:audit,entitlements:entitlements)},
@@ -85,6 +92,11 @@ struct AIRSWindowView: View {
                 removeUnreferenced:{fileOpen.removeUnreferencedProjectEvidence($0,audit:audit,entitlements:entitlements)},
                 removeProject:{fileOpen.removeProject($0,audit:audit,entitlements:entitlements)},
                 link:{fileOpen.linkProjectBatch($0,audit:audit,entitlements:entitlements)},close:fileOpen.closeProjects)
+                .interactiveDismissDisabled()
+        }
+        .sheet(item:$fileOpen.decodeInventoryReview) {session in
+            DecodeInventoryView(inventory:session.inventory,busy:fileOpen.isBusy,status:fileOpen.status,
+                openAudit:{fileOpen.chooseDecodeAudit($0,audit:audit,entitlements:entitlements,navigation:navigation)},close:fileOpen.closeDecodeInventory)
                 .interactiveDismissDisabled()
         }
         .sheet(item:$fileOpen.coverageReview) {session in
@@ -115,6 +127,11 @@ struct AIRSWindowView: View {
                 export:{fileOpen.chooseInventoryExport(audit:audit,entitlements:entitlements)},close:fileOpen.closeComponentReview)
                 .interactiveDismissDisabled()
         }
+        .alert("Decoder inventory unavailable",isPresented:Binding(
+            get:{fileOpen.decodeInventoryError != nil},
+            set:{if !$0 {fileOpen.dismissDecodeInventoryError()}})) {
+                Button("OK",role:.cancel) {fileOpen.dismissDecodeInventoryError()}
+            } message: {Text(fileOpen.decodeInventoryError ?? "")}
         .dropDestination(for: URL.self) { urls, _ in
             guard !urls.isEmpty, !fileOpen.blocksActions, !audit.blocksFileOpen, !entitlements.isBusy else { return false }
             fileOpen.open(urls, audit: audit, entitlements: entitlements, navigation: navigation)
