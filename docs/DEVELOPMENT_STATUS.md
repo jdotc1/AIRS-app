@@ -3,7 +3,7 @@
 The public baseline is v0.3.1/build 5. This development source uses model
 `arm64-bounded-local-fde-v40`, while the existing downloadable app and its frozen
 source retain their own identities. SOURCE_SNAPSHOT.json records the source
-revision and changed/reused export scope. No next binary release is assigned.
+revision and changed/reused export scope. Version 0.3.2/build 6 is the current release candidate; distribution checks are pending.
 
 | Boundary | Retained evidence | Scope limit |
 | --- | --- | --- |
