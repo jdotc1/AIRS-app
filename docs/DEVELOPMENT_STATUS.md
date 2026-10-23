@@ -1,3 +1,8 @@
+Release candidate0.3.3/build7 packages this source. Its build, GUI acceptance,
+signing/notarization and distribution receipts are recorded separately from the
+reused development evidence below. The earlier published baseline remains
+0.3.2/build6 until release publication completes.
+
 # Development scope and retained evidence
 
 The public baseline is v0.3.2/build 6. This development source uses model
