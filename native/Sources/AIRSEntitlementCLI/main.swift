@@ -6,11 +6,27 @@ import AIRSEntitlements
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 if arguments == ["--help"] {
-    do { try FileHandle.standardOutput.write(contentsOf: Data((ComparisonCommand.usage.replacingOccurrences(of: "entitlementdiff-cli", with: "airs-entitlements") + "\n\n" + EntitlementBatchCommand.usage + "\n\n" + ReviewPolicyCommand.usage + "\n\n" + PortableProjectCommand.usage + "\n").utf8)) }
+    do { try FileHandle.standardOutput.write(contentsOf: Data((ComparisonCommand.usage.replacingOccurrences(of: "entitlementdiff-cli", with: "airs-entitlements") + "\n\n" + EntitlementBatchCommand.usage + "\n\n" + ReviewPolicyCommand.usage + "\n\n" + PolicyAcknowledgementCommand.usage + "\n\n" + PortableProjectCommand.usage + "\n\n" + PortableSettledProjectCommand.usage + "\n").utf8)) }
     catch { exit(2) }
     exit(0)
 }
 do {
+    if arguments.first == "propose-acknowledgements" {
+        if Array(arguments.dropFirst()) == ["--help"] {
+            try FileHandle.standardOutput.write(contentsOf:Data((PolicyAcknowledgementCommand.usage+"\n").utf8));exit(0)
+        }
+        let bytes=try await PolicyAcknowledgementCommand(arguments:Array(arguments.dropFirst())).run()
+        try FileHandle.standardOutput.write(contentsOf:bytes)
+        exit(0)
+    }
+    if arguments.first == "project-outcomes" {
+        if Array(arguments.dropFirst()) == ["--help"] {
+            try FileHandle.standardOutput.write(contentsOf:Data((PortableSettledProjectCommand.usage+"\n").utf8));exit(0)
+        }
+        let output=try await PortableSettledProjectCommand.run(arguments:Array(arguments.dropFirst()))
+        try FileHandle.standardOutput.write(contentsOf:output)
+        exit(0)
+    }
     if arguments.first == "project" {
         if Array(arguments.dropFirst()) == ["--help"] {
             try FileHandle.standardOutput.write(contentsOf:Data((PortableProjectCommand.usage+"\n").utf8));exit(0)

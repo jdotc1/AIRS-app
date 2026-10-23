@@ -1,26 +1,22 @@
-# AIRS 0.3.1 Preview — build 5
+# Development source synchronization
 
-This update brings the public app to the completed private v35 checkpoint.
-The engine baseline is 2b4b958, with signing fix b9988e8 and dSYM fix
-74d5a47 from private main. In-progress v36 is excluded.
+This source snapshot advances beyond public v0.3.1/build 5 without creating a new
+binary release. The published tag/assets and their accepted qualification remain
+unchanged. No next version or release date is assigned.
 
-- X-only RBIT and UDIV, with exact model admission in Python and native reports.
-- Bounded SP-relative, unsigned scaled aligned 8-byte X stack loads/stores.
-  Full known slots, allocation bounds, overlap invalidation, frame lifetime and
-  pointer-escape checks remain required. Unsupported forms remain unresolved.
-- Shared frame-effect classification preserves the existing X29/SP guard.
-- Architecture-specific signing metadata coverage and dSYM picker attachment routing.
-- All previously released 0.3.0 component, project and exchange features remain.
+- Adopt the complete Lumen Settings scaffold and its native compact-toolbar fix,
+  including one sidebar control, aligned category history/title and related pane
+  surfaces. The actual AIRS Settings candidate received appearance review.
+- Include bounded development engine models v36–v40, with exact model admission
+  and preserved unknown/refusal boundaries. Retained qualification is described
+  in docs/DEVELOPMENT_STATUS.md; it is not a fresh corpus or release run.
+- Include native settled companion import/export/re-export and historical panels,
+  plus a bounded read-only project catalog CLI. Picker and historical-panel GUI
+  acceptance remains incomplete.
+- Preserve the public MIT licensing amendment, notices and existing public
+  portability changes. Remove maintainer-specific paths from changed fixtures
+  and isolate private qualification/comparison records from the public payload.
 
-Report schema remains 1. The engine model is arm64-bounded-x-stack-v35.
-Accepted focused semantic/native import and independent review receipts are
-reused. The retained owned two-library v35 observation was 16 functions,
-16 agreement, zero inconsistency and zero unresolved; this is a bounded prior
-measurement, not a new corpus run or general support claim.
-
-The standalone app is Developer ID signed, Apple notarized and stapled.
-New-container signature verification, ticket validation and local macOS
-distribution assessment passed. Release qualification is recorded separately. No unchanged suite, corpus,
-source/runtime provenance hash or dependency qualification is repeated.
-Minimum-OS, Intel-host, clean-Mac and broader workload qualification remain open.
-The stronger external MacScope consumer/paired workflow remains separate.
+The source snapshot, locally installed developer app and published release are
+separate identities. Compilation, focused tests and appearance review do not
+qualify a newly assembled optimized distribution or normal lifecycle behavior.

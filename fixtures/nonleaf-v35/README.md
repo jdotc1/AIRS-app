@@ -1,5 +1,11 @@
 # Small owned nonleaf workload — prepared, not run
 
+Historical preparation instructions below remain in force for new/repeated runs.
+A later explicit user grant authorized exactly one v36 pass, now completed and
+recorded in qualification-v36.json and docs/NONLEAF_V36_RESULTS.md. The original
+v35 expectations.json is preserved; a separate pre-run v36 overlay was used.
+No additional run is authorized. No target was executed.
+
 This packet is source and predicted expectations only. User authorization is
 limited to preparing it. **Do not compile, link, disassemble, audit or execute it
 under this preparation request.** No binary, report, identity digest or observed
@@ -73,7 +79,7 @@ not a failure to reach agreement. No target code is ever to be executed.
 
 ## Proposed future run, requiring separate explicit authorization
 
-1. Select one fresh output directory under an explicitly selected local workspace and preserve
+1. Select one fresh output directory under a new local development output parent and preserve
    an exclusive started marker containing the authorized scope, actual source
    revision and one-image/one-audit maximum. Existing outputs must never be
    overwritten or silently retried. No receipt-bypass option is permitted.

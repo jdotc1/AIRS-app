@@ -34,10 +34,18 @@ struct ProjectReviewView:View {
     let export:(UUID)->Void
     let exportMetadata:()->Void
     let portablePreview:PortableProjectPreview?
+    let settledExportPreview:SettledProjectExportPreview?
+    let prepareSettledExport:()->Void
+    let prepareSettledReexport:()->Void
+    let confirmSettledExport:()->Void
+    let cancelSettledExport:()->Void
+    private var hasPreview:Bool {portablePreview != nil || settledExportPreview != nil}
     let storePath:String
     let canReturnToOriginalStore:Bool
     let previewPortable:()->Void
     let choosePortablePackage:()->Void
+    let chooseSettledPackage:()->Void
+    let importedHistory:ImportedProjectHistorySnapshot?
     let confirmPortable:()->Void
     let cancelPortable:()->Void
     let returnToOriginalStore:()->Void
@@ -58,19 +66,35 @@ struct ProjectReviewView:View {
             Text("Projects retain original evidence bytes and separate review metadata. Membership or a pinned baseline does not retain an original app or establish trust.")
             Text("Store: \(storePath)").font(.caption).textSelection(.enabled)
             HStack {
-                Button("Preview Portable Export…",action:previewPortable).disabled(session.project == nil || portablePreview != nil)
-                Button("Reconstruct Package…",action:choosePortablePackage).disabled(portablePreview != nil)
-                if canReturnToOriginalStore {Button("Return to Original Store",action:returnToOriginalStore).disabled(portablePreview != nil)}
+                Button("Preview Portable Export…",action:previewPortable).disabled(session.project == nil || hasPreview)
+                Button("Reconstruct Package…",action:choosePortablePackage).disabled(hasPreview)
+                Button("Reconstruct with Batch Outcomes…",action:chooseSettledPackage).disabled(hasPreview)
+                if canReturnToOriginalStore {Button("Return to Original Store",action:returnToOriginalStore).disabled(hasPreview)}
+            }
+            HStack {
+                Button("Preview Export with Batch Outcomes…",action:prepareSettledExport).disabled(session.project == nil || hasPreview)
+                Button("Preview Recipient Re-export…",action:prepareSettledReexport).disabled(session.project == nil || hasPreview)
+            }
+            if let settledExportPreview {
+                SettledProjectExportPreviewView(preview:settledExportPreview,busy:busy,confirm:confirmSettledExport,cancel:cancelSettledExport)
             }
             if let portablePreview {
                 PortableProjectPreviewView(preview:portablePreview,busy:busy,confirm:confirmPortable,cancel:cancelPortable).id(portablePreview.id)
+            }
+            if !hasPreview,let snapshot=importedHistory {
+                Text("Historical snapshot · project " + snapshot.projectID.uuidString + " · revision \(snapshot.revision)").foregroundStyle(.secondary)
+                if snapshot.matches(project:session.project,store:URL(fileURLWithPath:storePath)) {
+                    HistoricalBatchOutcomesView(history:snapshot.history)
+                } else {
+                    Text("Imported historical outcomes belong to another project or revision. Review this project's matching companion snapshot to make them available.").foregroundStyle(.secondary)
+                }
             }
             HStack {
                 TextField("Project name",text:$name).textFieldStyle(.roundedBorder)
                 Button("New Project") {create(name)}.disabled(name.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty)
                 Button("Rename Selected") {rename(name)}.disabled(session.project == nil)
             }
-            .disabled(portablePreview != nil)
+            .disabled(hasPreview)
             HStack(alignment:.top,spacing:16) {
                 List(session.entries) {entry in
                     VStack(alignment:.leading,spacing:4) {
@@ -116,14 +140,14 @@ struct ProjectReviewView:View {
                     }
                 } else {Text("Choose or create a project.").frame(maxWidth:.infinity,maxHeight:.infinity)}
             }
-            .disabled(portablePreview != nil)
+            .disabled(hasPreview)
             DisclosureGroup("Unreferenced retained copies (\(session.unreferenced.count))") {
                 ForEach(session.unreferenced,id:\.self) {id in
                     HStack {Text(id.uuidString);Button("Export") {export(id)};Button("Move Copy to Trash…") {orphanRemoval=id}}
                 }
                 if let issue=session.retentionIssue {Text(issue).foregroundStyle(.secondary)}
             }
-            .disabled(portablePreview != nil)
+            .disabled(hasPreview)
             Text("Capacity: 64 projects, 128 retained archives / 256 MiB. Nothing is evicted. Unpin before removing a baseline; remove membership before deleting a retained copy. Project metadata export contains references and notes, not evidence bytes.").foregroundStyle(.secondary)
             Text(status).foregroundStyle(.secondary)
             HStack {Spacer();Button("Done",action:close).keyboardShortcut(.cancelAction)}

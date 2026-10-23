@@ -30,7 +30,7 @@ class CLZTests(unittest.TestCase):
             state=PathState();state.flags=(True,False,True,False);state.registers[1]=Value('constant',1)
             state.apply(decode_instruction(clz(width)));self.assertEqual(state.flags,(True,False,True,False))
     def test_neighbors_and_other_one_source_families_stay_unsupported(self):
-        for word in [0x5ac00000,0xdac01400,0x9ac10c00,clz()^(1<<30),clz()^(1<<29),clz()^(1<<16),clz()^(1<<21)]:
+        for word in [0xdac01400,0x1ac10c00,clz()^(1<<30),clz()^(1<<29),clz()^(1<<16),clz()^(1<<21)]:
             with self.assertRaises(ModelError):decode_instruction(word)
     def test_owned_compiler_bodies_gain_only_the_selected_family(self):
         # Apple llvm-objdump retained in AIRS-b6-owned-20261020. Literal complete

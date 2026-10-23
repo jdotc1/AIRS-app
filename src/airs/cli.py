@@ -11,6 +11,7 @@ from .bridge import make_handoff
 from .diff import compare_reports
 from .dsym import attach_dsym
 from .coverage import coverage_inventory
+from .decode_inventory import decode_inventory_path
 from .engine import audit_path, resolve_input
 from .report import atomic_write, dumps, load_report, render_html
 from .types import InputError
@@ -42,6 +43,10 @@ def _parser() -> argparse.ArgumentParser:
     inventory = commands.add_parser("coverage", help="Inventory unresolved reasons in saved reports without re-auditing images")
     inventory.add_argument("--report", type=Path, action="append", required=True)
     inventory.add_argument("--output", type=Path)
+    blockers = commands.add_parser("decode-blockers", help="List bounded full-function decode refusals; no semantic audit")
+    blockers.add_argument("input", type=Path)
+    blockers.add_argument("--arch", choices=("auto", "arm64", "arm64e"), default="auto")
+    blockers.add_argument("--output", type=Path)
     return parser
 
 
@@ -56,6 +61,10 @@ def main(argv: list[str] | None = None) -> int:
             output = render_html(report) if args.format == "html" else dumps(report)
             protected = (source, args.input)
             exit_code = 1 if args.fail_on_inconsistency and report["summary"]["inconsistency_count"] else 0
+        elif args.command == "decode-blockers":
+            source = resolve_input(args.input)
+            report = decode_inventory_path(source, requested_arch=args.arch)
+            output, protected, exit_code = dumps(report), (source, args.input), (0 if report["status"] == "complete" else 1)
         elif args.command == "diff":
             report = compare_reports(load_report(args.baseline), load_report(args.current))
             output, protected, exit_code = dumps(report), (args.baseline, args.current), 0

@@ -3,11 +3,14 @@ import Foundation
 /// Reuses the existing native CLI host; no app/image is inspected or executed.
 public enum PortableProjectCommand {
     public static let usage = """
+    airs-entitlements project catalog --store STORE
     airs-entitlements project preview --store STORE --project UUID
     airs-entitlements project export --store STORE --project UUID --output NEW.airsproject --confirm-original-evidence
     airs-entitlements project inventory --package PACKAGE.airsproject
     airs-entitlements project reconstruct --package PACKAGE.airsproject --output NEW_STORE
 
+    Catalog reads project metadata only, retaining unreadable entries as issues;
+    it does not validate evidence or resolve historical outcomes.
     Preview identifies metadata, notes and evidence included by export. Evidence
     bytes remain verbatim and may contain sensitive strings/paths. Original apps,
     dSYMs and batch checkpoints are excluded. Reconstruction requires a new
@@ -36,6 +39,11 @@ public enum PortableProjectCommand {
             var bytes=try JSONSerialization.data(withJSONObject:object,options:[.sortedKeys,.prettyPrinted]);bytes.append(10);return bytes
         }
         switch operation {
+        case "catalog":
+            guard Set(values.keys) == ["--store"],!confirmed else {throw BoundReviewError.invalid(usage)}
+            let catalog=try await InspectionProjectCatalog.read(from:path("--store"))
+            let encoder=JSONEncoder();encoder.outputFormatting=[.sortedKeys,.prettyPrinted]
+            var bytes=try encoder.encode(catalog);bytes.append(10);return bytes
         case "preview":
             guard Set(values.keys) == ["--store","--project"],!confirmed else {throw BoundReviewError.invalid(usage)}
             let store=InspectionProjectStore(root:try path("--store")),project=try await store.metadata(projectID())

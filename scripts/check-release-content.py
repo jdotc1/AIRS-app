@@ -5,13 +5,18 @@ import sys
 from pathlib import Path
 
 
-def check_source(root):
-    """Inspect only the bounded Lumen payload, not its private development tree."""
-    patterns = [re.compile(rb"/Users/|/home/", re.I),
+def lumen_source_patterns():
+    """Shared unchanged marker contract for whole-source and one-file inspection."""
+    return [re.compile(rb"/Users/|/home/", re.I),
                 re.compile(rb"\b(?:codex|claude|chatgpt|openai|anthropic|llm)\b", re.I),
                 re.compile(rb"gh[pousr]_[A-Za-z0-9]{30,}"),
                 re.compile(rb"sk-(?:proj-)?[A-Za-z0-9_-]{24,}"),
                 re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----")]
+
+
+def check_source(root):
+    """Inspect only the bounded Lumen payload, not its private development tree."""
+    patterns = lumen_source_patterns()
     count = 0
     for item in root.rglob('*'):
         relative = item.relative_to(root)

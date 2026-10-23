@@ -5,7 +5,7 @@ import EntitlementDiffCore
 
 final class ProjectAdmissionRegressionTests: XCTestCase {
     private func folder() throws -> URL {
-        let base=ProcessInfo.processInfo.environment["AIRS_TEST_OUTPUT_ROOT"] ?? FileManager.default.temporaryDirectory.appendingPathComponent("AIRS-project-admission").path
+        let base=ProcessInfo.processInfo.environment["AIRS_TEST_OUTPUT_ROOT"] ?? FileManager.default.temporaryDirectory.appendingPathComponent("AIRS-roadmap-admission-20261020", isDirectory: true).path
         let root=URL(fileURLWithPath:base).appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at:root,withIntermediateDirectories:true)
         return root

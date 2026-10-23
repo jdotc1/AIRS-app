@@ -2,8 +2,8 @@
 from dataclasses import replace
 import json
 import os
-import tempfile
 from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -15,7 +15,7 @@ from test_rbit_x_candidate import fixture, CTZ_WITNESS, RET, PRO, EPI, CALL, PAI
 from test_report_v32_admission_candidate import synthetic_report
 
 V33 = 'arm64-bounded-rbit-v33'
-OUTPUT = Path(os.environ.get('AIRS_TEST_OUTPUT_ROOT') or tempfile.mkdtemp(prefix="airs-integration-"))
+OUTPUT = Path(os.environ.get('AIRS_TEST_OUTPUT_ROOT', str(Path(tempfile.gettempdir()) / 'AIRS-RBIT-v33-20261021')))
 
 
 def report_for(words, encoding=0x02000000, with_callee=False):
@@ -31,19 +31,19 @@ def report_for(words, encoding=0x02000000, with_callee=False):
 
 class RBITV33IntegrationTests(unittest.TestCase):
     def test_new_model_report_and_serialized_complete_ctz_witness(self):
-        self.assertEqual(ANALYSIS_MODEL_VERSION, 'arm64-bounded-x-stack-v35')
+        self.assertEqual(ANALYSIS_MODEL_VERSION, 'arm64-bounded-equivalent-compact-v39')
         report = report_for(CTZ_WITNESS)
-        self.assertEqual(report['generator']['analysis_model_version'], 'arm64-bounded-x-stack-v35')
+        self.assertEqual(report['generator']['analysis_model_version'], 'arm64-bounded-equivalent-compact-v39')
         finding = report['findings'][0]
         self.assertEqual((finding['verdict'], finding['scope']), ('agreement', 'modeled_leaf_body'))
         self.assertEqual(finding['checked_pcs'], ['0x1000', '0x1004'])
-        output = OUTPUT / 'rbit-v35.json'
+        output = OUTPUT / 'rbit-v39.json'
         output.write_text(dumps(report), encoding='utf-8')
         self.assertEqual(load_report(output), report)
 
-    def test_new_model_w_neighbor_and_stack_provenance_stay_unresolved(self):
-        # W RBIT, then ADD X0,SP,#0; RBIT X1,X0; RET.
-        for words in ((0x5ac00008, 0x5ac01100, RET), (0x910003e0, 0xdac00001, RET)):
+    def test_new_model_stack_provenance_stays_unresolved(self):
+        # ADD X0,SP,#0; RBIT X1,X0; RET.
+        for words in ((0x910003e0, 0xdac00001, RET),):
             with self.subTest(words=words):
                 report = report_for(words)
                 finding = report['findings'][0]

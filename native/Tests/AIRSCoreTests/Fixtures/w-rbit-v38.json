@@ -1,0 +1,152 @@
+{
+  "analysis_config": {
+    "limits": {
+      "max_cfg_paths_per_function": 64,
+      "max_cfg_steps_per_function": 4096,
+      "max_cfi_bytes": 8388608,
+      "max_cfi_instructions": 200000,
+      "max_cfi_records": 4096,
+      "max_cfi_rows": 50000,
+      "max_evidence_per_function": 32,
+      "max_file_bytes": 536870912,
+      "max_functions": 50000,
+      "max_instructions_per_function": 16384,
+      "max_load_commands": 4096,
+      "max_observations_per_function": 256,
+      "max_sections": 4096,
+      "max_total_cfg_steps": 100000,
+      "max_total_evidence": 8192,
+      "max_total_instructions": 1000000,
+      "max_unwind_entries": 200000
+    }
+  },
+  "findings": [
+    {
+      "checked_pcs": [
+        "0x1018"
+      ],
+      "coverage": "compact",
+      "encoding": "0x04000000",
+      "evidence": [
+        {
+          "address": "0x1018",
+          "code": "caller_state_mismatch",
+          "expected": "original x19",
+          "message": "Modeled recovery differs for x19 on a known-reachable CFG path",
+          "observed": "constant 0x80000000"
+        },
+        {
+          "address": "0x1018",
+          "code": "cfg_call_site",
+          "expected": "constant 0x101c",
+          "message": "BL suspension at 0x1018, target 0x1100; callee ABI summary only, not analyzed",
+          "observed": "constant 0x101c"
+        },
+        {
+          "code": "cfg_paths_checked",
+          "message": "1 terminal paths checked; 0 with uncertain reachability; 11 state visits; 1 path-state observations; states retained separately at reconvergence; 0 paths without call observations"
+        }
+      ],
+      "function": {
+        "address": "0x1000",
+        "boundary_source": "lc_function_starts",
+        "end_address": "0x102c",
+        "image_offset": "0x0",
+        "name": "owned_rbit_candidate",
+        "size": 44
+      },
+      "id": "airsf-e3dda86e72767ec44ca1b2c6d51fe66d7481016fe57e0727673c305ee755e145",
+      "instruction_count": 11,
+      "limitations": [
+        "Only the documented, bounded integer instruction subset is interpreted.",
+        "Checks describe selected modeled states; they do not establish whole-function or asynchronous unwind correctness.",
+        "SIMD, pointer authentication, CFI outside the bounded subset, personality and LSDA semantics are outside this model.",
+        "Direct callees are summarized as ABI-conforming returns preserving SP, x19\u2013x29 and unescaped allocated stack storage; callees are not analyzed.",
+        "Only forward compact-frame paths with shared setup and independently checked return regions with bounded forward EQ\u2013LE or unconditional suffix transfers and direct calls to independent function entries are modeled; no CFI CFG extension.",
+        "Unknown supported NZCV conditions explore both successors without merging identities; possible-only discrepancies remain unresolved."
+      ],
+      "mode": "frame",
+      "reason_codes": [
+        "caller_state_mismatch"
+      ],
+      "scope": "synchronous_call_sites",
+      "verdict": "inconsistency"
+    },
+    {
+      "checked_pcs": [],
+      "coverage": "none",
+      "encoding": null,
+      "evidence": [
+        {
+          "code": "missing_unwind_metadata",
+          "message": "No unwind metadata range covers this function"
+        }
+      ],
+      "function": {
+        "address": "0x1100",
+        "boundary_source": "lc_function_starts",
+        "end_address": "0x1108",
+        "image_offset": "0x100",
+        "name": "owned_sink",
+        "size": 8
+      },
+      "id": "airsf-7eee512a586d5cddd8323dd6c329dde0da4281ff335d83f11a69d162412d943c",
+      "instruction_count": 0,
+      "limitations": [
+        "Only the documented, bounded integer instruction subset is interpreted.",
+        "Checks describe selected modeled states; they do not establish whole-function or asynchronous unwind correctness.",
+        "SIMD, pointer authentication, CFI outside the bounded subset, personality and LSDA semantics are outside this model."
+      ],
+      "mode": "none",
+      "reason_codes": [
+        "missing_unwind_metadata"
+      ],
+      "scope": "metadata_only",
+      "verdict": "unresolved"
+    }
+  ],
+  "generator": {
+    "analysis_model_version": "arm64-bounded-w-rbit-v38",
+    "name": "AIRS",
+    "version": "0.2.0"
+  },
+  "image": {
+    "architecture": "arm64",
+    "container_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "cpu_subtype": 0,
+    "display_name": "synthetic-rbit.bin",
+    "file_type": "dylib",
+    "preferred_base": "0x1000",
+    "slice_offset": 0,
+    "slice_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "slice_size": 264,
+    "uuid": null
+  },
+  "issues": [],
+  "limitations": [
+    "This is a bounded static model, not a proof that a binary always unwinds correctly.",
+    "Compact unwind is checked at supported synchronous call states or explicitly labeled leaf-body states; no asynchronous or all-PC guarantee is made.",
+    "Unsupported instructions, flow outside the bounded CFG and at-most-two sequential disjoint natural-loop subset, unsupported CFI, ARM64e/PAC and SIMD saves remain unresolved.",
+    "Exception personalities, LSDA behavior, runtime stack contents and executable behavior are not validated.",
+    "The inspected file is read as data and is never loaded or executed.",
+    "Selecting a .app analyzes its principal executable; embedded images are not recursively scanned in this version."
+  ],
+  "metadata_ranges": [
+    {
+      "encoding": "0x04000000",
+      "end": "0x102c",
+      "mode": "frame",
+      "start": "0x1000"
+    }
+  ],
+  "report_kind": "airs.audit",
+  "schema_version": 1,
+  "summary": {
+    "agreement_count": 0,
+    "checked_pc_count": 1,
+    "function_count": 2,
+    "inconsistency_count": 1,
+    "metadata_entry_count": 1,
+    "unresolved_count": 1
+  }
+}

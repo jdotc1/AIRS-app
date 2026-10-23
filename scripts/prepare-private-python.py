@@ -40,11 +40,51 @@ def inventory(root):
     return {str(path.relative_to(root)): identity(path) for path in sorted(root.rglob('*'))}
 
 
+def compare_runtime_metadata(saved, current):
+    """Accept exact metadata, or one uniform device renumber across both trees.
+
+    This preserves metadata-bound evidence only. It does not establish byte
+    equality or explain why the filesystem device identifier changed.
+    """
+    require(set(saved) == set(current) == {'Python.framework', 'Notices'},
+            'Unexpected runtime inventory groups')
+    old_devices, new_devices = set(), set()
+    changed_device = False
+    for group in ('Python.framework', 'Notices'):
+        before, after = saved[group], current[group]
+        require(before and before.keys() == after.keys(),
+                f'{group}: runtime inventory membership changed')
+        for path, previous in before.items():
+            actual = after[path]
+            require(isinstance(previous, list) and isinstance(actual, list)
+                    and len(previous) == len(actual) == 6
+                    and all(type(value) is int for value in previous + actual),
+                    f'{group}: invalid runtime metadata record')
+            require(previous[1:] == actual[1:],
+                    f'{group}: runtime metadata changed beyond device identity')
+            old_devices.add(previous[0])
+            new_devices.add(actual[0])
+            changed_device |= previous[0] != actual[0]
+    if not changed_device:
+        return {'status': 'exact_metadata'}
+    require(len(old_devices) == len(new_devices) == 1,
+            'Runtime device change is not one uniform renumbering')
+    return {'status': 'uniform_device_renumber',
+            'previous_device': next(iter(old_devices)),
+            'current_device': next(iter(new_devices))}
+
+
 def reuse(root):
     receipt = json.loads((root / 'runtime-receipt.json').read_text())
     require(receipt['python_version'] == VERSION and receipt['source_sha256'] == PACKAGE_SHA256, 'Unexpected runtime receipt')
-    require(inventory(root / 'Python.framework') == receipt['file_metadata'], 'Prepared runtime changed; choose a new output directory')
-    require(inventory(root / 'Notices') == receipt['notice_metadata'], 'Runtime notices changed or are missing')
+    result = compare_runtime_metadata(
+        {'Python.framework': receipt['file_metadata'], 'Notices': receipt['notice_metadata']},
+        {'Python.framework': inventory(root / 'Python.framework'), 'Notices': inventory(root / 'Notices')})
+    if result['status'] == 'uniform_device_renumber':
+        print(f"Reused metadata-bound runtime evidence with uniform device renumbering "
+              f"{result['previous_device']} -> {result['current_device']}; "
+              "membership, inode, size, timestamps and mode match. "
+              "Original receipt unchanged; no fresh byte verification or filesystem-cause claim.")
     print('Reused private Python preparation receipt; no hashes, signing or runtime checks repeated.')
 
 

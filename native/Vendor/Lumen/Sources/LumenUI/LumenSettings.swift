@@ -5,7 +5,7 @@ import LumenTokens
 // Settings, the Mac way: a separate window (⌘,), tabbed categories for a few panes or a sidebar
 // with search for many, native grouped forms and native controls, and every change applied at once
 // (no Save button). Lumen's part is the visual language: colored category tiles, pane headers, and
-// panel colors from the theme.
+// panel colors from the theme. Window roots also own their navigation chrome and stable frame.
 
 /// A settings pane: a header (tile, title, one-sentence summary) above a native grouped form.
 public struct LumenSettingsPane<Content: View>: View {
@@ -67,6 +67,8 @@ public struct LumenSettingsPane<Content: View>: View {
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
+        .frame(maxWidth: 640)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(palette[.panelBackground])
     }
 }
@@ -120,6 +122,7 @@ public struct LumenSettingsRow<Control: View>: View {
                 control.labelsHidden()
             }
         }
+        .frame(maxWidth: 480, alignment: .leading)
         .padding(.vertical, metrics.spacing.s1)
         // The match band reaches out past the row, so the title keeps the column's leading edge.
         .background {
@@ -270,68 +273,350 @@ extension EnvironmentValues {
     @Entry var lumenSettingsQuery = ""
 }
 
-/// System Settings' shape for apps with many categories: a searchable sidebar of tiled categories
-/// and the selected pane beside it.
+/// A complete settings window for two or many categories. Adopt with
+/// `Settings { LumenSettingsSidebarView(categories) }.lumenSettingsScene()`.
+/// Owns sidebar surfaces, search, selection history, navigation chrome, tint and content sizing.
+/// Keep the pane's header; do not add a second toolbar title or rebuild this root from its parts.
 public struct LumenSettingsSidebarView: View {
     private let categories: [LumenSettingsCategory]
+    private var externalSelection: Binding<String?>?
     @State private var selection: String?
     @State private var query = ""
+    @State private var history = LumenSettingsHistory()
+    @State private var visibility: NavigationSplitViewVisibility = .all
 
     @Environment(\.lumenPalette) private var palette
     @Environment(\.lumenMetrics) private var metrics
+    @Environment(\.lumenResolvedChromeStyle) private var chrome
+    @Environment(\.controlActiveState) private var activeState
 
-    /// The sidebar column's minimum width.
     public static let sidebarMinWidth: CGFloat = 200
-    /// The selected pane's minimum width, so a narrow window never squeezes its rows into
-    /// truncated values ("W…", live LIVE-05). The settings window's minimum is the two summed.
     public static let detailMinWidth: CGFloat = 360
+    /// Minimum width accommodates the sidebar, pane and native navigation controls.
+    public static let windowMinWidth: CGFloat = 680
+    public static let windowIdealWidth: CGFloat = 820
+    /// Stable compact content height; longer panes scroll without growing the window.
+    public static let stableContentHeight: CGFloat = 320
+    public static let windowMaxHeight: CGFloat = 720
 
+    /// `selection` is the initial category ID. Unknown IDs fall back to the first category.
     public init(_ categories: [LumenSettingsCategory], selection: String? = nil) {
         self.categories = categories
-        _selection = State(initialValue: selection ?? categories.first?.id)
+        _selection = State(initialValue: Self.validSelection(selection, in: categories))
+    }
+
+    /// Programmatic selection shares the sidebar's navigation history. Unknown or removed IDs
+    /// fall back to the first category; an empty category collection shows the empty state.
+    public init(_ categories: [LumenSettingsCategory], selection: Binding<String?>) {
+        self.init(categories, selection: selection.wrappedValue)
+        externalSelection = selection
+    }
+
+    /// Explicit initial-selection spelling for hosts that also use binding-based selection.
+    public init(_ categories: [LumenSettingsCategory], initialSelection: String?) {
+        self.init(categories, selection: initialSelection)
+    }
+
+    static func validSelection(_ id: String?, in categories: [LumenSettingsCategory]) -> String? {
+        categories.first(where: { $0.id == id })?.id ?? categories.first?.id
+    }
+
+    private var categorySelection: Binding<String?> {
+        Binding(get: { selection }, set: { visit($0) })
+    }
+
+    private func visit(_ next: String?) {
+        guard next != selection else { return }
+        history.visit(from: categories.contains(where: { $0.id == selection }) ? selection : nil, to: next)
+        selection = next
+    }
+
+    private func move(backward: Bool) {
+        let next = backward ? history.goBack(from: selection) : history.goForward(from: selection)
+        guard let next else { return }
+        // A historical category remains reachable even when the current query hides it.
+        if categories.first(where: { $0.id == next })?.matches(query) == false { query = "" }
+        selection = next
     }
 
     public var body: some View {
         let shown = categories.filter { $0.matches(query) }
-        NavigationSplitView {
-            List(shown, selection: $selection) { category in
+        NavigationSplitView(columnVisibility: $visibility) {
+            List(shown, selection: categorySelection) { category in
                 Label {
                     VStack(alignment: .leading, spacing: metrics.spacing.s1) {
                         Text(category.title).font(metrics.typography.body)
                         let found = category.matchingSettings(query)
                         if !found.isEmpty {
-                            // Each matching setting under its pane (Jeff's choice), so the result says what matched.
                             Text(found.joined(separator: " · ")).font(metrics.typography.caption)
                                 .foregroundStyle(palette[.sidebarSecondaryForeground]).lineLimit(2)
-                                .help(found.joined(separator: " · "))   // C-34
+                                .help(found.joined(separator: " · "))
                         }
                     }
                 } icon: {
                     LumenIconTile(category.systemImage, hue: category.hue, size: metrics.layout.tileRow)
                 }
+                .foregroundStyle(palette[.sidebarForeground])
+                .listRowBackground(
+                    RoundedRectangle(cornerRadius: metrics.radius.sm)
+                        .fill(selection == category.id
+                              ? palette[activeState == .inactive ? .sidebarRowSelectedInactive : .sidebarRowSelected]
+                              : .clear)
+                        .padding(.horizontal, metrics.spacing.s4)
+                        .padding(.vertical, metrics.spacing.s1)
+                )
                 .tag(category.id)
             }
-            .searchable(text: $query, placement: .sidebar, prompt: "Search")
+            .listStyle(.sidebar)
+            .lumenSidebarBackground()
+            .searchable(text: $query, placement: .sidebar, prompt: "Search Settings")
             .onChange(of: query) { _, text in
-                // Keep a matching pane showing as the search narrows.
                 let matching = categories.filter { $0.matches(text) }
-                if !matching.contains(where: { $0.id == selection }) { selection = matching.first?.id }
+                if !matching.contains(where: { $0.id == selection }) { visit(matching.first?.id) }
+            }
+            .toolbar(removing: .sidebarToggle)
+            .toolbar {
+                ToolbarItem(id: "lumen.settings.sidebar", placement: .navigation) {
+                    Button {
+                        visibility = visibility == .detailOnly ? .all : .detailOnly
+                    } label: {
+                        navigationLabel("Sidebar", systemImage: "sidebar.left")
+                    }
+                    .buttonStyle(.borderless)
+                    .controlSize(.regular)
+                    .help("Show or hide sidebar")
+                }
+                .lumenToolbarPlatter(chrome)
             }
             .navigationSplitViewColumnWidth(min: Self.sidebarMinWidth, ideal: 220, max: 280)
         } detail: {
-            // Within the filtered list: a search that hides the selected pane shows the empty state.
             Group {
                 if let category = shown.first(where: { $0.id == selection }) {
-                    category.content()
-                        .environment(\.lumenSettingsQuery, query)
-                        .navigationTitle(category.title)
+                    category.content().lumenSettingsQuery(query)
                 } else {
                     LumenEmptyState(systemImage: "magnifyingglass", title: "No matching settings",
                                     message: "Try a different word, or clear the search.", actionTitle: "Clear search") { query = "" }
                 }
             }
+            .frame(minWidth: Self.detailMinWidth, maxWidth: .infinity, maxHeight: .infinity)
+            .background(palette[.panelBackground])
             .navigationSplitViewColumnWidth(min: Self.detailMinWidth, ideal: Self.detailMinWidth + 120)
         }
+        .navigationSplitViewStyle(.balanced)
+        .toolbar {
+            ToolbarItem(id: "lumen.settings.history", placement: .navigation) {
+                HStack(spacing: 0) {
+                    Button { move(backward: true) } label: {
+                        navigationLabel("Back", systemImage: "chevron.backward")
+                    }
+                    .disabled(!history.canGoBack)
+                    .keyboardShortcut("[", modifiers: .command)
+                    .help("Back")
+                    Button { move(backward: false) } label: {
+                        navigationLabel("Forward", systemImage: "chevron.forward")
+                    }
+                    .disabled(!history.canGoForward)
+                    .keyboardShortcut("]", modifiers: .command)
+                    .help("Forward")
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.regular)
+            }
+            .lumenToolbarPlatter(chrome)
+        }
+        .lumenWindowChrome()
+        .background(LumenSettingsNativeChrome())
+        .navigationTitle(categories.first(where: { $0.id == selection })?.title ?? "Settings")
+        .frame(minWidth: Self.windowMinWidth, idealWidth: Self.windowIdealWidth,
+               minHeight: Self.stableContentHeight, idealHeight: Self.stableContentHeight,
+               maxHeight: Self.windowMaxHeight)
+        .background(palette[.panelBackground])
+        .tint(palette[.accent])
+        .onAppear { synchronizeSelection() }
+        .onChange(of: selection) { _, _ in synchronizeSelection() }
+        .onChange(of: externalSelection?.wrappedValue) { _, next in
+            guard externalSelection != nil, next != selection else { return }
+            let valid = Self.validSelection(next, in: categories)
+            if categories.first(where: { $0.id == valid })?.matches(query) == false { query = "" }
+            visit(valid)
+            synchronizeSelection()
+        }
+        .onChange(of: categories.map(\.id)) { _, ids in
+            history.retain(ids)
+            if !ids.contains(selection ?? "") {
+                visit(categories.first(where: { $0.matches(query) })?.id)
+            }
+            history.discardCurrent(selection)
+        }
+    }
+
+    private func synchronizeSelection() {
+        if let externalSelection, externalSelection.wrappedValue != selection {
+            externalSelection.wrappedValue = selection
+        }
+    }
+
+    private func navigationLabel(_ title: String, systemImage: String) -> some View {
+        Label(title, systemImage: systemImage)
+            .labelStyle(.iconOnly)
+            .font(.system(size: 14, weight: .medium))
+            .frame(width: 28, height: 28)
+    }
+}
+
+public extension View {
+    /// Supplies a search query to settings rows in a custom embedded pane. A stock settings
+    /// window propagates its search automatically; hosts need not rebuild its sidebar.
+    func lumenSettingsQuery(_ query: String) -> some View {
+        environment(\.lumenSettingsQuery, query)
+    }
+}
+
+public extension Scene {
+    /// Completes the stock settings root's window contract. The native compact toolbar puts the
+    /// category navigation title beside Back/Forward. The root owns its palette-derived tint,
+    /// because Settings does not inherit the main window's view environment.
+    func lumenSettingsScene() -> some Scene {
+        windowStyle(.titleBar)
+            .windowToolbarStyle(.unifiedCompact(showsTitle: true))
+            .defaultSize(width: LumenSettingsSidebarView.windowIdealWidth,
+                         height: LumenSettingsSidebarView.stableContentHeight)
+            .windowResizability(.contentSize)
+    }
+}
+
+/// Settings scenes can force AppKit's preference toolbar after Scene modifiers have been
+/// applied. Own the documented native style at the root's window lifetime as well. This bridge
+/// never removes toolbar items, positions titlebar frames, or touches another window.
+private struct LumenSettingsNativeChrome: NSViewRepresentable {
+    func makeNSView(context: Context) -> ChromeView { ChromeView() }
+    func updateNSView(_ nsView: ChromeView, context: Context) { nsView.scheduleConfiguration() }
+    static func dismantleNSView(_ nsView: ChromeView, coordinator: ()) { nsView.detach() }
+
+    final class ChromeView: NSView {
+        private weak var ownedWindow: NSWindow?
+        private var originalStyle: NSWindow.ToolbarStyle?
+        private var observation: NSKeyValueObservation?
+        private var scheduled = false
+        private var contentHeightBeforeStyleChange: CGFloat?
+        private weak var sidebarTable: NSTableView?
+        private var originalSelectionStyle: NSTableView.SelectionHighlightStyle?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard window !== ownedWindow else { return }
+            detach()
+            guard let window else { return }
+            ownedWindow = window
+            originalStyle = window.toolbarStyle
+            observation = window.observe(\.toolbarStyle, options: [.prior]) { [weak self] window, change in
+                MainActor.assumeIsolated {
+                    if change.isPrior {
+                        // Capture before AppKit enforces the taller preference-style minimum.
+                        if window.toolbarStyle == .unifiedCompact {
+                            self?.contentHeightBeforeStyleChange = window.contentLayoutRect.height
+                        }
+                    } else {
+                        self?.scheduleConfiguration()
+                    }
+                }
+            }
+            scheduleConfiguration()
+        }
+
+        func scheduleConfiguration() {
+            guard !scheduled else { return }
+            scheduled = true
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.scheduled = false
+                guard let window = self.ownedWindow, window === self.window else { return }
+                self.configureSidebar(in: window.contentView)
+                guard window.toolbarStyle != .unifiedCompact else { return }
+                let contentHeight = self.contentHeightBeforeStyleChange ?? window.contentLayoutRect.height
+                self.contentHeightBeforeStyleChange = nil
+                window.toolbarStyle = .unifiedCompact
+                // AppKit keeps or expands the outer frame when changing toolbar style. Keep
+                // the visible content height and top edge, including after later scene updates.
+                let excess = window.contentLayoutRect.height - contentHeight
+                var frame = window.frame
+                frame.origin.y += excess
+                frame.size.height -= excess
+                window.setFrame(frame, display: false)
+            }
+        }
+
+        private func sourceList(in view: NSView?) -> NSTableView? {
+            guard let view else { return nil }
+            if let table = view as? NSTableView, table.effectiveStyle == .sourceList { return table }
+            return view.subviews.lazy.compactMap { self.sourceList(in: $0) }.first
+        }
+
+        private func configureSidebar(in view: NSView?) {
+            guard let table = sourceList(in: view) else { return }
+            if table !== sidebarTable {
+                restoreSelectionStyle()
+                sidebarTable = table
+                originalSelectionStyle = table.selectionHighlightStyle
+            }
+            // Keep native selection, keyboard navigation and table semantics. Only the fill
+            // comes from the row's palette role instead of AppKit's grey selection material.
+            table.selectionHighlightStyle = .none
+        }
+
+        private func restoreSelectionStyle() {
+            if let table = sidebarTable, let originalSelectionStyle, table.selectionHighlightStyle == .none {
+                table.selectionHighlightStyle = originalSelectionStyle
+            }
+            sidebarTable = nil
+            originalSelectionStyle = nil
+        }
+
+        func detach() {
+            observation = nil
+            restoreSelectionStyle()
+            if let window = ownedWindow, let originalStyle, window.toolbarStyle == .unifiedCompact {
+                window.toolbarStyle = originalStyle
+            }
+            ownedWindow = nil
+            originalStyle = nil
+            contentHeightBeforeStyleChange = nil
+        }
+    }
+}
+
+/// Value history tracks category destinations independently of the host binding.
+struct LumenSettingsHistory {
+    private(set) var back: [String] = []
+    private(set) var forward: [String] = []
+    var canGoBack: Bool { !back.isEmpty }
+    var canGoForward: Bool { !forward.isEmpty }
+
+    mutating func visit(from current: String?, to next: String?) {
+        guard current != next else { return }
+        if let current { back.append(current) }
+        forward.removeAll()
+    }
+    mutating func goBack(from current: String?) -> String? {
+        while back.last == current, !back.isEmpty { back.removeLast() }
+        guard let previous = back.popLast() else { return nil }
+        if let current { forward.append(current) }
+        return previous
+    }
+    mutating func goForward(from current: String?) -> String? {
+        while forward.last == current, !forward.isEmpty { forward.removeLast() }
+        guard let next = forward.popLast() else { return nil }
+        if let current { back.append(current) }
+        return next
+    }
+    mutating func discardCurrent(_ current: String?) {
+        while back.last == current, !back.isEmpty { back.removeLast() }
+        while forward.last == current, !forward.isEmpty { forward.removeLast() }
+    }
+    mutating func retain(_ ids: [String]) {
+        let valid = Set(ids)
+        back.removeAll { !valid.contains($0) }
+        forward.removeAll { !valid.contains($0) }
     }
 }
 

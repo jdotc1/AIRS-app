@@ -1,32 +1,50 @@
 {
-  "version": "0.3.1",
-  "build": "5",
-  "source_revision": "8ef2412c5ccb9dbbe685d1e9c7234ba28104e863",
+  "source_revision": "ee680600a7cdc9c5f6e9bacf16e5e5651cd7cad3",
+  "published_baseline": {
+    "version": "0.3.1",
+    "build": "5",
+    "tag": "v0.3.1"
+  },
+  "release_identity_assigned": false,
   "export_policy": "allowlist; no history, runtime, private evidence or corpus locations",
-  "files": 543,
-  "source_status": "release",
+  "files": 595,
+  "source_status": "development",
   "sanitation": "bounded maintainer-path and credential-marker scan passed on new/changed files",
-  "sanitation_inspected_files": 9,
-  "sanitation_reused_files": 534,
-  "sanitation_reuse": "unchanged files retained from base_public_commit; no repeated hashes or tests",
-  "lumen_source_gate": "Lumen implementation retained unchanged; LICENSE and PROVENANCE.md inspected for this licensing amendment",
+  "sanitation_inspected_files": 95,
+  "sanitation_reused_files": 500,
+  "sanitation_reuse": "saved equality retained via immutable source/baseline/current Git blob identities; no repeated payload comparison, scan or hash",
+  "lumen_source_gate": "unchanged vendor evidence reused; pinned Settings.swift update uses its separate one-file receipt",
+  "lumen_settings_donor": "46b7dc04458991093301dc9c05ca35c82f69a7ea",
+  "private_evidence_excluded": [
+    "fixtures/fde-isolation-prepared/qualification-v39-baseline.json",
+    "fixtures/mixed-metadata-prepared/qualification-v38.json",
+    "fixtures/mixed-metadata-prepared/qualification-v39-comparison.json",
+    "fixtures/nonleaf-v35/qualification-v36.json",
+    "fixtures/nonleaf-v35/qualification-v37-comparison.json",
+    "fixtures/rbit-w-prepared/qualification-v38.json",
+    "tests/test_public_export_policy.py"
+  ],
   "limitation": "Pattern inspection is not proof that arbitrary confidential text cannot exist",
   "distribution_actions_performed": false,
-  "implementation_baseline": "2b4b958",
-  "analysis_model": "arm64-bounded-x-stack-v35",
-  "additional_private_commits": [
-    "b9988e8",
-    "74d5a47"
-  ],
   "post_export_amendment": {
-    "date": "2026-10-22",
-    "kind": "MIT licensing",
-    "base_public_commit": "fec0c76b1488fca2f76cfa8dca5a992825ed36e2",
-    "scope_record": "SOURCE_EXPORT_SCOPE.json",
-    "original_export_files": 540,
-    "original_sanitation_inspected_files": 35,
-    "original_sanitation_reused_files": 505,
-    "analysis_and_ui_code_changed": false,
-    "binary_release_created": false
-  }
+    "base_export_source": "3ab3e6996a6bae20b6af599217afafbac2c9be72",
+    "source_revision": "ee680600a7cdc9c5f6e9bacf16e5e5651cd7cad3",
+    "base_public_commit": "f514fd6388ecb9eb19f56880037b203e8086789e",
+    "kind": "preserve existing published baseline version constants",
+    "paths": [
+      "pyproject.toml",
+      "scripts/package-app.sh",
+      "src/airs/__init__.py"
+    ],
+    "delta_files": 3,
+    "delta_inspected": 1,
+    "delta_reused": 2,
+    "base_export_counts": {
+      "files": 595,
+      "inspected": 95,
+      "reused": 500
+    },
+    "new_release_created": false
+  },
+  "sanitation_counts_scope": "Original base export; post_export_amendment records the separate version-preservation delta"
 }

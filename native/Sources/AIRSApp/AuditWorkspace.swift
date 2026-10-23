@@ -146,17 +146,19 @@ final class AuditWorkspace: ObservableObject {
     @Published var reusesRetainedAnalyses = false
     @Published var usesExternalPython = false {
         didSet {
-            UserDefaults.standard.set(usesExternalPython, forKey: "usesExternalPython")
+            preferences.set(usesExternalPython, forKey: "usesExternalPython")
             refreshEngineAvailability()
         }
     }
     @Published var pythonPath: String {
         didSet {
-            UserDefaults.standard.set(pythonPath, forKey: "pythonExecutablePath")
+            preferences.set(pythonPath, forKey: "pythonExecutablePath")
             refreshEngineAvailability()
         }
     }
 
+    let storageLocations: AuditWorkspaceStorageLocations
+    private let preferences: UserDefaults
     private let runner = EngineRunner()
     private let documents: DocumentWorker
     private let library: ReportLibrary
@@ -181,18 +183,22 @@ final class AuditWorkspace: ObservableObject {
     init(library: ReportLibrary? = nil, recents: (any WorkspaceRecentsRecording)? = nil,
          batchAudit: (@Sendable (URL) async throws -> Data)? = nil, batchHistory: BatchHistory? = nil,
          batchCompare: (@Sendable (Data, Data) async throws -> Data)? = nil,
-         boundReviewLedger: BoundReviewLedger? = nil) {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+         boundReviewLedger: BoundReviewLedger? = nil,
+         supportRoot: URL? = nil, preferences: UserDefaults = .standard) {
+        self.preferences = preferences
+        let support = supportRoot ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
-        self.documents = DocumentWorker(boundLedger:boundReviewLedger ?? BoundReviewLedger(root:support.appendingPathComponent("AIRS/BoundReviews",isDirectory:true)))
-        self.library = library ?? ReportLibrary(root: support.appendingPathComponent("AIRS/ReportLibrary", isDirectory: true))
-        self.analysisReuse = AnalysisReuse(root: support.appendingPathComponent("AIRS/AnalysisReuse"), library: self.library)
+        let locations = AuditWorkspaceStorageLocations(supportRoot: support)
+        self.storageLocations = locations
+        self.documents = DocumentWorker(boundLedger:boundReviewLedger ?? BoundReviewLedger(root:locations.boundReviews))
+        self.library = library ?? ReportLibrary(root: locations.reportLibrary)
+        self.analysisReuse = AnalysisReuse(root: locations.analysisReuse, library: self.library)
         self.recents = recents ?? SystemDocumentRecents()
         self.batchCompare = batchCompare
         self.batchAudit = batchAudit
-        self.history = batchHistory ?? BatchHistory(root: support.appendingPathComponent("AIRS/BatchHistory", isDirectory: true))
-        usesExternalPython = UserDefaults.standard.bool(forKey: "usesExternalPython")
-        pythonPath = UserDefaults.standard.string(forKey: "pythonExecutablePath") ?? ""
+        self.history = batchHistory ?? BatchHistory(root: locations.batchHistory)
+        usesExternalPython = preferences.bool(forKey: "usesExternalPython")
+        pythonPath = preferences.string(forKey: "pythonExecutablePath") ?? ""
         recentReports = self.recents.recentDocumentURLs.filter { $0.pathExtension.lowercased() == "json" }
         refreshEngineAvailability()
     }
@@ -1029,5 +1035,21 @@ final class AuditWorkspace: ObservableObject {
         let parts = name.components(separatedBy: forbidden)
         let joined = parts.joined(separator: "_")
         return joined.isEmpty ? "airs" : String(joined.prefix(100))
+    }
+}
+
+
+/// Shared path construction keeps the settings-review injection complete.
+struct AuditWorkspaceStorageLocations {
+    let boundReviews: URL
+    let reportLibrary: URL
+    let analysisReuse: URL
+    let batchHistory: URL
+
+    init(supportRoot: URL) {
+        boundReviews = supportRoot.appendingPathComponent("AIRS/BoundReviews", isDirectory: true)
+        reportLibrary = supportRoot.appendingPathComponent("AIRS/ReportLibrary", isDirectory: true)
+        analysisReuse = supportRoot.appendingPathComponent("AIRS/AnalysisReuse", isDirectory: true)
+        batchHistory = supportRoot.appendingPathComponent("AIRS/BatchHistory", isDirectory: true)
     }
 }
