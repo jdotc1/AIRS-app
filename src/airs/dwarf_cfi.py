@@ -3,6 +3,10 @@
 The selected compilation-system convention retains integer registers for absent
 rules (LLVM libunwind kRegisterUnused), including current LR for a leaf. This is
 not the generic DWARF undefined default. Explicit undefined is always unknown.
+
+Fixed-width advances and remembered-state handling adapt selected MIT-licensed
+gimli code (Copyright (c) 2015 The Rust Project Developers). Source pin, exact
+excerpts, and license: third_party/gimli/.
 """
 from __future__ import annotations
 
@@ -144,12 +148,14 @@ class Budget:
             fail('CFI row budget exhausted')
 
 
-def program(reader: Reader, start: int, end: int, initial: Row | None, budget: Budget) -> tuple[Row, ...]:
+def program(reader: Reader, start: int, end: int, initial: Row | None, budget: Budget, *,
+            enable_cfi_controls: bool = False) -> tuple[Row, ...]:
     """Read the ENTIRE stream; no supported prefix can hide a later unknown."""
     pc = start
     cfa = initial.cfa if initial else None
     rules = dict(initial.rules) if initial else {reg: ('same', 0) for reg in range(19,31)}
     rows: list[Row] = []
+    saved_states: list[tuple[tuple[int, int], dict[int, tuple[str, int]]]] = []
 
     def save() -> None:
         if cfa is None:
@@ -166,11 +172,29 @@ def program(reader: Reader, start: int, end: int, initial: Row | None, budget: B
             fail('CFI register rule is outside x19–x30')
         return number
 
+    def refuse_control(message: str) -> None:
+        if initial is None:
+            fail(message)
+        budget.opaque(reader.end - reader.pos)
+        raise LocalProgramRefusal(message)
+
+    def advance(delta: int) -> None:
+        nonlocal pc
+        if initial is None or not delta:
+            refuse_control('Location changes in CIEs and zero advances are outside this subset')
+        next_pc = pc + delta
+        if next_pc >= 1 << 64 or next_pc > end or next_pc % 4:
+            refuse_control('CFI location advance is outside the FDE or ARM64 instruction grid')
+        save()
+        pc = next_pc
+
     while reader.pos < reader.end:
         budget.instruction()
         opcode = reader.byte()
         family, operand = opcode & 0xc0, opcode & 0x3f
-        if family == 0x40:
+        if family == 0x40 and enable_cfi_controls:
+            advance(operand)
+        elif family == 0x40:
             if initial is None or not operand:
                 fail('Location changes in CIEs and zero advances are outside this subset')
             save()
@@ -190,6 +214,25 @@ def program(reader: Reader, start: int, end: int, initial: Row | None, budget: B
             rules[number] = initial.rules[number]
         elif opcode == 0:
             continue
+        elif opcode in (2, 3, 4) and enable_cfi_controls:
+            # gimli CallFrameInstruction::parse uses fixed unsigned widths.
+            width = {2: 1, 3: 2, 4: 4}[opcode]
+            if reader.end - reader.pos < width:
+                refuse_control('Truncated __eh_frame fixed-width advance operand')
+            advance(int.from_bytes(reader.take(width), 'little'))
+        elif opcode in (10, 11) and enable_cfi_controls:
+            if initial is None or cfa is None:
+                refuse_control('Remembered CFI state requires an FDE and a supported CFA')
+            if opcode == 10:
+                if len(saved_states) >= budget.limits.max_cfi_state_depth:
+                    refuse_control('CFI state depth budget exhausted')
+                # gimli push_row: snapshot supported recovery state by value.
+                saved_states.append((cfa, rules.copy()))
+            else:
+                if not saved_states:
+                    refuse_control('CFI restore_state lacks a remembered FDE state')
+                # gimli RestoreState: recovery changes, current PC does not.
+                cfa, rules = saved_states.pop()
         elif opcode in (7,8):
             rules[reg(reader.uleb())] = ('undefined' if opcode == 7 else 'same', 0)
         elif opcode in (10, 11) and initial is not None:
@@ -216,7 +259,8 @@ def program(reader: Reader, start: int, end: int, initial: Row | None, budget: B
     return tuple(rows)
 
 
-def parse_eh_frame(image: MachOImage, limits: Limits = Limits()) -> CFITable:
+def parse_eh_frame(image: MachOImage, limits: Limits = Limits(), *,
+                   enable_cfi_controls: bool = False) -> CFITable:
     section = image.section('__TEXT','__eh_frame')
     if section is None or not section.size:
         fail('No nonempty __TEXT,__eh_frame section is available')
@@ -251,7 +295,7 @@ def parse_eh_frame(image: MachOImage, limits: Limits = Limits()) -> CFITable:
         # Exact layout deliberately limits augmentations, alignment and RA column.
         if reader.take(9) != b'\x01zR\0\x01\x78\x1e\x01\x10':
             fail('Only CIEv1 zR, code1/data-8, RA30, pcrel-pointer64 is supported')
-        cies[offset] = program(reader,0,0,None,budget)[-1]
+        cies[offset] = program(reader,0,0,None,budget, enable_cfi_controls=enable_cfi_controls)[-1]
     headers = []
     for offset,(end,identifier) in records.items():
         if not identifier:
@@ -274,7 +318,8 @@ def parse_eh_frame(image: MachOImage, limits: Limits = Limits()) -> CFITable:
     for offset, cie_offset, start, end, program_start, record_end in headers:
         reader = Reader(data, program_start, record_end)
         try:
-            rows = program(reader, start, end, cies[cie_offset], budget)
+            rows = program(reader, start, end, cies[cie_offset], budget,
+                           enable_cfi_controls=enable_cfi_controls)
             fdes[offset] = FDE(offset, cie_offset, start, end, rows)
         except LocalProgramRefusal as refusal:
             fdes[offset] = FDE(offset, cie_offset, start, end, (), str(refusal))

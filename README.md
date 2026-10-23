@@ -12,7 +12,7 @@ It does not replace that release, its tag or downloadable assets. No next releas
 version is assigned. SOURCE_SNAPSHOT.json identifies the private source revision,
 published baseline, export scope and reused sanitation evidence.
 
-The source now includes model `arm64-bounded-local-fde-v40`: bounded X29-relative
+The source includes the v40 baseline: bounded X29-relative
 X stack access, signed X division, W RBIT, equivalent contiguous compact rules,
 and local refusal for the two operand-free FDE row-state opcodes. These changes
 retain explicit unsupported and unresolved boundaries; they are not general
@@ -31,6 +31,17 @@ catalog command. Historical observations and imported receipts do not establish
 current permissions, issuer authenticity, trust, safety or a restored live queue.
 The stronger C4 exchange retains its separate
 [public protocol contract](docs/MACSCOPE_BOUND_CONTRACT.md).
+
+## Raw signature evidence and v41 CFI controls
+
+Current source adds descriptor-bound raw XML/DER signature evidence and the
+`arm64-bounded-cfi-control-v41` extension. It preserves v40 structural checks,
+refusal accounting and historical parser defaults, while the active engine
+opts into bounded fixed-width location advances and remembered recovery state.
+Historical model identities remain distinct. Raw signature bytes are structural
+evidence; saved imports do not authenticate the original or authorize live reads.
+See [signature evidence](docs/SIGNATURE_EVIDENCE.md) and
+[the v41 contract](docs/CFI_CONTROL_V41.md).
 
 ## Saved reports and project navigation
 

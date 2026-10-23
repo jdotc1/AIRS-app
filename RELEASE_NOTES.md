@@ -26,3 +26,7 @@ qualify a newly assembled optimized distribution or normal lifecycle behavior.
 Project search and catalog ordering; saved-report summaries and bounded text
 output; conservative parser, comparison and handoff snapshot corrections.
 These source changes do not create a new downloadable binary release.
+
+Current development source also integrates raw signature evidence and bounded
+v41 CFI controls over the preserved v40 baseline. This source update creates
+no new downloadable binary release.

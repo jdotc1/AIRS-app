@@ -10,12 +10,23 @@ public struct ComponentMetadataReader: Sendable {
     public private(set) var observedArchitectures: [String] = []
     private var captureLoadCommands = false
     private var loadDeclarations: [ComponentLoadDeclaration] = []
+    private var captureSignatureLocations = false
+    private var signatureLocations: [CodeSignatureSliceLocation] = []
     public mutating func readLoadCommands(_ candidate: BundleDiscoveryEntry) throws -> [ComponentLoadDeclaration] {
         bytesRead = 0; loadDeclarations = []; captureLoadCommands = true
         observedArchitectures = try readConsuming(candidate).architectures
         return loadDeclarations
     }
     public init(maximumHeaderBytes: Int = 1_048_576) { self.maximumHeaderBytes = maximumHeaderBytes }
+    /// Internal descriptor-only seam: callers keep the discovery capability open
+    /// across exact slice enumeration, bounded signature reads and source hashing.
+    mutating func readSignatureLocations(fileDescriptor: Int32, fileSize: UInt64) throws -> [CodeSignatureSliceLocation] {
+        guard maximumHeaderBytes > 0, maximumHeaderBytes <= 1_048_576 else { throw invalid("Invalid signature metadata budget.") }
+        bytesRead = 0; signatureLocations = []; captureLoadCommands = false; captureSignatureLocations = true
+        defer { captureSignatureLocations = false }
+        _ = try parse(fileDescriptor, size: fileSize)
+        return signatureLocations
+    }
     public func read(_ candidate: BundleDiscoveryEntry) throws -> ComponentRecord {
         var reader = self
         return try reader.readConsuming(candidate)
@@ -161,11 +172,30 @@ public struct ComponentMetadataReader: Sendable {
         var position = 0, minimum: String?, issues: [String] = []
         var platformCommands = 0
         var localLoads: [(String,String,String?,String?,UInt32?)] = []
+        let inspectSignature = captureSignatureLocations && cpu == 0x0100000c
+            && [UInt32(0), 1, 2].contains(subtype & 0x00ffffff) && little && wide
+        var signatureCommands = 0
+        var signatureRange: (UInt64, UInt64)?
+        var signatureProblem: CodeSignatureEvidenceProblem?
         func version(_ value: UInt64) -> String { "\((value >> 16) & 0xffff).\((value >> 8) & 0xff).\(value & 0xff)" }
         for _ in 0..<count {
             guard position <= commands.count - 8 else { throw invalid("Truncated load-command entry.") }
             let cmd = number(commands, position, little: little), length = Int(number(commands, position + 4, little: little))
             guard length >= 8, length % (wide ? 8 : 4) == 0, length <= commands.count - position else { throw invalid("Invalid bounded load-command size.") }
+            if inspectSignature, cmd == 0x1d {
+                signatureCommands += 1
+                if signatureCommands > 1 {
+                    signatureProblem = .duplicateCommand; signatureRange = nil
+                } else if length != 16 {
+                    signatureProblem = .invalidSignatureRange
+                } else {
+                    let offset = number(commands, position + 8, little: little)
+                    let length = number(commands, position + 12, little: little)
+                    if offset < UInt64(headerSize + commandBytes) || offset > slice.size || length == 0 || length > slice.size - offset {
+                        signatureProblem = .invalidSignatureRange
+                    } else { signatureRange = (slice.offset + offset, length) }
+                }
+            }
             if captureLoadCommands {
                 let dylibs: [UInt64: String] = [0xc:"load",0x80000018:"weak",0x8000001f:"reexport",0x80000023:"upward",0x20:"lazy",0xd:"installName"]
                 if let name = dylibs[cmd] {
@@ -219,6 +249,13 @@ public struct ComponentMetadataReader: Sendable {
         if captureLoadCommands {
             guard localLoads.count <= 4096 - loadDeclarations.count else { throw invalid("Loader declaration record budget exceeded.") }
             loadDeclarations += localLoads.map { .init(architecture: architecture, command: $0.0, path: $0.1, currentVersion: $0.2, compatibilityVersion: $0.3, useFlags: $0.4) }
+        }
+        if captureSignatureLocations {
+            signatureLocations.append(.init(cpuType: cpu, cpuSubtype: subtype, headerMagic: UInt32(magic),
+                sliceOffset: slice.offset, sliceSize: slice.size,
+                loadCommandsEnd: slice.offset + UInt64(headerSize + commandBytes),
+                signatureOffset: signatureRange?.0, signatureByteCount: signatureRange?.1,
+                problem: signatureProblem))
         }
         return (architecture, minimum, issues)
     }

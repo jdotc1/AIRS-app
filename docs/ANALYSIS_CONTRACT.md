@@ -1,3 +1,12 @@
+Current integrated model: `arm64-bounded-cfi-control-v41` adds bounded
+fixed-width location advances and remembered recovery state through explicit
+engine opt-in. Historical direct-parser defaults preserve v40 refusal, structural
+preflight, overlap checks and global budget accounting. Exact report identities
+v1–v40 and the alternate historical CFI-v36 remain distinct. See
+[the v41 contract](CFI_CONTROL_V41.md). Raw signature evidence is independent
+structural byte evidence and does not change unwind scope, verdict or trust.
+Historical model checkpoints below retain their original meaning.
+
 Current isolated model: `arm64-bounded-equivalent-compact-v39` admits fully
 covering contiguous ranges with exactly equal frame/frameless compact encodings
 through the existing auditor. Original metadata remains unchanged; changed rules,

@@ -59,8 +59,14 @@ struct AIRSWindowView: View {
                 .interactiveDismissDisabled()
         }
         .sheet(item: $fileOpen.inventoryReview) { review in
-            ComponentInventoryView(review: review, status: fileOpen.status, isWriting: fileOpen.isWritingInventory,
+            ComponentInventoryView(review: review, status: fileOpen.status, isWriting: fileOpen.isWritingInventory, busy: fileOpen.isBusy,
+                captureSignature: { _ = fileOpen.captureSignatureEvidence($0, audit: audit, entitlements: entitlements) }, cancel: fileOpen.cancel,
                 export: { fileOpen.chooseInventoryExport(audit: audit, entitlements: entitlements) }, close: fileOpen.closeInventory)
+                .interactiveDismissDisabled()
+        }
+        .sheet(item: $fileOpen.signatureEvidenceReview) { review in
+            SignatureEvidenceReviewView(session: review, busy: fileOpen.isBusy, status: fileOpen.status,
+                export: { fileOpen.chooseInventoryExport(audit: audit, entitlements: entitlements) }, close: fileOpen.closeSignatureEvidence)
                 .interactiveDismissDisabled()
         }
         .sheet(item:$fileOpen.projectReview) { session in

@@ -11,7 +11,7 @@ final class ComponentInventoryWorkspaceTests: XCTestCase {
     @MainActor
     func testBuildStagesInventoryWithoutReplacingSessionsAndCancelSettles() async throws {
         let inventory = fixture(), audit = AuditWorkspace(), entitlements = EntitlementsWorkspace(), navigation = AIRSNavigation()
-        let owner = AIRSFileOpen(hasModal: { false }, inventoryBuild: { _ in inventory })
+        let owner = AIRSFileOpen(hasModal: { false }, inventoryBuild: { _ in .init(inventory: inventory, units: [:]) })
         let auditRevision = audit.reportRevision, entitlementRevision = entitlements.model.reportRevision
         await owner.inventory(URL(fileURLWithPath: "/owned/App.app"), audit: audit, entitlements: entitlements)?.value
         XCTAssertEqual(owner.inventoryReview?.inventory.id, inventory.id)
@@ -43,7 +43,7 @@ final class ComponentInventoryWorkspaceTests: XCTestCase {
     @MainActor
     func testChangedSessionRejectsLateInventoryAndProtectedExportDoesNotWrite() async throws {
         let inventory = fixture(), audit = AuditWorkspace(), entitlements = EntitlementsWorkspace()
-        let owner = AIRSFileOpen(hasModal: { false }, inventoryBuild: { _ in inventory })
+        let owner = AIRSFileOpen(hasModal: { false }, inventoryBuild: { _ in .init(inventory: inventory, units: [:]) })
         let task = try XCTUnwrap(owner.inventory(URL(fileURLWithPath: "/owned/App.app"), audit: audit, entitlements: entitlements))
         entitlements.model.loadExample()
         let changed = entitlements.model.reportRevision
@@ -65,7 +65,7 @@ final class ComponentInventoryWorkspaceTests: XCTestCase {
     func testWriteFailureDuringQuitPreservesInventoryAndRefusesQuit() async throws {
         let inventory = fixture(), audit = AuditWorkspace(), entitlements = EntitlementsWorkspace()
         let gate = ComponentWriteGate()
-        let owner = AIRSFileOpen(hasModal: { false }, inventoryBuild: { _ in inventory }, inventoryWrite: { _,_ in try await gate.write() })
+        let owner = AIRSFileOpen(hasModal: { false }, inventoryBuild: { _ in .init(inventory: inventory, units: [:]) }, inventoryWrite: { _,_ in try await gate.write() })
         await owner.inventory(URL(fileURLWithPath: "/owned/App.app"), audit: audit, entitlements: entitlements)?.value
         let output = FileManager.default.temporaryDirectory.appendingPathComponent("AIRS-source-tests/\(UUID())/AIRS-components-20261020/failure.airsreview")
         try FileManager.default.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)

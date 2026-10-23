@@ -71,11 +71,9 @@ class LocalFDETests(unittest.TestCase):
             with self.assertRaises(InputError):table.select(offset,other)
 
     def test_new_model_admission_and_unknown_future(self):
-        from airs import ANALYSIS_MODEL_VERSION
         from airs.report import validate_report
         from test_equivalent_compact import synthetic_report
         model='arm64-bounded-local-fde-v40'
-        self.assertEqual(ANALYSIS_MODEL_VERSION,model)
         for fault in ('subtype','boundary','scope','dwarf'):
             wire=synthetic_report(model);finding=wire['findings'][0]
             if fault=='subtype':wire['image']['cpu_subtype']=0x80000000
