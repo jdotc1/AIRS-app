@@ -294,7 +294,9 @@ def render_html(report: dict) -> str:
             if e.get("address") is not None:
                 parts.append(f"<p>PC: <code>{esc(e['address'])}</code></p>")
             if e.get("expected") is not None or e.get("observed") is not None:
-                parts.append(f"<table><tr><th>Expected</th><td><code>{esc(e.get('expected', 'unknown'))}</code></td></tr><tr><th>Observed</th><td><code>{esc(e.get('observed', 'unknown'))}</code></td></tr></table>")
+                expected = e["expected"] if e.get("expected") is not None else "unknown"
+                observed = e["observed"] if e.get("observed") is not None else "unknown"
+                parts.append(f"<table><tr><th>Expected</th><td><code>{esc(expected)}</code></td></tr><tr><th>Observed</th><td><code>{esc(observed)}</code></td></tr></table>")
         parts.append("<p>Reasons: <code>" + esc(", ".join(f["reason_codes"])) + "</code></p>")
         if f["limitations"]:
             parts.append("<ul>" + "".join(f"<li>{esc(x)}</li>" for x in f["limitations"]) + "</ul>")

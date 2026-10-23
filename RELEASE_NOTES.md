@@ -20,3 +20,9 @@ Distribution qualification is pending; accepted focused feature evidence is reus
 The source snapshot, locally installed developer app and published release are
 separate identities. Compilation, focused tests and appearance review do not
 qualify a newly assembled optimized distribution or normal lifecycle behavior.
+
+## Development source after 0.3.2
+
+Project search and catalog ordering; saved-report summaries and bounded text
+output; conservative parser, comparison and handoff snapshot corrections.
+These source changes do not create a new downloadable binary release.

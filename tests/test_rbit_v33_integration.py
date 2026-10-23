@@ -1,9 +1,9 @@
 """New-model report integration using tiny typed inputs; parsers are substituted."""
 from dataclasses import replace
 import json
-import os
 from pathlib import Path
 import tempfile
+from output_paths import output_root
 import unittest
 from unittest.mock import patch
 
@@ -15,7 +15,7 @@ from test_rbit_x_candidate import fixture, CTZ_WITNESS, RET, PRO, EPI, CALL, PAI
 from test_report_v32_admission_candidate import synthetic_report
 
 V33 = 'arm64-bounded-rbit-v33'
-OUTPUT = Path(os.environ.get('AIRS_TEST_OUTPUT_ROOT', str(Path(tempfile.gettempdir()) / 'AIRS-RBIT-v33-20261021')))
+OUTPUT = output_root()
 
 
 def report_for(words, encoding=0x02000000, with_callee=False):
@@ -31,9 +31,8 @@ def report_for(words, encoding=0x02000000, with_callee=False):
 
 class RBITV33IntegrationTests(unittest.TestCase):
     def test_new_model_report_and_serialized_complete_ctz_witness(self):
-        self.assertEqual(ANALYSIS_MODEL_VERSION, 'arm64-bounded-equivalent-compact-v39')
         report = report_for(CTZ_WITNESS)
-        self.assertEqual(report['generator']['analysis_model_version'], 'arm64-bounded-equivalent-compact-v39')
+        self.assertEqual(report['generator']['analysis_model_version'], ANALYSIS_MODEL_VERSION)
         finding = report['findings'][0]
         self.assertEqual((finding['verdict'], finding['scope']), ('agreement', 'modeled_leaf_body'))
         self.assertEqual(finding['checked_pcs'], ['0x1000', '0x1004'])

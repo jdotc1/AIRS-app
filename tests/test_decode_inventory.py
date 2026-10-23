@@ -9,6 +9,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+from output_paths import output_root
 import unittest
 from airs import ANALYSIS_MODEL_VERSION
 from airs.decode_inventory import decode_inventory, decode_inventory_path
@@ -19,7 +20,7 @@ from parser_helpers import build_macho
 from test_rbit_x_candidate import fixture, BASE, RET
 
 
-OUTPUT = Path(os.environ.get('AIRS_TEST_OUTPUT_ROOT', str(Path(tempfile.gettempdir()) / 'AIRS-decode-inventory-20261021')))
+OUTPUT = output_root()
 REPO=Path(__file__).resolve().parents[1]
 
 

@@ -1,14 +1,13 @@
 """Focused X29-based X slots; tiny typed inputs, no prepared workload execution."""
 from dataclasses import replace
 import unittest
-from airs import ANALYSIS_MODEL_VERSION
 from airs.arm64 import ModelError, Value, original
 from airs.cfg import PathState, decode_instruction
 from airs.types import Limits
 from test_rbit_x_candidate import BASE, PAIR_PRO, PAIR_EPI, CALL, call_result
 from test_x_stack_slots import apply, xmem, wmem, SUB16, ADD16
 
-MODEL='arm64-bounded-sdiv-v37'
+MODEL='arm64-bounded-fp-x-stack-v36'
 FRAME_WORDS=(*PAIR_PRO,0xf94003a0,0xf90003a0,0xf94007a1,0xf90007a1,CALL,*PAIR_EPI)
 
 
@@ -137,8 +136,7 @@ class FPXFrameTests(unittest.TestCase):
         unknown=call_result((*PAIR_PRO,xmem(True,0,0,29),0x9ac10813,CALL,*PAIR_EPI))
         self.assertEqual((unknown.verdict,unknown.reason_codes),('unresolved',('unknown_recovery_value',)))
 
-    def test_current_model_and_affected_work_budgets(self):
-        self.assertEqual(ANALYSIS_MODEL_VERSION,'arm64-bounded-equivalent-compact-v39')
+    def test_affected_work_budgets(self):
         for limits,reason in ((replace(Limits(),max_cfg_steps_per_function=3),'cfg_work_limit'),
                               (replace(Limits(),max_instructions_per_function=4),'function_instruction_limit')):
             result=call_result(FRAME_WORDS,limits=limits)

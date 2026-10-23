@@ -1,10 +1,11 @@
 """New SP-relative X memory semantics; retained owned words are data only."""
 from dataclasses import replace
 import unittest
-from airs import ANALYSIS_MODEL_VERSION
 from airs.arm64 import ModelError, Value, original
 from airs.cfg import PathState, audit_current_function, decode_instruction
-from airs.types import Limits
+from airs.report import validate_report
+from airs.types import InputError, Limits
+from test_report_v32_admission_candidate import synthetic_report
 from test_rbit_x_candidate import fixture, call_result, BASE, RET, PRO, EPI, PAIR_PRO, PAIR_EPI, CALL
 
 SUB16=0xd10043ff
@@ -174,8 +175,11 @@ class XStackRecoveryTests(unittest.TestCase):
         result=audit_current_function(*fixture((SUB16,xmem(True,31),ADD16,RET),0x02001000))
         self.assertEqual((result.verdict,result.reason_codes),('unresolved',('unknown_stack_read',)))
 
-    def test_current_model_has_distinct_memory_identity(self):
-        self.assertEqual(ANALYSIS_MODEL_VERSION,'arm64-bounded-equivalent-compact-v39')
+    def test_v35_memory_model_retains_exact_import_admission(self):
+        report=synthetic_report('arm64-bounded-x-stack-v35')
+        self.assertIs(validate_report(report),report)
+        report['image']['cpu_subtype']=0x80000000
+        with self.assertRaises(InputError):validate_report(report)
 
 
 class XStackFlowTests(unittest.TestCase):

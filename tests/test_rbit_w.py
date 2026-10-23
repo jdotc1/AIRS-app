@@ -75,7 +75,6 @@ class RBITWTests(unittest.TestCase):
         result=audit_current_function(*fixture((rbit(),RET)),replace(Limits(),max_cfg_steps_per_function=0))
         self.assertEqual(result.verdict,'unresolved')
     def test_emitted_report_and_exact_new_model_admission(self):
-        self.assertEqual(ANALYSIS_MODEL_VERSION,'arm64-bounded-equivalent-compact-v39')
         report=report_for((0x5ac00008,0x5ac01100,RET))
         self.assertEqual(report['generator']['analysis_model_version'],ANALYSIS_MODEL_VERSION)
         self.assertEqual(report['findings'][0]['verdict'],'agreement')

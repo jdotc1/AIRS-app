@@ -2,11 +2,12 @@
 from dataclasses import replace
 from pathlib import Path
 import json
-import os
 import struct
 import tempfile
+from output_paths import output_root
 import unittest
 from unittest.mock import patch
+from airs import ANALYSIS_MODEL_VERSION
 from airs.engine import audit_path
 from airs.report import dumps, load_report
 from airs.types import InputError, Limits, UnwindTable
@@ -15,7 +16,7 @@ from test_report_v32_admission_candidate import synthetic_report
 from test_x_stack_slots import O0_CLZ, O0_CTZ, O0_UDIV
 
 MODEL='arm64-bounded-x-stack-v35'
-OUTPUT=Path(os.environ.get('AIRS_TEST_OUTPUT_ROOT',str(Path(tempfile.gettempdir()) / 'AIRS-X-stack-v35-20261021')))
+OUTPUT = output_root()
 
 
 def report_for(words,limits=Limits(),second=False):
@@ -39,7 +40,7 @@ class XStackV35IntegrationTests(unittest.TestCase):
     def test_three_complete_retained_bodies_emit_v35_and_round_trip(self):
         for name,words in (('clz',O0_CLZ),('ctz',O0_CTZ),('udiv',O0_UDIV)):
             report=report_for(words)
-            self.assertEqual(report['generator']['analysis_model_version'],'arm64-bounded-equivalent-compact-v39')
+            self.assertEqual(report['generator']['analysis_model_version'],ANALYSIS_MODEL_VERSION)
             finding=report['findings'][0]
             self.assertEqual((finding['verdict'],finding['scope']),('agreement','modeled_leaf_body'))
             self.assertEqual(finding['checked_pcs'],[hex(BASE+i*4) for i in range(1,len(words)-2)])

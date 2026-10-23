@@ -68,7 +68,9 @@ class VariableShiftTests(unittest.TestCase):
         for base in BASES:
             for bit in (1<<29,1<<30,1<<21,1<<15,1<<12):
                 with self.assertRaises(ModelError):decode_instruction(word(base)^bit)
-        for base in (0x1ac00800,0x9ac00c00,0x9ac03000):
+        # X SDIV is supported; W division and CRC32 remain outside this model.
+        self.assertEqual(decode_instruction(word(0x9ac00c00)).kind,'xsdiv')
+        for base in (0x1ac00800,0x1ac00c00,0x9ac03000):
             with self.assertRaises(ModelError):decode_instruction(word(base))
         result=audit_current_function(*fixture((0x14000002,word(BASES[0])|(1<<29),NOP,RET),0x02000000));self.assertEqual(result.verdict,'unresolved')
     def test_unknown_output_preserves_known_cfg_path(self):

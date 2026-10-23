@@ -245,8 +245,28 @@ public actor InspectionProjectStore {
     private func folders() throws -> [URL] {
         let root=storageRoot.appendingPathComponent("Projects")
         guard FileManager.default.fileExists(atPath:root.path) else {return []};try directory(storageRoot);try directory(root)
-        let values=try FileManager.default.contentsOfDirectory(at:root,includingPropertiesForKeys:nil).filter{UUID(uuidString:$0.lastPathComponent) != nil}
-        guard values.count <= maximumProjects else {throw full()};return values
+        guard maximumProjects >= 0 else {throw full()}
+        // Match the catalog's shallow 128-entry default while retaining custom
+        // project capacities. Saturate doubling rather than overflowing Int.
+        let doubled=maximumProjects.multipliedReportingOverflow(by:2)
+        let maximumEntries=max(128,doubled.overflow ? Int.max : doubled.partialValue)
+        var enumerationError:Error?
+        guard let children=FileManager.default.enumerator(at:root,includingPropertiesForKeys:nil,
+            options:[.skipsSubdirectoryDescendants],errorHandler:{_,error in enumerationError=error;return false}) else {
+            throw invalid("Cannot enumerate Projects directory.")
+        }
+        var values:[URL]=[],count=0
+        while let child=children.nextObject() as? URL {
+            try Task.checkCancellation()
+            guard count < maximumEntries else {throw invalid("Project directory entry limit exceeded.")}
+            count += 1
+            if UUID(uuidString:child.lastPathComponent) != nil {
+                guard values.count < maximumProjects else {throw full()}
+                values.append(child)
+            }
+        }
+        if let enumerationError {throw enumerationError}
+        return values
     }
     private func lock() throws -> Int32 {
         try FileManager.default.createDirectory(at:storageRoot,withIntermediateDirectories:true,attributes:[.posixPermissions:0o700])

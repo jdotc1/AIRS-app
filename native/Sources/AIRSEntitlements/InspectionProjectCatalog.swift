@@ -3,6 +3,9 @@ import Darwin
 
 /// Read-only metadata inventory, not admission of retained evidence or history.
 public struct InspectionProjectCatalog:Codable,Sendable {
+    public enum Ordering: String, Codable, Sendable {
+        case name
+    }
     public struct Row:Codable,Sendable {
         public let projectID:UUID
         public let name:String?
@@ -12,6 +15,14 @@ public struct InspectionProjectCatalog:Codable,Sendable {
         public let historicalBatchLinkCount:Int?
         public let issue:String?
     }
+    public struct Selection: Codable, Sendable {
+        public let nameContains: String
+        public let examinedProjectCount: Int
+        public let excludedReadableCount: Int
+        public let unreadableRowsRetained: Bool
+    }
+    public let sort: Ordering?
+    public let selection: Selection?
     public let format:String
     public let schemaVersion:Int
     public let store:String
@@ -24,8 +35,21 @@ public struct InspectionProjectCatalog:Codable,Sendable {
     public let atomicSnapshot:Bool
     public let projects:[Row]
 
-    public static func read(from root:URL) async throws -> Self {
+    public static func read(from root:URL, nameContains: String? = nil, sort: Ordering? = nil) async throws -> Self {
         try Task.checkCancellation()
+        let locale = Locale(identifier: "en_US_POSIX")
+        let foldedQuery: String?
+        if let nameContains {
+            guard !nameContains.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  nameContains.utf8.count <= 256,
+                  !nameContains.unicodeScalars.contains(where: CharacterSet.controlCharacters.contains) else {
+                throw BoundReviewError.invalid("Name filter must contain 1–256 UTF-8 bytes, nonblank text and no control characters.")
+            }
+            foldedQuery = nameContains.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: locale)
+            guard foldedQuery?.isEmpty == false else {
+                throw BoundReviewError.invalid("Name filter must contain searchable text.")
+            }
+        } else { foldedQuery = nil }
         guard root.isFileURL else {throw BoundReviewError.invalid("Use an absolute local project store.")}
         let physical=root.standardizedFileURL
         let values=try physical.resourceValues(forKeys:[.isDirectoryKey,.isSymbolicLinkKey])
@@ -84,8 +108,39 @@ public struct InspectionProjectCatalog:Codable,Sendable {
             }
         }
         try Task.checkCancellation()
+        // Search is display-name selection only. Never normalize project UUIDs,
+        // filenames or evidence identity. Retain every unreadable row explicitly.
+        let examinedCount = rows.count
+        if let foldedQuery {
+            rows = rows.filter { row in
+                row.issue != nil || row.name?.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: locale)
+                    .contains(foldedQuery) == true
+            }
+        }
+        try Task.checkCancellation()
+        if sort == .name {
+            // Compare original UTF-8 bytes, without locale or filename normalization.
+            // Unreadable rows have no trusted name and remain visible after names.
+            rows.sort { lhs, rhs in
+                switch (lhs.name, rhs.name) {
+                case let (left?, right?):
+                    if !left.utf8.elementsEqual(right.utf8) {
+                        return left.utf8.lexicographicallyPrecedes(right.utf8)
+                    }
+                case (_?, nil): return true
+                case (nil, _?): return false
+                case (nil, nil): break
+                }
+                return lhs.projectID.uuidString < rhs.projectID.uuidString
+            }
+        }
+        try Task.checkCancellation()
         let readable=rows.filter{$0.issue == nil}.count
-        return .init(format:"airs.project-catalog",schemaVersion:1,store:physical.path,
+        let selection = nameContains.map {
+            Selection(nameContains: $0, examinedProjectCount: examinedCount,
+                      excludedReadableCount: examinedCount - rows.count, unreadableRowsRetained: true)
+        }
+        return .init(sort:sort,selection:selection,format:"airs.project-catalog",schemaVersion:1,store:physical.path,
             projectCount:rows.count,readableCount:readable,unreadableCount:rows.count-readable,
             evidenceValidated:false,historicalOutcomesResolved:false,queueRestored:false,
             atomicSnapshot:false,projects:rows)

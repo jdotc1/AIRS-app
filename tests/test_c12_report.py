@@ -6,6 +6,7 @@ import struct
 import tempfile
 import unittest
 
+from airs import ANALYSIS_MODEL_VERSION
 from airs.engine import audit_path
 from airs.report import validate_report
 from airs.types import InputError, Limits
@@ -24,7 +25,7 @@ class CFGReportTests(unittest.TestCase):
 
     def test_real_pipeline_emits_v3_and_keeps_two_independent_functions(self):
         report=validate_report(self.report())
-        self.assertEqual(report['generator']['analysis_model_version'],'arm64-bounded-sequential-loops-v31')
+        self.assertEqual(report['generator']['analysis_model_version'],ANALYSIS_MODEL_VERSION)
         self.assertEqual(report['summary']['function_count'],2)
         self.assertEqual(report['summary']['agreement_count'],2)
         self.assertTrue(all(any(e['code']=='cfg_paths_checked' for e in f['evidence']) for f in report['findings']))

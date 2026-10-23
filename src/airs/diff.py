@@ -21,6 +21,7 @@ def compare_reports(baseline: dict, current: dict) -> dict:
     validate_report(current)
     same_image = baseline["image"]["slice_sha256"] == current["image"]["slice_sha256"] and baseline["image"]["architecture"] == current["image"]["architecture"]
     compatible = baseline["generator"]["analysis_model_version"] == current["generator"]["analysis_model_version"] and baseline["image"]["architecture"] == current["image"]["architecture"]
+    configuration_changed = baseline.get("analysis_config") != current.get("analysis_config")
     groups: dict[str, dict[str, list]] = defaultdict(lambda: {"before": [], "after": []})
 
     for side, report in (("before", baseline), ("after", current)):
@@ -51,6 +52,9 @@ def compare_reports(baseline: dict, current: dict) -> dict:
             if not compatible:
                 change = "ambiguous"
                 notes.append("Analysis model or architecture differs. Reanalyze both inputs with one model before interpreting a verdict change.")
+            elif configuration_changed:
+                change = "ambiguous"
+                notes.append("Analysis configuration differs or is missing from one report. Reanalyze both inputs with one configuration before interpreting a finding change.")
             else:
                 change = "unchanged" if _signature(before) == _signature(after) else "changed"
             if basis == "unique_symbol":
@@ -73,7 +77,6 @@ def compare_reports(baseline: dict, current: dict) -> dict:
             row.update(after_verdict=after["verdict"], after_scope=after["scope"])
         changes.append(row)
 
-    configuration_changed = baseline.get("analysis_config") != current.get("analysis_config")
     limitations = ["Different build addresses are never joined solely because they are equal.", "Cross-build symbol matches are candidates for review, not guaranteed source identity.", "Added/removed unmatched functions are not automatically regressions/fixes.", "An agreement still has the scope and limitations of its source report."]
     if configuration_changed:
         limitations.append("Analysis configuration differs or is missing from one report; budget-related scope changes require review.")

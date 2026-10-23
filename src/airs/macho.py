@@ -384,6 +384,10 @@ def parse_macho(data: bytes, path: str = "<memory>", limits: Limits = Limits(),
             values = struct.unpack_from("<10I", selected, cursor + 8)
             for index in range(0, 10, 2):
                 payload_extent(values[index], values[index + 1], "Dyld information")
+        elif command == 0x21:
+            # A legacy encryption declaration must not fall through as opaque
+            # metadata, even when padded to the Mach-O64 command alignment.
+            raise InputError("unsupported_encryption_command", "LC_ENCRYPTION_INFO is outside the supported 64-bit format", cursor)
         elif command == 0x2C:
             exact(24)
             cryptoff, cryptsize, cryptid, _ = struct.unpack_from("<IIII", selected, cursor + 8)
