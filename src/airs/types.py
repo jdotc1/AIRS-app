@@ -24,6 +24,7 @@ class Limits:
     max_cfi_records: int = 4096
     max_cfi_instructions: int = 200_000
     max_cfi_rows: int = 50_000
+    max_cfi_state_depth: int = 64
     max_cfg_steps_per_function: int = 4096
     max_cfg_paths_per_function: int = 64
     max_total_cfg_steps: int = 100_000

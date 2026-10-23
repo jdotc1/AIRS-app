@@ -1,0 +1,119 @@
+{
+  "analysis_config": {
+    "limits": {
+      "max_cfg_paths_per_function": 64,
+      "max_cfg_steps_per_function": 4096,
+      "max_cfi_bytes": 8388608,
+      "max_cfi_instructions": 200000,
+      "max_cfi_records": 4096,
+      "max_cfi_rows": 50000,
+      "max_cfi_state_depth": 64,
+      "max_evidence_per_function": 32,
+      "max_file_bytes": 536870912,
+      "max_functions": 50000,
+      "max_instructions_per_function": 16384,
+      "max_load_commands": 4096,
+      "max_observations_per_function": 256,
+      "max_sections": 4096,
+      "max_total_cfg_steps": 100000,
+      "max_total_evidence": 8192,
+      "max_total_instructions": 1000000,
+      "max_unwind_entries": 200000
+    }
+  },
+  "findings": [
+    {
+      "checked_pcs": [
+        "0x10000100c"
+      ],
+      "coverage": "dwarf_evaluated",
+      "encoding": "0x03000014",
+      "evidence": [
+        {
+          "code": "caller_state_recovered",
+          "message": "The unwind rule recovers entry SP and original x19\u2013x30 at every listed modeled observation"
+        },
+        {
+          "address": "0x10000100c",
+          "code": "dwarf_cfi_row",
+          "expected": "entry SP and original x19\u2013x30",
+          "message": "FDE __eh_frame+0x14, CIE +0x0, row at 0x100001008",
+          "observed": "CFA=x29+16; x29=CFA-16 memory, x30=CFA-8 memory"
+        }
+      ],
+      "function": {
+        "address": "0x100001000",
+        "boundary_source": "lc_function_starts",
+        "end_address": "0x100001018",
+        "image_offset": "0x1000",
+        "name": "sub_100001000",
+        "size": 24
+      },
+      "id": "airsf-4d0bf3feb054adc1d119b3238b4e2d5387aa5476d8d6368eb18d2e87ea5434f9",
+      "instruction_count": 6,
+      "limitations": [
+        "Only the documented, bounded integer instruction subset is interpreted.",
+        "Checks describe selected modeled states; they do not establish whole-function or asynchronous unwind correctness.",
+        "SIMD, pointer authentication, CFI outside the bounded subset, personality and LSDA semantics are outside this model.",
+        "Direct callees are summarized as ABI-conforming returns preserving SP, x19\u2013x29 and unescaped allocated stack storage; callees are not analyzed.",
+        "CFI uses Apple/LLVM unchanged-register defaults; only the exact supported CIE/FDE and listed PCs are evaluated."
+      ],
+      "mode": "dwarf",
+      "reason_codes": [
+        "supported_model_agreement"
+      ],
+      "scope": "synchronous_call_sites",
+      "verdict": "agreement"
+    }
+  ],
+  "generator": {
+    "analysis_model_version": "arm64-bounded-cfi-control-v41",
+    "name": "AIRS",
+    "version": "0.3.2"
+  },
+  "image": {
+    "architecture": "arm64",
+    "container_sha256": "28933b87c10d2bc550729394d38e47d6835cbd6447db6521c209b2c8e990f9c6",
+    "cpu_subtype": 0,
+    "display_name": "owned-cfi-control.macho",
+    "file_type": "execute",
+    "preferred_base": "0x100000000",
+    "slice_offset": 0,
+    "slice_sha256": "28933b87c10d2bc550729394d38e47d6835cbd6447db6521c209b2c8e990f9c6",
+    "slice_size": 16387,
+    "uuid": "00010203-0405-0607-0809-0a0b0c0d0e0f"
+  },
+  "issues": [
+    {
+      "code": "dwarf_metadata_only",
+      "message": "This metadata parser records an FDE reference; see the finding for bounded CFI evaluation status",
+      "offset": 8252
+    }
+  ],
+  "limitations": [
+    "This is a bounded static model, not a proof that a binary always unwinds correctly.",
+    "Compact unwind is checked at supported synchronous call states or explicitly labeled leaf-body states; no asynchronous or all-PC guarantee is made.",
+    "Unsupported instructions, flow outside the bounded CFG and at-most-two sequential disjoint natural-loop subset, unsupported CFI, ARM64e/PAC and SIMD saves remain unresolved.",
+    "Exception personalities, LSDA behavior, runtime stack contents and executable behavior are not validated.",
+    "The inspected file is read as data and is never loaded or executed.",
+    "Selecting a .app analyzes its principal executable; embedded images are not recursively scanned in this version."
+  ],
+  "metadata_ranges": [
+    {
+      "encoding": "0x03000014",
+      "end": "0x100001018",
+      "mode": "dwarf",
+      "start": "0x100001000"
+    }
+  ],
+  "report_kind": "airs.audit",
+  "schema_version": 1,
+  "summary": {
+    "agreement_count": 1,
+    "checked_pc_count": 1,
+    "function_count": 1,
+    "inconsistency_count": 0,
+    "metadata_entry_count": 1,
+    "unresolved_count": 0
+  }
+}

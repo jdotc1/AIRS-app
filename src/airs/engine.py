@@ -128,7 +128,7 @@ def audit_path(path: Path | str, *, requested_arch: str = "auto", limits: Limits
     cfi_table = None
     if any(_mode(entry.encoding) == "dwarf" for entry in table.entries):
         try:
-            cfi_table = parse_eh_frame(image, limits)
+            cfi_table = parse_eh_frame(image, limits, enable_cfi_controls=True)
         except InputError as error:
             # A malformed or unsupported table remains metadata, never a defect.
             cfi_table = error

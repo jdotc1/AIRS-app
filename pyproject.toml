@@ -16,3 +16,6 @@ airs = "airs.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools]
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "third_party/gimli/LICENSE-MIT"]

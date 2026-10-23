@@ -57,6 +57,7 @@ public struct InspectionArchive: Sendable {
         switch item.kind {
         case AssessmentDocument.kind: _ = try AssessmentDocument.decode(item.bytes)
         case InspectionDocument.kind: _ = try InspectionDocumentCodec.decode(item.bytes)
+        case CodeSignatureEvidenceDocument.kind: _ = try CodeSignatureEvidenceDocument.decode(item.bytes)
         case "EntitlementDiff": _ = try SavedReport.parse(item.bytes)
         case "airs.audit": _ = try AuditReport.decode(item.bytes)
         case ComponentInventoryDocumentCodec.kind: _ = try ComponentInventoryDocumentCodec.decode(item.bytes)

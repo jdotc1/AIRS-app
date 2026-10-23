@@ -122,6 +122,8 @@ cp "$PROJECT_DIR/THIRD_PARTY_NOTICES.md" "$CONTENTS/Resources/THIRD_PARTY_NOTICE
 mkdir -p "$CONTENTS/Resources/ThirdPartyNotices"
 cp "$PROJECT_DIR/native/Vendor/Lumen/LICENSE" "$CONTENTS/Resources/ThirdPartyNotices/Lumen-LICENSE.txt"
 cp "$PROJECT_DIR/native/Vendor/EntitlementDiff/LICENSE" "$CONTENTS/Resources/ThirdPartyNotices/EntitlementDiff-LICENSE.txt"
+cp "$PROJECT_DIR/third_party/EntitlementLens/LICENSE" "$CONTENTS/Resources/ThirdPartyNotices/EntitlementLens-LICENSE.txt"
+cp "$PROJECT_DIR/third_party/gimli/LICENSE-MIT" "$CONTENTS/Resources/ThirdPartyNotices/gimli-LICENSE-MIT.txt"
 if [ "$EXTERNAL_PYTHON" -eq 0 ]; then
     mkdir -p "$CONTENTS/Frameworks" "$CONTENTS/Resources/RuntimeNotices"
     /usr/bin/ditto "$PRIVATE_PYTHON/Python.framework" "$CONTENTS/Frameworks/Python.framework"

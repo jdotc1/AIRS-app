@@ -9,6 +9,7 @@ airs_cli.py
 docs/ANALYSIS_CONTRACT.md
 docs/ARCHITECTURE.md
 docs/ASSESSMENT_FORMAT.md
+docs/CFI_CONTROL_V41.md
 docs/COMPONENT_INVENTORY_FORMAT.md
 docs/COMPONENT_REVIEW_FORMAT.md
 docs/DEVELOPMENT_STATUS.md
@@ -24,6 +25,7 @@ docs/SAVED_REPORT_COMMAND_EXAMPLES.md
 docs/SAVED_REPORT_SUMMARY.md
 docs/SAVED_REPORT_SUMMARY_SELECTION.md
 docs/SAVED_REPORT_SUMMARY_TEXT.md
+docs/SIGNATURE_EVIDENCE.md
 docs/UDIV.md
 docs/X_STACK_SLOTS.md
 examples/README.md
@@ -187,6 +189,7 @@ native/Sources/AIRSApp/ReportViews.swift
 native/Sources/AIRSApp/SettingsReviewConfiguration.swift
 native/Sources/AIRSApp/SettledProjectExportPreview.swift
 native/Sources/AIRSApp/SettledProjectExportPreviewView.swift
+native/Sources/AIRSApp/SignatureEvidenceReviewView.swift
 native/Sources/AIRSApp/SourceViews.swift
 native/Sources/AIRSApp/WorkspaceRecents.swift
 native/Sources/AIRSApp/WorkspaceView.swift
@@ -195,8 +198,11 @@ native/Sources/AIRSCore/AuditReport.swift
 native/Sources/AIRSCore/BatchCheckpointStore.swift
 native/Sources/AIRSCore/BatchComparison.swift
 native/Sources/AIRSCore/BatchHistory.swift
+native/Sources/AIRSCore/BoundedCodeSignatureParser.swift
 native/Sources/AIRSCore/BundleCodeUnit.swift
 native/Sources/AIRSCore/BundleDiscovery.swift
+native/Sources/AIRSCore/CodeSignatureEvidence.swift
+native/Sources/AIRSCore/CodeSignatureEvidenceReader.swift
 native/Sources/AIRSCore/ComparisonReport.swift
 native/Sources/AIRSCore/ComponentInventory.swift
 native/Sources/AIRSCore/ComponentLoadDeclaration.swift
@@ -218,6 +224,7 @@ native/Sources/AIRSEntitlements/BoundReviewAcknowledgment.swift
 native/Sources/AIRSEntitlements/BoundReviewFiles.swift
 native/Sources/AIRSEntitlements/BoundReviewLedger.swift
 native/Sources/AIRSEntitlements/BoundReviewRequest.swift
+native/Sources/AIRSEntitlements/CodeSignatureEvidenceDocument.swift
 native/Sources/AIRSEntitlements/CodeUnitEntitlementReader.swift
 native/Sources/AIRSEntitlements/ComponentInfoDeclarations.swift
 native/Sources/AIRSEntitlements/ComponentInventoryDocument.swift
@@ -292,6 +299,7 @@ native/Tests/AIRSAppTests/ReportLibraryWorkspaceTests.swift
 native/Tests/AIRSAppTests/SecondaryDialogLayoutTests.swift
 native/Tests/AIRSAppTests/SettingsReviewIsolationTests.swift
 native/Tests/AIRSAppTests/SettledProjectExportWorkspaceTests.swift
+native/Tests/AIRSAppTests/SignatureEvidenceWorkspaceTests.swift
 native/Tests/AIRSAppTests/SourceWorkspaceTests.swift
 native/Tests/AIRSAppTests/StandaloneEntitlementsTests.swift
 native/Tests/AIRSAppTests/UnifiedWorkspaceNavigationTests.swift
@@ -305,7 +313,9 @@ native/Tests/AIRSCoreTests/BatchComparisonTests.swift
 native/Tests/AIRSCoreTests/BatchHistoryTests.swift
 native/Tests/AIRSCoreTests/BundleDiscoveryTests.swift
 native/Tests/AIRSCoreTests/CFGReportTests.swift
+native/Tests/AIRSCoreTests/CFIControlModelAdmissionTests.swift
 native/Tests/AIRSCoreTests/CFIReportTests.swift
+native/Tests/AIRSCoreTests/CodeSignatureEvidenceTests.swift
 native/Tests/AIRSCoreTests/ComponentInventoryTests.swift
 native/Tests/AIRSCoreTests/ComponentLoadCommandTests.swift
 native/Tests/AIRSCoreTests/ComponentMatcherTests.swift
@@ -313,6 +323,8 @@ native/Tests/AIRSCoreTests/EngineRunnerTests.swift
 native/Tests/AIRSCoreTests/EquivalentCompactReportTests.swift
 native/Tests/AIRSCoreTests/FPXStackReportTests.swift
 native/Tests/AIRSCoreTests/Fixtures/audit-v1.json
+native/Tests/AIRSCoreTests/Fixtures/cfi-control-v36.json
+native/Tests/AIRSCoreTests/Fixtures/cfi-control-v41.json
 native/Tests/AIRSCoreTests/Fixtures/comparison-v1.json
 native/Tests/AIRSCoreTests/Fixtures/equivalent-compact-v39.json
 native/Tests/AIRSCoreTests/Fixtures/fp-x-stack-v36.json
@@ -334,6 +346,7 @@ native/Tests/AIRSCoreTests/XStackReportTests.swift
 native/Tests/AIRSEntitlementsTests/AssessmentRunnerTests.swift
 native/Tests/AIRSEntitlementsTests/AssessmentTests.swift
 native/Tests/AIRSEntitlementsTests/BoundReviewTests.swift
+native/Tests/AIRSEntitlementsTests/CodeSignatureEvidenceDocumentTests.swift
 native/Tests/AIRSEntitlementsTests/CodeUnitReaderTests.swift
 native/Tests/AIRSEntitlementsTests/ComponentInventoryArchiveTests.swift
 native/Tests/AIRSEntitlementsTests/ComponentReviewTests.swift
@@ -580,6 +593,8 @@ tests/test_cfg_suffix.py
 tests/test_cfg_teardowns.py
 tests/test_cfg_variable_shift.py
 tests/test_cfg_widening_multiply.py
+tests/test_cfi_v41_emission.py
+tests/test_cfi_v41_integration.py
 tests/test_cli.py
 tests/test_clz.py
 tests/test_compact.py
@@ -626,3 +641,8 @@ tests/test_udiv_x.py
 tests/test_verify_python.py
 tests/test_x_stack_slots.py
 tests/test_x_stack_v35_integration.py
+third_party/EntitlementLens/LICENSE
+third_party/EntitlementLens/UPSTREAM.md
+third_party/gimli/LICENSE-MIT
+third_party/gimli/README.md
+third_party/gimli/cfi-control-excerpts.rs

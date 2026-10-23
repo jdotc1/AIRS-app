@@ -1,7 +1,7 @@
 # Development scope and retained evidence
 
 The public baseline is v0.3.2/build 6. This development source uses model
-`arm64-bounded-local-fde-v40`, while the existing downloadable app and its frozen
+`arm64-bounded-cfi-control-v41`, while the existing downloadable app and its frozen
 source retain their own identities. SOURCE_SNAPSHOT.json records the source
 revision and changed/reused export scope. No next binary release is assigned.
 
@@ -42,3 +42,16 @@ were reused and the 10 remaining reason/limit/order methods passed on resume.
 The portable-test repair retains its separate accepted 777-method Linux matrix;
 that matrix was not replayed. New GUI workflows remain unexercised. No new
 optimized binary, signing, notarization, installation or release is claimed.
+
+## Current-baseline PR5 integration
+
+Twenty-seven focused Python methods passed for literal CFI controls, whole-owned
+Mach-O emission/admission and historical v40 admission. AIRSApp and native CLI
+builds passed, along with24 native methods covering raw signature evidence,
+portable documents, archive/lifecycle behavior and current/historical CFI models.
+The v41 native fixture comes from the first checked emission without a repeated
+audit. Two independent source reviews found no actionable defect. V40 direct
+parser defaults, exact FDE selection, overlap and global opaque-work accounting
+remain preserved. Existing vendor/runtime/dependency and original PR receipts
+were reused; no full suite or corpus was rerun. New GUI acceptance, wheel/sdist,
+optimized packaging, signing/notarization and installed updates remain separate.

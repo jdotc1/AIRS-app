@@ -31,3 +31,22 @@ metadata and reference artwork. Apple-provided frameworks, symbols, templates
 and reference material remain subject to their applicable Apple terms.
 The AIRS and Lumen MIT licenses cover the owner's original contributions and
 do not relicense that third-party material.
+
+## EntitlementLens
+
+- Source: <https://github.com/hideouts-io/EntitlementLens>
+- Revision: `d7c6d58e08aa33ec950cd15bf852f277a44bef3c`
+- License: MIT; copyright 2026 hideouts-io.
+- Adapted area: bounded code-signature SuperBlob/index/slot parsing and checked byte ranges, from `Sources/EntitlementLens/Services/CodeSignatureParser.swift` and `MachOByteRange.swift`.
+- Local changes: AIRS descriptor-bound reads, strict exact-slice identity, rejection of overlap across all indexed slots, tighter aggregate budgets, retained evidence validation, and no upstream URL wrapper, architecture-name dictionary join or XML semantic decoder.
+- License and detailed provenance: `third_party/EntitlementLens/`.
+
+## Gimli
+
+- Source: <https://github.com/gimli-rs/gimli>
+- Revision: `478f07ad90e91bb8b061ec33ef4bd3a8448839e1`
+- License choice: MIT, from the upstream MIT OR Apache-2.0 offer.
+- Adapted area: CFI fixed-width PC advance and saved-rule-state operations in `src/read/cfi.rs`, translated into AIRS's bounded Python evaluator.
+- Local changes: existing AIRS positive/aligned/range constraints, FDE-only saved-rule stack, explicit operation/row/depth budgets and full-stream validation. No Rust code is built or dynamically loaded by AIRS.
+- License, pinned source excerpts and detailed provenance: `third_party/gimli/`.
+

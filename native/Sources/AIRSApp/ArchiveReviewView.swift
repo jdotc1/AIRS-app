@@ -40,7 +40,7 @@ private struct ArchiveEvidenceRow: View {
     // publication. Do not reparse/hash blobs during SwiftUI body evaluation.
     private var supported: Bool {
         item.schemaVersion == 1 && item.mediaType == "application/json" &&
-            ["airs.inspection", "airs.audit", "EntitlementDiff", "airs.components", "airs.component.review", "airs.assessments"].contains(item.kind)
+            ["airs.inspection", "airs.audit", "EntitlementDiff", "airs.components", "airs.component.review", "airs.assessments", CodeSignatureEvidenceDocument.kind].contains(item.kind)
     }
     var body: some View {
         HStack {

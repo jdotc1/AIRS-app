@@ -13,13 +13,14 @@ enum AIRSOpenedReport: Sendable {
     case inspection(InspectionDocument, Data)
     case archive(InspectionArchive, Data)
     case inventory(ComponentInventory, Data)
+    case signatureEvidence(CodeSignatureEvidenceDocument, Data)
     case componentReview(ComponentReview)
     case assessments(AssessmentDocument)
 
     private struct Envelope: Decodable {
         enum Keys: String, CodingKey { case schema_version, report_kind, schemaVersion, tool, kind }
         let kind: Kind
-        enum Kind { case audit, entitlements, inspection, archive, inventory }
+        enum Kind { case audit, entitlements, inspection, archive, inventory, signatureEvidence }
         init(from decoder: Decoder) throws {
             let fields = try decoder.container(keyedBy: Keys.self)
             let audit = fields.contains(.schema_version) || fields.contains(.report_kind)
@@ -28,10 +29,16 @@ enum AIRSOpenedReport: Sendable {
             if inspection {
                 let name = try fields.decode(String.self, forKey: .kind)
                 guard !audit, !entitlements,
-                      [InspectionDocument.kind, InspectionArchive.kind, ComponentInventoryDocumentCodec.kind].contains(name) else {
+                      [InspectionDocument.kind, InspectionArchive.kind, ComponentInventoryDocumentCodec.kind,
+                       CodeSignatureEvidenceDocument.kind].contains(name) else {
                     throw ReportError.invalidContents("Unrecognized or ambiguous inspection document.")
                 }
-                kind = name == InspectionArchive.kind ? .archive : (name == ComponentInventoryDocumentCodec.kind ? .inventory : .inspection)
+                switch name {
+                case InspectionArchive.kind: kind = .archive
+                case ComponentInventoryDocumentCodec.kind: kind = .inventory
+                case CodeSignatureEvidenceDocument.kind: kind = .signatureEvidence
+                default: kind = .inspection
+                }
                 return
             }
             guard audit != entitlements else {
@@ -56,6 +63,7 @@ enum AIRSOpenedReport: Sendable {
     static func parse(_ data: Data) throws -> Self {
         guard data.count <= ReportFiles.maximumBytes else { throw ReportError.tooLarge(ReportFiles.maximumBytes) }
         switch try JSONDecoder().decode(Envelope.self, from: data).kind {
+        case .signatureEvidence: return .signatureEvidence(try CodeSignatureEvidenceDocument.decode(data), data)
         case .inventory: return .inventory(try ComponentInventoryDocumentCodec.decode(data), data)
         case .archive: return .archive(try InspectionArchive.decode(data), data)
         case .inspection: return .inspection(try InspectionDocumentCodec.decode(data), data)
@@ -90,6 +98,7 @@ final class AIRSFileOpen {
     var intakeReview: AppIntakeReview?
     var archiveReview: ArchiveReview?
     var inventoryReview: ComponentInventoryReview?
+    var signatureEvidenceReview: SignatureEvidenceReviewSession?
     var projectReview:ProjectReviewSession?
     private(set) var projectStore:InspectionProjectStore
     var portableProjectPreview: PortableProjectPreview?
@@ -119,7 +128,8 @@ final class AIRSFileOpen {
     private let componentBuild: @Sendable (URL,URL,Architecture) throws -> ComponentReviewSession
     private(set) var isWritingInventory = false
     private var inventoryWriteFailedDuringQuit = false
-    private let inventoryBuild: @Sendable (URL) throws -> ComponentInventory
+    private let inventoryBuild: @Sendable (URL) throws -> LiveComponentInventory
+    private let signatureCapture: @Sendable (BundleImageProvenance, UUID) async throws -> CodeSignatureEvidenceDocument
     private let inventoryWrite: @Sendable (Data, URL) async throws -> Void
     private(set) var isBusy = false
     private(set) var isPresentingPanel = false
@@ -133,9 +143,16 @@ final class AIRSFileOpen {
     init(read: @escaping @Sendable (URL) async throws -> AIRSOpenedReport = { try await AIRSOpenedReport.read($0) },
          hasModal: @escaping @MainActor () -> Bool = {
              NSApp?.modalWindow != nil || NSApp?.windows.contains(where: { $0.attachedSheet != nil }) == true
-         }, inventoryBuild: @escaping @Sendable (URL) throws -> ComponentInventory = { try ComponentInventoryBuilder().build($0) },
+         }, inventoryBuild: @escaping @Sendable (URL) throws -> LiveComponentInventory = { try ComponentInventoryBuilder().capture($0) },
          inventoryWrite: @escaping @Sendable (Data, URL) async throws -> Void = { data, url in
              try await Task.detached { try data.write(to: url, options: .atomic) }.value
+         }, signatureCapture: @escaping @Sendable (BundleImageProvenance, UUID) async throws -> CodeSignatureEvidenceDocument = { unit, componentID in
+             let worker = Task.detached(priority: .userInitiated) {
+                 let access = unit.bundle.startAccessingSecurityScopedResource()
+                 defer { if access { unit.bundle.stopAccessingSecurityScopedResource() } }
+                 return try CodeSignatureEvidenceDocument.capture(unit: unit, componentID: componentID)
+             }
+             return try await withTaskCancellationHandler(operation: { try await worker.value }, onCancel: { worker.cancel() })
          }, componentBuild: @escaping @Sendable (URL,URL,Architecture) throws -> ComponentReviewSession = { try ComponentReviewOperations.build($0,$1,$2) }, assessmentRunner: AssessmentRunner = AssessmentRunner(), projectStore:InspectionProjectStore?=nil,
          portableExport: @escaping @Sendable (InspectionProjectStore,UUID,Int,URL) async throws -> Void = { store,id,revision,url in
              try await store.exportPortableProject(id,to:url,expectedRevision:revision)
@@ -152,18 +169,19 @@ final class AIRSFileOpen {
         self.portableSettledReconstruct=portableSettledReconstruct
         self.assessmentRunner=assessmentRunner
         self.componentBuild = componentBuild
+        self.signatureCapture = signatureCapture
         self.inventoryBuild = inventoryBuild; self.inventoryWrite = inventoryWrite
         self.read = read; self.hasModal = hasModal
     }
 
-    var blocksActions: Bool { decodeInventoryError != nil || decodeInventoryReview != nil || coverageReview != nil || policyReview != nil || intakeReview != nil || archiveReview != nil || inventoryReview != nil || componentReview != nil || assessmentReview != nil || projectReview != nil || componentPairReview != nil || isBusy || isPresentingPanel || isTerminating }
+    var blocksActions: Bool { decodeInventoryError != nil || decodeInventoryReview != nil || coverageReview != nil || policyReview != nil || intakeReview != nil || archiveReview != nil || inventoryReview != nil || signatureEvidenceReview != nil || componentReview != nil || assessmentReview != nil || projectReview != nil || componentPairReview != nil || isBusy || isPresentingPanel || isTerminating }
 
     func chooseReport(audit: AuditWorkspace, entitlements: EntitlementsWorkspace, navigation: AIRSNavigation) {
         guard !blocksActions, !audit.blocksFileOpen, !entitlements.isBusy, !hasModal() else { return }
         isPresentingPanel = true
         let panel = NSOpenPanel()
         panel.title = "Open Report"
-        panel.message = "Open an AIRS audit, entitlement comparison, inspection or review archive."
+        panel.message = "Open an AIRS audit, entitlement comparison, inspection, signature evidence or review archive."
         panel.allowedContentTypes = [.json, UTType(filenameExtension: "airsinspect") ?? .json, UTType(filenameExtension: "airsreview") ?? .json]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
@@ -218,6 +236,8 @@ final class AIRSFileOpen {
                 case .inventory(let inventory, let bytes):
                     inventoryReview = ComponentInventoryReview(inventory: inventory,
                         archiveBytes: try ComponentInventoryDocumentCodec.archive(payload: bytes), sourceURL: url, imported: true)
+                case .signatureEvidence(let document, let bytes):
+                    signatureEvidenceReview = .init(document: document, archiveBytes: try Self.projectArchive(bytes), sourceURL: url)
                 case .archive(let archive, let bytes):
                     archiveReview = ArchiveReview(archive: archive, bytes: bytes, sourceURL: url,
                         auditRevision: auditRevision, entitlementRevision: entitlementRevision)
@@ -295,6 +315,9 @@ final class AIRSFileOpen {
                     archiveReview = nil
                     inventoryReview = ComponentInventoryReview(inventory: value, archiveBytes: review.bytes,
                         sourceURL: review.sourceURL, imported: true)
+                case .signatureEvidence(let document, _):
+                    archiveReview = nil
+                    signatureEvidenceReview = .init(document: document, archiveBytes: review.bytes, sourceURL: review.sourceURL)
                 case .archive: throw InspectionArchiveError.invalid
                 }
                 status = ""
@@ -339,7 +362,7 @@ final class AIRSFileOpen {
         await activeTask?.value
         if inventoryWriteFailedDuringQuit { return false }
         portableProjectPreview=nil;settledProjectExportPreview=nil;settledExportGeneration=UUID();importedProjectHistory=nil
-        inventoryReview = nil; decodeInventoryError=nil; decodeInventoryReview=nil; coverageReview=nil; policyReview=nil; projectReview=nil; assessmentReview = nil; componentReview = nil; componentPairReview = nil; pendingComponentPair = nil
+        inventoryReview = nil; signatureEvidenceReview = nil; decodeInventoryError=nil; decodeInventoryReview=nil; coverageReview=nil; policyReview=nil; projectReview=nil; assessmentReview = nil; componentReview = nil; componentPairReview = nil; pendingComponentPair = nil
         return true
     }
     func resumeAfterCancelledQuit() { isTerminating = false; inventoryWriteFailedDuringQuit = false }
@@ -368,8 +391,8 @@ final class AIRSFileOpen {
                 let worker = Task.detached(priority: .userInitiated) {
                     let access = url.startAccessingSecurityScopedResource()
                     defer { if access { url.stopAccessingSecurityScopedResource() } }
-                    let inventory = try build(url)
-                    return (inventory, try ComponentInventoryDocumentCodec.archive(inventory))
+                    let live = try build(url)
+                    return (live, try ComponentInventoryDocumentCodec.archive(live.inventory))
                 }
                 let result = try await withTaskCancellationHandler(operation: { try await worker.value }, onCancel: { worker.cancel() })
                 try Task.checkCancellation()
@@ -377,7 +400,7 @@ final class AIRSFileOpen {
                       audit.reportRevision == auditRevision, entitlements.model.reportRevision == entitlementRevision else {
                     status = "Workspace changed; component inventory was not opened."; return
                 }
-                inventoryReview = ComponentInventoryReview(inventory: result.0, archiveBytes: result.1, sourceURL: url, imported: false)
+                inventoryReview = ComponentInventoryReview(inventory: result.0.inventory, archiveBytes: result.1, sourceURL: url, imported: false, live: result.0)
                 status = "Inventory ready. Architecture and minimum OS are declarations, not compatibility tests."
             } catch {
                 if Task.isCancelled || isTerminating || error is CancellationError { status = "Component inventory cancelled; sessions are unchanged." }
@@ -389,11 +412,47 @@ final class AIRSFileOpen {
     }
 
     func closeInventory() { guard !isBusy else { return }; inventoryReview = nil; status = "" }
+    @discardableResult
+    func captureSignatureEvidence(_ componentID: UUID, audit: AuditWorkspace,
+                                  entitlements: EntitlementsWorkspace) -> Task<Void, Never>? {
+        guard let review = inventoryReview, review.canCaptureSignature(componentID),
+              let unit = review.live?.units[componentID], !isBusy, !isTerminating,
+              !audit.blocksFileOpen, !entitlements.isBusy else { return nil }
+        let auditRevision = audit.reportRevision, entitlementRevision = entitlements.model.reportRevision
+        let capture = signatureCapture
+        isBusy = true; status = "Capturing bounded signature byte evidence…"
+        let task = Task {
+            defer { isBusy = false; activeTask = nil }
+            do {
+                let document = try await capture(unit, componentID)
+                try Task.checkCancellation()
+                guard !isTerminating, inventoryReview?.id == review.id, !audit.blocksFileOpen, !entitlements.isBusy,
+                      audit.reportRevision == auditRevision, entitlements.model.reportRevision == entitlementRevision else {
+                    status = "Workspace changed; signature evidence was not added. Capture it again when ready."
+                    return
+                }
+                var updated = review
+                try updated.addSignatureEvidence(document)
+                inventoryReview = updated
+                status = "Signature evidence retained in this archive. Inspect each slice for missing, malformed or unexamined evidence."
+            } catch {
+                if Task.isCancelled || isTerminating || error is CancellationError {
+                    status = "Signature capture cancelled; the existing archive is unchanged."
+                } else {
+                    status = "Signature evidence was not added: " + error.localizedDescription
+                    errorMessage = error.localizedDescription
+                }
+            }
+        }
+        activeTask = task
+        return task
+    }
+    func closeSignatureEvidence() { guard !isBusy else { return }; signatureEvidenceReview = nil; status = "" }
     func chooseInventoryExport(audit: AuditWorkspace, entitlements: EntitlementsWorkspace) {
-        guard policyReview?.result != nil || inventoryReview != nil || componentReview != nil || assessmentReview != nil, !isBusy, !isTerminating else { return }
+        guard policyReview?.result != nil || inventoryReview != nil || componentReview != nil || assessmentReview != nil || signatureEvidenceReview != nil, !isBusy, !isTerminating else { return }
         isPresentingPanel = true
         let panel = NSSavePanel(); panel.title = policyReview != nil ? "Export Policy Result JSON" : "Export Complete Review Archive"
-        panel.nameFieldStringValue = policyReview != nil ? "policy-result.json" : assessmentReview != nil ? "app-assessments.airsreview" : "component-inventory.airsreview"
+        panel.nameFieldStringValue = policyReview != nil ? "policy-result.json" : signatureEvidenceReview != nil ? "signature-evidence.airsreview" : assessmentReview != nil ? "app-assessments.airsreview" : "component-inventory.airsreview"
         panel.allowedContentTypes = policyReview != nil ? [.json] : [UTType(filenameExtension: "airsreview") ?? .json]
         let result = panel.runModal(); isPresentingPanel = false
         if result == .OK, let url = panel.url { exportInventory(to: url, audit: audit, entitlements: entitlements) }
@@ -406,6 +465,7 @@ final class AIRSFileOpen {
             do {bytes=try result.data();inputs=review.prepared.inputURLs} catch {status=error.localizedDescription;return nil}
         }
         else if let review = assessmentReview { bytes = review.archiveBytes; inputs = review.sourceURLs }
+        else if let review = signatureEvidenceReview { bytes = review.archiveBytes; inputs = [review.sourceURL] }
         else if let review = componentReview { bytes = review.archiveBytes; inputs = review.sourceURLs }
         else if let review = inventoryReview { bytes = review.archiveBytes; inputs = [review.sourceURL] }
         else { return nil }
@@ -840,12 +900,16 @@ final class AIRSFileOpen {
     }
     nonisolated static func projectArchive(_ data:Data) throws -> Data {
         let kind:String
+        var componentIDs: [UUID] = []
         switch try AIRSOpenedReport.parse(data) {
         case .archive: return data
         case .audit: kind="airs.audit"
         case .inspection: kind=InspectionDocument.kind
         case .entitlements: kind="EntitlementDiff"
         case .inventory: kind=ComponentInventoryDocumentCodec.kind
+        case .signatureEvidence(let document, _):
+            kind = CodeSignatureEvidenceDocument.kind
+            componentIDs = [document.evidence.componentID]
         case .assessments,.componentReview: throw InspectionArchiveError.invalid
         }
         let digest=AssessmentDocument.digest(data),prefix=String(digest.prefix(32))
@@ -853,7 +917,8 @@ final class AIRSFileOpen {
         let name=parts.joined(separator:"-")
         guard let id=UUID(uuidString:String(name)) else {throw InspectionArchiveError.invalid}
         // Stable wrapper identity keeps repeated raw-document imports idempotent.
-        return try InspectionArchive(attachments:[.init(id:id,kind:kind,schemaVersion:1,mediaType:"application/json",sha256:digest,byteCount:data.count,bytes:data)]).encode()
+        return try InspectionArchive(attachments:[.init(id:id,kind:kind,schemaVersion:1,mediaType:"application/json",sha256:digest,byteCount:data.count,bytes:data)],
+            components: componentIDs.map { .init(id: $0, evidenceIDs: [id]) }).encode()
     }
     func reviewProjectEvidence(_ id:UUID,audit:AuditWorkspace,entitlements:EntitlementsWorkspace) {
         guard !hasPortableProjectPreview,let project=projectReview?.project,!isBusy,!isTerminating else {return}

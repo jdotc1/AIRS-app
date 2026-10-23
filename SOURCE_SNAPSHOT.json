@@ -1,5 +1,5 @@
 {
-  "source_revision": "812d00ec042656bdd824a568782a09a088c7c92b",
+  "source_revision": "6965011a7adae710499b1deaaafe1e451edd48dd",
   "published_baseline": {
     "version": "0.3.2",
     "build": "6",
@@ -7,12 +7,12 @@
   },
   "release_identity_assigned": false,
   "export_policy": "allowlist; no history, runtime, private evidence or corpus locations",
-  "files": 628,
+  "files": 648,
   "source_status": "development",
   "sanitation": "bounded maintainer-path and credential-marker scan passed on new/changed files",
-  "sanitation_inspected_files": 64,
-  "sanitation_reused_files": 564,
-  "sanitation_reuse": "Accepted public export at 5feb833d3c3eb506718caf0ac6ac91578a1f26d0 reused through exact committed Git blob identities; accepted-only public docs retained; only changed/new bytes inspected",
+  "sanitation_inspected_files": 41,
+  "sanitation_reused_files": 607,
+  "sanitation_reuse": "Accepted public export at c95726647e033a440a23ef2e1eec19e296382601 reused through exact committed Git blob identities; accepted-only public docs retained; only changed/new bytes inspected",
   "lumen_source_gate": "unchanged vendor evidence reused; pinned Settings.swift update uses its separate one-file receipt",
   "lumen_settings_donor": "46b7dc04458991093301dc9c05ca35c82f69a7ea",
   "private_evidence_excluded": [
@@ -25,15 +25,5 @@
     "tests/test_public_export_policy.py"
   ],
   "limitation": "Pattern inspection is not proof that arbitrary confidential text cannot exist",
-  "distribution_actions_performed": false,
-  "post_export_amendment": {
-    "paths": [
-      "docs/SAVED_REPORT_COMMAND_EXAMPLES.md",
-      "docs/SAVED_REPORT_SUMMARY.md",
-      "docs/SAVED_REPORT_SUMMARY_SELECTION.md",
-      "docs/SAVED_REPORT_SUMMARY_TEXT.md",
-      "docs/DIFF_TEXT.md"
-    ],
-    "scope": "First inspection of changed receipt-status wording only; prior export receipt retained; unchanged payload not rescanned"
-  }
+  "distribution_actions_performed": false
 }
