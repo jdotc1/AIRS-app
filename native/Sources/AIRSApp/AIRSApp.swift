@@ -76,7 +76,15 @@ struct AIRSApp: App {
                 )) { Button("OK") { fileOpen.errorMessage = nil } }
                 message: { Text(fileOpen.errorMessage ?? "") }
             } else {
+                #if DEBUG
+                if let fixture = ProcessInfo.processInfo.environment["AIRS_COMPARISON_REVIEW_FIXTURE"] {
+                    ComparisonReviewLauncher(workspace: workspace, fixture: URL(fileURLWithPath: fixture))
+                } else {
+                    SettingsReviewLauncher()
+                }
+                #else
                 SettingsReviewLauncher()
+                #endif
             }
         }
         .windowStyle(.hiddenTitleBar)
@@ -207,6 +215,8 @@ struct AIRSApp: App {
                 .lumenDensityRoot()
         }
         .lumenSettingsScene()
+        .defaultSize(width: LumenSettingsSidebarView.windowIdealWidth,
+                     height: EngineSettingsView.idealHeight)
     }
 }
 

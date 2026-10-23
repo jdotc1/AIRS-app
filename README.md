@@ -7,8 +7,8 @@ input data and are never loaded or executed by the analyzer.
 ## Development source and the published app
 
 This tree is a **source snapshot for the
-[AIRS 0.3.3/build 7 preview](https://github.com/jdotc1/AIRS-app/releases/tag/v0.3.3)**.
-It does not replace that release, its tag or downloadable assets. The release identity is 0.3.3/build 7. SOURCE_SNAPSHOT.json identifies the private source revision,
+[AIRS 0.3.3/build 9 preview](https://github.com/jdotc1/AIRS-app/releases/tag/v0.3.3-build9)**.
+The release identity is 0.3.3/build 9. The earlier build 7 release and its assets remain available. SOURCE_SNAPSHOT.json identifies the private source revision,
 published baseline, export scope and reused sanitation evidence.
 
 The source includes the v40 baseline: bounded X29-relative
