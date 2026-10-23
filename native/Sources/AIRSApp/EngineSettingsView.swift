@@ -4,6 +4,11 @@ import LumenUI
 
 @MainActor
 struct EngineSettingsView: View {
+    // The shared scaffold's compact default fits a short pane, but Engine also
+    // contains an interpreter path, actions and explanatory text.
+    static let minimumHeight: CGFloat = 560
+    static let idealHeight: CGFloat = 640
+
     @ObservedObject var workspace: AuditWorkspace
 
     private var categories: [LumenSettingsCategory] {
@@ -27,6 +32,7 @@ struct EngineSettingsView: View {
 
     var body: some View {
         LumenSettingsSidebarView(categories)
+            .frame(minHeight: Self.minimumHeight, idealHeight: Self.idealHeight)
     }
 }
 
@@ -50,7 +56,7 @@ private struct EngineRuntimeSettingsPane: View {
                     Toggle("Use external Python", isOn: $workspace.usesExternalPython)
                         .toggleStyle(.switch)
                 }
-                VStack(alignment: .leading, spacing: AppDesign.Space.small) {
+                VStack(alignment: .leading, spacing: 12) {
                     Text("Python executable").font(.callout).foregroundStyle(.secondary)
                     TextField("Python executable", text: $workspace.pythonPath,
                               prompt: Text("Private runtime by default"))

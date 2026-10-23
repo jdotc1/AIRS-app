@@ -9,6 +9,7 @@ struct ComparisonView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showUnchanged = false
     @State private var showJSON = false
+    @State private var changePage = 0
 
     private var visibleChanges: [ComparisonChange] {
         document.report.changes.filter { showUnchanged || $0.change != "unchanged" }
@@ -32,13 +33,19 @@ struct ComparisonView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     SectionCard("Comparison scope") {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 10)], spacing: 10) {
-                            StatTile(value: document.report.summary.matchedCount, title: "Matched functions")
-                            StatTile(value: document.report.summary.changedCount, title: "Changed findings", tint: .orange)
-                            StatTile(value: document.report.summary.unchangedCount, title: "Unchanged findings")
-                            StatTile(value: document.report.summary.addedCount, title: "Added functions")
-                            StatTile(value: document.report.summary.removedCount, title: "Removed functions")
-                            StatTile(value: document.report.summary.ambiguousCount, title: "Ambiguous comparisons")
+                        // Six fixed tiles can be measured eagerly while the native
+                        // sheet negotiates its initial size through the ScrollView.
+                        Grid(horizontalSpacing: 10, verticalSpacing: 10) {
+                            GridRow {
+                                StatTile(value: document.report.summary.matchedCount, title: "Matched functions")
+                                StatTile(value: document.report.summary.changedCount, title: "Changed findings", tint: .orange)
+                                StatTile(value: document.report.summary.unchangedCount, title: "Unchanged findings")
+                            }
+                            GridRow {
+                                StatTile(value: document.report.summary.addedCount, title: "Added functions")
+                                StatTile(value: document.report.summary.removedCount, title: "Removed functions")
+                                StatTile(value: document.report.summary.ambiguousCount, title: "Ambiguous comparisons")
+                            }
                         }
                         FactRow(label: "Image identity", value: document.report.comparison.sameImage
                                 ? "Same selected image" : "Different selected images")
@@ -49,13 +56,29 @@ struct ComparisonView: View {
                     LimitationsView(title: "Comparison limitations", limitations: document.report.limitations)
                     SectionCard("Function changes") {
                         Toggle("Include unchanged findings", isOn: $showUnchanged)
+                            .onChange(of: showUnchanged) { _, _ in changePage = 0 }
                         if visibleChanges.isEmpty {
                             LumenEmptyState("No changes are visible with this filter.", prominence: .inline)
-                        }
-                        LazyVStack(alignment: .leading, spacing: 16) {
-                            ForEach(Array(visibleChanges.enumerated()), id: \.offset) { index, change in
-                                if index > 0 { Divider() }
-                                ComparisonChangeView(change: change)
+                        } else {
+                            let page = ComparisonChangePage(count: visibleChanges.count, index: changePage)
+                            if page.pageCount > 1 {
+                                HStack {
+                                    Text("Findings \(page.range.lowerBound + 1)–\(page.range.upperBound) of \(visibleChanges.count)")
+                                        .font(.callout).foregroundStyle(.secondary)
+                                    Spacer()
+                                    Button("Previous") { changePage = page.index - 1 }
+                                        .disabled(page.index == 0)
+                                    Button("Next") { changePage = page.index + 1 }
+                                        .disabled(page.index + 1 == page.pageCount)
+                                }
+                            }
+                            // Eager, bounded rows avoid lazy scroll preferences feeding
+                            // back into native sheet sizing, even after filter changes.
+                            VStack(alignment: .leading, spacing: 16) {
+                                ForEach(Array(visibleChanges[page.range].enumerated()), id: \.offset) { index, change in
+                                    if index > 0 { Divider() }
+                                    ComparisonChangeView(change: change)
+                                }
                             }
                         }
                     }
@@ -105,5 +128,21 @@ struct ComparisonChangeView: View {
         var parts = [verdict?.title ?? "No matched finding"]
         if let scope { parts.append("Scope: \(readableToken(scope))") }
         return parts.joined(separator: "\n")
+    }
+}
+
+/// Bounds eager view construction without truncating or changing report evidence.
+struct ComparisonChangePage {
+    static let size = 50
+    let index: Int
+    let pageCount: Int
+    let range: Range<Int>
+
+    init(count: Int, index: Int) {
+        let count = max(0, count)
+        pageCount = count / Self.size + (count % Self.size == 0 ? 0 : 1)
+        self.index = min(max(0, index), max(0, pageCount - 1))
+        let lower = self.index * Self.size
+        range = lower..<(lower + min(Self.size, count - lower))
     }
 }

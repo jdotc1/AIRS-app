@@ -1,6 +1,8 @@
 import AppKit
 import Foundation
 import SwiftUI
+import AIRSCore
+import LumenUI
 
 /// Explicit opt-in inspection of the real Settings scene, with no production stores.
 struct SettingsReviewConfiguration {
@@ -74,3 +76,29 @@ struct SettingsReviewLauncher: View {
             }
     }
 }
+
+#if DEBUG
+/// Uses the strict isolated-review workspace above; never a production launch path.
+struct ComparisonReviewLauncher: View {
+    @ObservedObject var workspace: AuditWorkspace
+    let fixture: URL
+    @State private var errorMessage: String?
+
+    var body: some View {
+        VStack {
+            Button("Open Comparison Fixture") {
+                do {
+                    let data = try ReportFiles.readBounded(fixture)
+                    workspace.comparisonDocument = ComparisonDocument(
+                        report: try ComparisonReport.decode(data), data: data,
+                        formattedJSON: try ReportFiles.prettyJSON(data), protectedInputs: [fixture])
+                } catch { errorMessage = error.localizedDescription }
+            }
+            if let errorMessage { Text(errorMessage) }
+            WorkspaceView(workspace: workspace)
+        }
+        .frame(minWidth: 1000, minHeight: 760)
+        .lumenPaletteRoot().lumenMetrics(.standard).lumenDensityRoot()
+    }
+}
+#endif

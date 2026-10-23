@@ -20,6 +20,7 @@ docs/MACSCOPE_BOUND_CONTRACT.md
 docs/PRIVATE_PYTHON.md
 docs/PROJECT_FORMAT.md
 docs/RBIT_X.md
+docs/RELEASE_0_3_3_BUILD9.md
 docs/REVIEW_POLICY_FORMAT.md
 docs/SAVED_REPORT_COMMAND_EXAMPLES.md
 docs/SAVED_REPORT_SUMMARY.md
@@ -266,6 +267,7 @@ native/Tests/AIRSAppTests/BatchComparisonWorkspaceTests.swift
 native/Tests/AIRSAppTests/BatchHistoryWorkspaceTests.swift
 native/Tests/AIRSAppTests/BoundReviewWorkspaceTests.swift
 native/Tests/AIRSAppTests/BundleDiscoveryWorkspaceTests.swift
+native/Tests/AIRSAppTests/ComparisonSheetLayoutTests.swift
 native/Tests/AIRSAppTests/ComponentInventoryWorkspaceTests.swift
 native/Tests/AIRSAppTests/ComponentReviewWorkspaceTests.swift
 native/Tests/AIRSAppTests/CoverageWorkspaceTests.swift
