@@ -2,8 +2,8 @@
 from dataclasses import replace
 from pathlib import Path
 import json
-import os
 import tempfile
+from output_paths import output_root
 import unittest
 from unittest.mock import patch
 from airs import ANALYSIS_MODEL_VERSION
@@ -14,7 +14,7 @@ from test_rbit_x_candidate import fixture
 from test_fp_x_stack import MODEL, FRAME_WORDS
 from test_report_v32_admission_candidate import synthetic_report
 
-OUTPUT=Path(os.environ.get('AIRS_TEST_OUTPUT_ROOT',str(Path(tempfile.gettempdir()) / 'AIRS-FP-X-stack-v36-20261021')))
+OUTPUT = output_root()
 
 
 class FPXStackIntegrationTests(unittest.TestCase):

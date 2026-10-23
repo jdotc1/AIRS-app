@@ -1,18 +1,18 @@
 {
-  "source_revision": "ee680600a7cdc9c5f6e9bacf16e5e5651cd7cad3",
+  "source_revision": "812d00ec042656bdd824a568782a09a088c7c92b",
   "published_baseline": {
-    "version": "0.3.1",
-    "build": "5",
-    "tag": "v0.3.1"
+    "version": "0.3.2",
+    "build": "6",
+    "tag": "v0.3.2"
   },
-  "release_identity_assigned": true,
+  "release_identity_assigned": false,
   "export_policy": "allowlist; no history, runtime, private evidence or corpus locations",
-  "files": 595,
-  "source_status": "release-candidate",
+  "files": 628,
+  "source_status": "development",
   "sanitation": "bounded maintainer-path and credential-marker scan passed on new/changed files",
-  "sanitation_inspected_files": 95,
-  "sanitation_reused_files": 500,
-  "sanitation_reuse": "saved equality retained via immutable source/baseline/current Git blob identities; no repeated payload comparison, scan or hash",
+  "sanitation_inspected_files": 64,
+  "sanitation_reused_files": 564,
+  "sanitation_reuse": "Accepted public export at 5feb833d3c3eb506718caf0ac6ac91578a1f26d0 reused through exact committed Git blob identities; accepted-only public docs retained; only changed/new bytes inspected",
   "lumen_source_gate": "unchanged vendor evidence reused; pinned Settings.swift update uses its separate one-file receipt",
   "lumen_settings_donor": "46b7dc04458991093301dc9c05ca35c82f69a7ea",
   "private_evidence_excluded": [
@@ -27,31 +27,13 @@
   "limitation": "Pattern inspection is not proof that arbitrary confidential text cannot exist",
   "distribution_actions_performed": false,
   "post_export_amendment": {
-    "base_export_source": "3ab3e6996a6bae20b6af599217afafbac2c9be72",
-    "source_revision": "ee680600a7cdc9c5f6e9bacf16e5e5651cd7cad3",
-    "base_public_commit": "f514fd6388ecb9eb19f56880037b203e8086789e",
-    "kind": "preserve existing published baseline version constants",
     "paths": [
-      "pyproject.toml",
-      "scripts/package-app.sh",
-      "src/airs/__init__.py"
+      "docs/SAVED_REPORT_COMMAND_EXAMPLES.md",
+      "docs/SAVED_REPORT_SUMMARY.md",
+      "docs/SAVED_REPORT_SUMMARY_SELECTION.md",
+      "docs/SAVED_REPORT_SUMMARY_TEXT.md",
+      "docs/DIFF_TEXT.md"
     ],
-    "delta_files": 3,
-    "delta_inspected": 1,
-    "delta_reused": 2,
-    "base_export_counts": {
-      "files": 595,
-      "inspected": 95,
-      "reused": 500
-    },
-    "new_release_created": false
-  },
-  "sanitation_counts_scope": "Original base export; post_export_amendment records the separate version-preservation delta",
-  "release_candidate": {
-    "version": "0.3.2",
-    "build": "6",
-    "public_base_commit": "b20a6f000afb57229b1be5229dd29516d6352c4b",
-    "distribution_qualification": "pending",
-    "sanitation": "Existing export receipt reused; release metadata and notes are a separate reviewed delta"
+    "scope": "First inspection of changed receipt-status wording only; prior export receipt retained; unchanged payload not rescanned"
   }
 }

@@ -1,9 +1,9 @@
 # Development scope and retained evidence
 
-The public baseline is v0.3.1/build 5. This development source uses model
+The public baseline is v0.3.2/build 6. This development source uses model
 `arm64-bounded-local-fde-v40`, while the existing downloadable app and its frozen
 source retain their own identities. SOURCE_SNAPSHOT.json records the source
-revision and changed/reused export scope. Version 0.3.2/build 6 is the current release candidate; distribution checks are pending.
+revision and changed/reused export scope. No next binary release is assigned.
 
 | Boundary | Retained evidence | Scope limit |
 | --- | --- | --- |
@@ -32,3 +32,13 @@ version constants, qualify changed optimized integration within an explicitly
 allocated scope, and complete the required distribution checks. Existing signing,
 notarization, clean-Mac and OS receipts apply only to their named artifacts.
 Publication and release remain separate from this development source update.
+
+## Saved-report and project navigation increment
+
+The development app and CLI built successfully. Ten focused native methods
+passed for project search, catalog filtering/ordering and bounded store traversal.
+Fifty-nine new Python methods passed in composed receipts: 49 earlier methods
+were reused and the 10 remaining reason/limit/order methods passed on resume.
+The portable-test repair retains its separate accepted 777-method Linux matrix;
+that matrix was not replayed. New GUI workflows remain unexercised. No new
+optimized binary, signing, notarization, installation or release is claimed.

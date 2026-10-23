@@ -2,8 +2,8 @@
 from dataclasses import replace
 from pathlib import Path
 import json
-import os
 import tempfile
+from output_paths import output_root
 import unittest
 from unittest.mock import patch
 from airs import ANALYSIS_MODEL_VERSION
@@ -14,7 +14,7 @@ from test_rbit_x_candidate import fixture
 from test_sdiv_x import MODEL, RETAINED_NONLEAF as FRAME_WORDS
 from test_report_v32_admission_candidate import synthetic_report
 
-OUTPUT=Path(os.environ.get('AIRS_TEST_OUTPUT_ROOT',str(Path(tempfile.gettempdir()) / 'AIRS-SDIV-v37-20261021')))
+OUTPUT = output_root()
 
 
 class SDIVIntegrationTests(unittest.TestCase):

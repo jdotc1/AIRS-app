@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from airs import ANALYSIS_MODEL_VERSION
 from airs.engine import audit_path
 from airs.report import validate_report
 from airs.diff import compare_reports
@@ -30,7 +31,7 @@ class C13ReportTests(unittest.TestCase):
 
     def test_engine_emits_new_model_evaluated_coverage_and_cfi_evidence(self):
         report=validate_report(self.report())
-        self.assertEqual(report['generator']['analysis_model_version'],'arm64-bounded-sequential-loops-v31')
+        self.assertEqual(report['generator']['analysis_model_version'],ANALYSIS_MODEL_VERSION)
         self.assertEqual(report['summary']['agreement_count'],1)
         self.assertEqual(report['findings'][0]['coverage'],'dwarf_evaluated')
         self.assertTrue(any(e['code']=='dwarf_cfi_row' for e in report['findings'][0]['evidence']))

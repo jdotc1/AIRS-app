@@ -1,6 +1,7 @@
 import SwiftUI
 import AIRSCore
 import AIRSEntitlements
+import LumenUI
 
 struct ProjectReviewSession:Identifiable,Sendable {
     let id:UUID
@@ -19,6 +20,18 @@ struct ProjectBatchChoice:Identifiable {
     var id:String {family.rawValue+":"+historyID.uuidString}
     func link() -> ProjectBatchLink {.init(family:family,historyID:historyID,rowIDs:[])}
 }
+enum ProjectNameSearch {
+    static func includes(name:String?,query:String) -> Bool {
+        guard let name else {return true}
+        let query=query.trimmingCharacters(in:.whitespacesAndNewlines)
+        return query.isEmpty || name.range(of:query,options:[.caseInsensitive,.diacriticInsensitive]) != nil
+    }
+
+    static func visibleEntries(_ entries:[InspectionProjectEntry],query:String) -> [InspectionProjectEntry] {
+        entries.filter {includes(name:$0.project?.name,query:query)}
+    }
+}
+
 struct ProjectReviewView:View {
     let session:ProjectReviewSession
     let busy:Bool
@@ -54,6 +67,7 @@ struct ProjectReviewView:View {
     let removeProject:(UUID)->Void
     let link:(ProjectBatchLink)->Void
     let close:()->Void
+    @State private var projectQuery=""
     @State private var name=""
     @State private var noteText=""
     @State private var acknowledged=false
@@ -61,6 +75,9 @@ struct ProjectReviewView:View {
     @State private var orphanRemoval:UUID?
     @State private var projectRemoval:UUID?
     var body:some View {
+        // Filter only the metadata snapshot already admitted by the project store.
+        // Query edits cannot initiate store or evidence reads.
+        let visibleProjects=ProjectNameSearch.visibleEntries(session.entries,query:projectQuery)
         VStack(alignment:.leading,spacing:12) {
             Text("Inspection Projects").font(.title2).bold()
             Text("Projects retain original evidence bytes and separate review metadata. Membership or a pinned baseline does not retain an original app or establish trust.")
@@ -96,11 +113,19 @@ struct ProjectReviewView:View {
             }
             .disabled(hasPreview)
             HStack(alignment:.top,spacing:16) {
-                List(session.entries) {entry in
-                    VStack(alignment:.leading,spacing:4) {
-                        Button(entry.project?.name ?? "Unavailable project") {select(entry.id)}
-                        if let project=entry.project {Text("Revision \(project.revision) · \(project.evidence.count) records").foregroundStyle(.secondary)}
-                        if let issue=entry.issue {Text(issue).foregroundStyle(.secondary);Button("Remove Unavailable Project…") {projectRemoval=entry.id}}
+                VStack(alignment:.leading,spacing:8) {
+                    LumenFilterField(text:$projectQuery,prompt:"Search project names")
+                    Text("\(visibleProjects.count) of \(session.entries.count) projects").font(.caption).foregroundStyle(.secondary)
+                    List(visibleProjects) {entry in
+                        VStack(alignment:.leading,spacing:4) {
+                            Button(entry.project?.name ?? "Unavailable project") {select(entry.id)}
+                            if let project=entry.project {Text("Revision \(project.revision) · \(project.evidence.count) records").foregroundStyle(.secondary)}
+                            if let issue=entry.issue {Text(issue).foregroundStyle(.secondary);Button("Remove Unavailable Project…") {projectRemoval=entry.id}}
+                        }
+                    }
+                    if visibleProjects.isEmpty {Text("No project names match.").foregroundStyle(.secondary)}
+                    if let selected=session.project,!visibleProjects.contains(where:{$0.id == selected.id}) {
+                        Text("Selected project is hidden by search. Its details remain open.").font(.caption).foregroundStyle(.secondary)
                     }
                 }.frame(width:240)
                 if let project=session.project {
@@ -152,7 +177,7 @@ struct ProjectReviewView:View {
             Text(status).foregroundStyle(.secondary)
             HStack {Spacer();Button("Done",action:close).keyboardShortcut(.cancelAction)}
         }.padding(24).frame(minWidth:1000,idealWidth:1200,minHeight:650,idealHeight:800).disabled(busy)
-        .onChange(of:storePath) {_,_ in name=session.project?.name ?? "";noteText="";acknowledged=false}
+        .onChange(of:storePath) {_,_ in projectQuery="";name=session.project?.name ?? "";noteText="";acknowledged=false}
         .onChange(of:session.project?.id) {_,_ in name=session.project?.name ?? "";noteText="";acknowledged=false}
         .confirmationDialog("Remove evidence membership?",isPresented:Binding(get:{removal != nil},set:{if !$0 {removal=nil}})) {
             Button("Remove from Project",role:.destructive) {if let id=removal {remove(id)};removal=nil}

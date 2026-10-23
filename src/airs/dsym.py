@@ -152,7 +152,10 @@ def validate_annotations(value: object, report: dict) -> None:
         import re
         if not isinstance(attachment.get('slice_sha256'),str) or not re.fullmatch('[0-9a-f]{64}',attachment['slice_sha256']):bad()
         if not string(attachment.get('path')) or not posixpath.isabs(attachment['path']):bad()
-        if not integer(attachment.get('slice_offset')) or not integer(attachment.get('slice_size')) or attachment['slice_size']>MAX_DEBUG_BYTES:bad()
+        if not integer(attachment.get('slice_offset')) or not integer(attachment.get('slice_size')):bad()
+        # Every admitted debug slice contains at least a 64-bit Mach-O header,
+        # and its full container extent must fit the reader's byte budget.
+        if attachment['slice_size']<32 or attachment['slice_offset']+attachment['slice_size']>MAX_DEBUG_BYTES:bad()
     entries=value.get('functions')
     if not isinstance(entries,list) or len(entries)>50000:bad()
     if value['status']!='matched':

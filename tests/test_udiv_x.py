@@ -1,7 +1,6 @@
 """Bounded X UDIV: retained bytes and independent arithmetic/recovery controls."""
 from dataclasses import replace
 import unittest
-from airs import ANALYSIS_MODEL_VERSION
 from airs.arm64 import ModelError, Value, original
 from airs.cfg import PathState, audit_current_function, decode_instruction
 from airs.report import validate_report
@@ -141,7 +140,6 @@ class UDIVXTests(unittest.TestCase):
         self.assertEqual((later.verdict,later.reason_codes),('unresolved',('unknown_recovery_value',)))
 
     def test_v34_identity_and_exact_import_admission(self):
-        self.assertEqual(ANALYSIS_MODEL_VERSION,'arm64-bounded-equivalent-compact-v39')
         for model in ('arm64-bounded-udiv-v34','arm64-bounded-rbit-v33','arm64-bounded-clz-v32'):
             report=synthetic_report(model);report['image']['cpu_subtype']=0x80000000
             with self.assertRaises(InputError):validate_report(report)

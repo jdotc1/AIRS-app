@@ -1,6 +1,7 @@
 """Export-only MacScope companion contract. No undocumented API is invoked."""
 from __future__ import annotations
 
+from copy import deepcopy
 import re
 import uuid as uuid_module
 
@@ -20,8 +21,8 @@ def make_handoff(report: dict, finding_id: str) -> dict:
         "integration_status": "proposed_export_contract",
         "image": {key: image.get(key) for key in ("display_name", "uuid", "architecture", "cpu_subtype", "container_sha256", "slice_sha256", "slice_offset", "slice_size", "preferred_base")},
         "selection": {"finding_id": finding_id, "function_name": function["name"], "address_space": "preferred_vm", "vm_range": {"start": function["address"], "end": function["end_address"]}, "image_relative_range": {"start": function["image_offset"], "end": hex(int(function["image_offset"], 16) + function["size"])}},
-        "finding": {key: finding[key] for key in ("verdict", "coverage", "mode", "scope", "reason_codes", "checked_pcs", "evidence", "limitations")},
-        "source_analysis": dict(report["generator"]),
+        "finding": deepcopy({key: finding[key] for key in ("verdict", "coverage", "mode", "scope", "reason_codes", "checked_pcs", "evidence", "limitations")}),
+        "source_analysis": deepcopy(report["generator"]),
         "requirements": ["Verify architecture and selected-slice SHA-256 before applying an address to an open image.", "Use UUID as additional image identity when present; a matching filename is insufficient.", "Addresses are preferred unslid VM addresses; apply a verified runtime slide only in a runtime-aware adapter.", "This export defines a proposed adapter contract. It does not assume an existing MacScope GUI deep link or import command."],
     }
 

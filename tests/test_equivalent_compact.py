@@ -3,6 +3,7 @@ import os
 from dataclasses import replace
 from pathlib import Path
 import tempfile
+from output_paths import output_root
 import unittest
 from unittest.mock import patch
 from airs import ANALYSIS_MODEL_VERSION
@@ -12,7 +13,7 @@ from airs.types import Limits, UnwindEntry, UnwindTable, InputError, Issue
 from test_rbit_x_candidate import fixture, PRO, EPI, PAIR_PRO, PAIR_EPI, CALL, RET
 from test_report_v32_admission_candidate import synthetic_report
 
-OUTPUT = Path(os.environ.get('AIRS_TEST_OUTPUT_ROOT', str(Path(tempfile.gettempdir()) / 'AIRS-equivalent-compact-v39-20261021')))
+OUTPUT = output_root()
 MODEL='arm64-bounded-equivalent-compact-v39'
 
 
@@ -91,9 +92,8 @@ class EquivalentCompactTests(unittest.TestCase):
         finding=report_for((UnwindEntry(0x1000,0x1010,0x02000000,0),))['findings'][0]
         self.assertEqual(finding['verdict'],'agreement')
         self.assertFalse(any(e['code']=='equivalent_compact_ranges' for e in finding['evidence']))
-    def test_v39_emission_serialization_and_exact_admission(self):
-        self.assertEqual(ANALYSIS_MODEL_VERSION,MODEL)
-        report=report_for();self.assertEqual(report['generator']['analysis_model_version'],MODEL)
+    def test_current_emission_serialization_and_v39_admission(self):
+        report=report_for();self.assertEqual(report['generator']['analysis_model_version'],ANALYSIS_MODEL_VERSION)
         output=OUTPUT/'equivalent-v39.json';output.write_text(dumps(report));self.assertEqual(load_report(output),report)
         for model in (MODEL,'arm64-bounded-w-rbit-v38'):
             wire=synthetic_report(model);wire['image']['cpu_subtype']=0x80000000

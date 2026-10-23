@@ -12,7 +12,7 @@ from test_report_v32_admission_candidate import synthetic_report, replace_mode, 
 
 class V32ImportIntegrationTests(unittest.TestCase):
     def load(self, report):
-        root = os.environ.get('AIRS_TEST_OUTPUT_ROOT', str(Path(tempfile.gettempdir()) / 'AIRS-v32-admission-20261021'))
+        root = os.environ.get('AIRS_TEST_OUTPUT_ROOT') or tempfile.gettempdir()
         with tempfile.TemporaryDirectory(dir=root) as folder:
             path = Path(folder) / 'new-synthetic-report.json'
             path.write_text(json.dumps(report), encoding='utf-8')

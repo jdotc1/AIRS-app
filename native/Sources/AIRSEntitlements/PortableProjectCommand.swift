@@ -3,14 +3,18 @@ import Foundation
 /// Reuses the existing native CLI host; no app/image is inspected or executed.
 public enum PortableProjectCommand {
     public static let usage = """
-    airs-entitlements project catalog --store STORE
+    airs-entitlements project catalog --store STORE [--name-contains TEXT] [--sort name]
     airs-entitlements project preview --store STORE --project UUID
     airs-entitlements project export --store STORE --project UUID --output NEW.airsproject --confirm-original-evidence
     airs-entitlements project inventory --package PACKAGE.airsproject
     airs-entitlements project reconstruct --package PACKAGE.airsproject --output NEW_STORE
 
     Catalog reads project metadata only, retaining unreadable entries as issues;
-    it does not validate evidence or resolve historical outcomes.
+    it does not validate evidence or resolve historical outcomes. Optional name
+    selection is a case/diacritic-insensitive literal substring (256 UTF-8 bytes
+    maximum); unreadable rows remain visible and selection counts are explicit.
+    Default order is UUID. Optional --sort name orders original display-name UTF-8
+    bytes, case-sensitively, with UUID ties; unreadable rows follow in UUID order.
     Preview identifies metadata, notes and evidence included by export. Evidence
     bytes remain verbatim and may contain sensitive strings/paths. Original apps,
     dSYMs and batch checkpoints are excluded. Reconstruction requires a new
@@ -25,8 +29,11 @@ public enum PortableProjectCommand {
                 guard !confirmed else {throw BoundReviewError.invalid(usage)}
                 confirmed=true;index += 1;continue
             }
-            guard ["--store","--project","--output","--package"].contains(key),values[key] == nil,index+1 < arguments.count else {throw BoundReviewError.invalid(usage)}
+            guard ["--store","--project","--output","--package","--name-contains","--sort"].contains(key),values[key] == nil,index+1 < arguments.count else {throw BoundReviewError.invalid(usage)}
             values[key]=arguments[index+1];index += 2
+        }
+        guard operation == "catalog" || (values["--name-contains"] == nil && values["--sort"] == nil) else {
+            throw BoundReviewError.invalid(usage)
         }
         func path(_ key:String) throws -> URL {
             guard let value=values[key],value.hasPrefix("/") else {throw BoundReviewError.invalid("Use explicit absolute local paths.\n"+usage)}
@@ -40,8 +47,15 @@ public enum PortableProjectCommand {
         }
         switch operation {
         case "catalog":
-            guard Set(values.keys) == ["--store"],!confirmed else {throw BoundReviewError.invalid(usage)}
-            let catalog=try await InspectionProjectCatalog.read(from:path("--store"))
+            guard values["--store"] != nil, Set(values.keys).isSubset(of: ["--store", "--name-contains", "--sort"]),!confirmed else {throw BoundReviewError.invalid(usage)}
+            let ordering: InspectionProjectCatalog.Ordering?
+            if let requested = values["--sort"] {
+                guard let parsed = InspectionProjectCatalog.Ordering(rawValue: requested) else {
+                    throw BoundReviewError.invalid(usage)
+                }
+                ordering = parsed
+            } else { ordering = nil }
+            let catalog=try await InspectionProjectCatalog.read(from:path("--store"), nameContains:values["--name-contains"], sort:ordering)
             let encoder=JSONEncoder();encoder.outputFormatting=[.sortedKeys,.prettyPrinted]
             var bytes=try encoder.encode(catalog);bytes.append(10);return bytes
         case "preview":

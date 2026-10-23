@@ -1,18 +1,19 @@
 """Engine/report boundary for new v34; binary parsers use tiny typed substitutes."""
 from dataclasses import replace
 import json
-import os
 from pathlib import Path
 import tempfile
+from output_paths import output_root
 import unittest
 from unittest.mock import patch
+from airs import ANALYSIS_MODEL_VERSION
 from airs.engine import audit_path
 from airs.report import dumps, load_report, validate_report
 from airs.types import InputError, UnwindTable
 from test_rbit_x_candidate import fixture
 from test_udiv_x import WITNESS
 
-OUTPUT=Path(os.environ.get('AIRS_TEST_OUTPUT_ROOT',str(Path(tempfile.gettempdir()) / 'AIRS-UDIV-v34-20261021')))
+OUTPUT = output_root()
 
 
 class UDIVV34IntegrationTests(unittest.TestCase):
@@ -25,7 +26,7 @@ class UDIVV34IntegrationTests(unittest.TestCase):
             path=Path(directory)/'synthetic-udiv.bin';path.write_bytes(image.data)
             with patch('airs.engine.parse_macho',return_value=image),patch('airs.engine.parse_compact_unwind',return_value=UnwindTable((entry,))):
                 report=audit_path(path)
-        self.assertEqual(report['generator']['analysis_model_version'],'arm64-bounded-equivalent-compact-v39')
+        self.assertEqual(report['generator']['analysis_model_version'],ANALYSIS_MODEL_VERSION)
         finding=report['findings'][0]
         self.assertEqual((finding['verdict'],finding['scope'],finding['checked_pcs']),('agreement','modeled_leaf_body',['0x1000']))
         output=OUTPUT/'udiv-v37.json';output.write_text(dumps(report))

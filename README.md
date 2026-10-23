@@ -7,7 +7,7 @@ input data and are never loaded or executed by the analyzer.
 ## Development source and the published app
 
 This tree is a **development source snapshot beyond the published
-[AIRS 0.3.1/build 5 preview](https://github.com/jdotc1/AIRS-app/releases/tag/v0.3.1)**.
+[AIRS 0.3.2/build 6 preview](https://github.com/jdotc1/AIRS-app/releases/tag/v0.3.2)**.
 It does not replace that release, its tag or downloadable assets. No next release
 version is assigned. SOURCE_SNAPSHOT.json identifies the private source revision,
 published baseline, export scope and reused sanitation evidence.
@@ -31,6 +31,15 @@ catalog command. Historical observations and imported receipts do not establish
 current permissions, issuer authenticity, trust, safety or a restored live queue.
 The stronger C4 exchange retains its separate
 [public protocol contract](docs/MACSCOPE_BOUND_CONTRACT.md).
+
+## Saved reports and project navigation
+
+The source adds view-local project name search, bounded catalog name selection
+and deterministic ordering. Saved-report summaries support JSON or escaped text,
+verdict and literal reason selection, stable verdict ordering and explicit detail
+limits. Full source counts and unresolved denominators remain intact. Comparison
+and coverage commands also provide bounded text output. See the
+[saved-report examples](docs/SAVED_REPORT_COMMAND_EXAMPLES.md).
 
 ## Build and verification
 
