@@ -1,32 +1,13 @@
-# AIRS 0.3.2 Preview — build 6
+# AIRS 0.3.3 Preview — build 7
 
-This release candidate packages the published development source as version 0.3.2
-(build 6), including the revised native Settings pane and engine model v40.
-Distribution qualification is pending; accepted focused feature evidence is reused.
+AIRS remains an Apple silicon preview for macOS14 or newer, with private Python3.15.0.
 
-- Adopt the complete Lumen Settings scaffold and its native compact-toolbar fix,
-  including one sidebar control, aligned category history/title and related pane
-  surfaces. The actual AIRS Settings candidate received appearance review.
-- Include bounded development engine models v36–v40, with exact model admission
-  and preserved unknown/refusal boundaries. Retained qualification is described
-  in docs/DEVELOPMENT_STATUS.md; it is not a fresh corpus or release run.
-- Include native settled companion import/export/re-export and historical panels,
-  plus a bounded read-only project catalog CLI. Picker and historical-panel GUI
-  acceptance remains incomplete.
-- Preserve the public MIT licensing amendment, notices and existing public
-  portability changes. Remove maintainer-specific paths from changed fixtures
-  and isolate private qualification/comparison records from the public payload.
+- Capture bounded raw XML/DER signature evidence tied to exact component/slice identities; retain and reopen historical evidence in complete archives.
+- Add bounded CFI fixed-width advances and remembered recovery state under v41 while preserving v40 structural checks, default parser behavior and historical model identities.
+- Search inspection projects by name and use deterministic catalog ordering with bounded directory traversal.
+- Summarize saved reports as JSON or terminal-safe text, filter by verdict/reason, order by verdict and apply explicit detail limits while retaining full source counts.
+- Present comparison and coverage results as bounded text; improve parser, imported-report, HTML and handoff snapshot boundaries.
 
-The source snapshot, locally installed developer app and published release are
-separate identities. Compilation, focused tests and appearance review do not
-qualify a newly assembled optimized distribution or normal lifecycle behavior.
+Raw signature evidence is structural bytes, not signature trust or effective permissions. Agreement remains limited to recorded model, PCs and scope. Unresolved findings remain in the denominator.
 
-## Development source after 0.3.2
-
-Project search and catalog ordering; saved-report summaries and bounded text
-output; conservative parser, comparison and handoff snapshot corrections.
-These source changes do not create a new downloadable binary release.
-
-Current development source also integrates raw signature evidence and bounded
-v41 CFI controls over the preserved v40 baseline. This source update creates
-no new downloadable binary release.
+The release reuses accepted focused source/runtime/vendor evidence and qualifies the new optimized artifact and affected native workflows. Minimum-OS, clean-Mac and Intel-host distribution limits remain explicit.

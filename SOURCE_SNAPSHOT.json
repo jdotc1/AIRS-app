@@ -5,10 +5,10 @@
     "build": "6",
     "tag": "v0.3.2"
   },
-  "release_identity_assigned": false,
+  "release_identity_assigned": true,
   "export_policy": "allowlist; no history, runtime, private evidence or corpus locations",
   "files": 648,
-  "source_status": "development",
+  "source_status": "release-candidate",
   "sanitation": "bounded maintainer-path and credential-marker scan passed on new/changed files",
   "sanitation_inspected_files": 41,
   "sanitation_reused_files": 607,
@@ -25,5 +25,7 @@
     "tests/test_public_export_policy.py"
   ],
   "limitation": "Pattern inspection is not proof that arbitrary confidential text cannot exist",
-  "distribution_actions_performed": false
+  "distribution_actions_performed": false,
+  "release_version": "0.3.3",
+  "release_build": 7
 }
